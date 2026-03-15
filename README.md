@@ -1,6 +1,6 @@
 ![](https://raw.githubusercontent.com/audio-wav/unexpected-g2/main/unexpected_assets/unexpected_g2/unexpected_banner.png)
 # unexpected g2
-An open source Roblox admin commands script [Discord](https://discord.gg/J73SnGB2y2)
+An open source Roblox admin commands script [Discord](https://discord.gg/J73SnGB2y2) [Website](https://audio-wav.github.io/unexpected-g2/)
 ```lua
 loadstring(game:HttpGet('https://raw.githubusercontent.com/audio-wav/unexpected-g2/refs/heads/main/source'))()
 ```
