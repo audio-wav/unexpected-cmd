@@ -74,6 +74,12 @@ local function mk(class, parent, props)
 	return o
 end
 
+local function CREATE_CORNER(PARENT, RADIUS_SCALE, RADIUS_OFFSET)
+    return mk("UICorner", PARENT, {
+        CornerRadius = UDim.new(RADIUS_SCALE or 0, RADIUS_OFFSET or 0)
+    })
+end
+
 local function CREATE_STROKE(PARENT, COLOR, APPLY_MODE)
     return mk("UIStroke", PARENT, {
         Color = COLOR or FQ.COLORS.STROKE,
