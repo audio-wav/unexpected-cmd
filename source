@@ -224,7 +224,7 @@ unexpected_UI.DISCORD = mk("TextButton", unexpected_UI.MENUFRAME, {
 	Text = "discord",
 	Name = "discordButton",
 	Visible = true,
-	Position = UDim2.new(0.0885,0,0.54741,0),
+	Position = UDim2.new(0.0885,0,0.735,0),
 })
 
 unexpected_UI.DISCORD.MouseButton1Click:Connect(function()
@@ -315,7 +315,6 @@ unexpected_UI.AUTORUNS_BUTTON = mk("TextButton", unexpected_UI.MENUFRAME, {
 CREATE_CORNER(unexpected_UI.AUTORUNS_BUTTON, 0.3, 0)
 CREATE_STROKE(unexpected_UI.AUTORUNS_BUTTON, FQ.COLORS.STROKE)
 
--- autorun frame (mirrors CMDFRAME)
 unexpected_UI.ARFRAME = mk("Frame", unexpected_UI.MENUFRAME, {
 	BorderSizePixel = 0,
 	BackgroundColor3 = Color3.fromRGB(255,255,255),
@@ -369,6 +368,77 @@ unexpected_UI.ARBACK = mk("ImageButton", unexpected_UI.ARFRAME, {
 	Position = UDim2.new(0.0885,0,0.82759,0),
 })
 CREATE_ASPECT(unexpected_UI.ARBACK)
+
+unexpected_UI.EVENTS_BUTTON = mk("TextButton", unexpected_UI.MENUFRAME, {
+	BorderSizePixel = 0,
+	TextSize = 18,
+	TextColor3 = FQ.COLORS.TEXT_MAIN,
+	BackgroundColor3 = FQ.COLORS.BACKGROUND,
+	FontFace = FQ.FONTS.REGULAR,
+	Size = UDim2.new(0,278,0,51),
+	BorderColor3 = FQ.COLORS.BACKGROUND,
+	Text = "events",
+	Name = "eventsButton",
+	Visible = true,
+	Position = UDim2.new(0.0885,0,0.54741,0),
+})
+CREATE_CORNER(unexpected_UI.EVENTS_BUTTON, 0.3, 0)
+CREATE_STROKE(unexpected_UI.EVENTS_BUTTON, FQ.COLORS.STROKE)
+
+unexpected_UI.EVFRAME = mk("Frame", unexpected_UI.MENUFRAME, {
+	BorderSizePixel = 0,
+	BackgroundColor3 = Color3.fromRGB(255,255,255),
+	Size = UDim2.new(0,339,0,348),
+	BorderColor3 = FQ.COLORS.BACKGROUND,
+	Name = "eventFrame",
+	BackgroundTransparency = 1,
+	Visible = false,
+})
+
+unexpected_UI.EVBTNLIST = mk("ScrollingFrame", unexpected_UI.EVFRAME, {
+	Active = true,
+	BorderSizePixel = 0,
+	CanvasSize = UDim2.new(0,0,0,0),
+	BackgroundColor3 = Color3.fromRGB(255,255,255),
+	Name = "eventList",
+	Size = UDim2.new(0,278,0,210),
+	ScrollBarImageColor3 = FQ.COLORS.ACCENT,
+	Position = UDim2.new(0.0885,0,0.32184,0),
+	BorderColor3 = FQ.COLORS.BACKGROUND,
+	ScrollBarThickness = 1,
+	BackgroundTransparency = 1,
+})
+
+unexpected_UI.EVSEARCHBAR = mk("TextBox", unexpected_UI.EVFRAME, {
+	CursorPosition = -1,
+	Name = "eventSearch",
+	PlaceholderColor3 = FQ.COLORS.TEXT_DIM,
+	BorderSizePixel = 0,
+	TextSize = 18,
+	TextColor3 = FQ.COLORS.TEXT_MAIN,
+	BackgroundColor3 = Color3.fromRGB(255,255,255),
+	FontFace = FQ.FONTS.REGULAR,
+	PlaceholderText = "search events",
+	Size = UDim2.new(0,278,0,41),
+	Position = UDim2.new(0.0885,0,0.17816,0),
+	BorderColor3 = FQ.COLORS.BACKGROUND,
+	Text = "",
+	BackgroundTransparency = 1,
+})
+
+unexpected_UI.EVBACK = mk("ImageButton", unexpected_UI.EVFRAME, {
+	BorderSizePixel = 0,
+	BackgroundTransparency = 1,
+	BackgroundColor3 = Color3.fromRGB(255,255,255),
+	ImageColor3 = FQ.COLORS.ACCENT,
+	Image = "rbxassetid://10709812784",
+	Size = UDim2.new(0,38,0,30),
+	BorderColor3 = FQ.COLORS.BACKGROUND,
+	Name = "eventBack",
+	Position = UDim2.new(0.0885,0,0.82759,0),
+})
+CREATE_ASPECT(unexpected_UI.EVBACK)
+
 
 local unexpected = {}
 local commandListData = {}
@@ -663,10 +733,12 @@ end
 --#inputs
 unexpected_UI["CLI"]:GetPropertyChangedSignal("Text"):Connect(function()
 	local input = unexpected_UI["CLI"].Text
-	local cmdName = string.match(input, "^%S+") or ""
+	local cmdName, argText = string.match(input, "^(%S+)%s(.*)$")
+	local bareCmd = string.match(input, "^(%S+)$") or ""
 	local suggestion = ""
-	if cmdName ~= "" then
-		local lowerCmd = string.lower(cmdName)
+
+	if bareCmd ~= "" then
+		local lowerCmd = string.lower(bareCmd)
 		local node = trieRoot
 		for i = 1, #lowerCmd do
 			if not node then break end
@@ -674,13 +746,34 @@ unexpected_UI["CLI"]:GetPropertyChangedSignal("Text"):Connect(function()
 			node = node.children and node.children[c]
 		end
 		if node and node.entries and #node.entries > 0 then
-			local bestKey, bestEntry = nil, nil
+			local bestKey = nil
 			for _, rec in ipairs(node.entries) do
-				if not bestKey or rec.key < bestKey then bestKey = rec.key bestEntry = rec.entry end
+				if not bestKey or rec.key < bestKey then bestKey = rec.key end
 			end
 			if bestKey then
-				local completion = string.sub(bestKey, #cmdName + 1)
-				suggestion = input .. completion
+				suggestion = input .. string.sub(bestKey, #bareCmd + 1)
+			end
+		end
+	elseif cmdName then
+		local cmd = commandListData[string.lower(cmdName)]
+		if cmd and cmd.UsageArgs and cmd.UsageArgs[1] == "player" then
+			local lastArg = string.match(argText, "%S+$") or ""
+			local lowerArg = string.lower(lastArg)
+			local bestMatch = nil
+			for _, p in ipairs(PLRS:GetPlayers()) do
+				if p ~= LP then
+					local n = string.lower(p.Name)
+					local dn = string.lower(p.DisplayName)
+					if lowerArg == "" or n:sub(1, #lowerArg) == lowerArg then
+						if not bestMatch or n < string.lower(bestMatch) then bestMatch = p.Name end
+					elseif dn:sub(1, #lowerArg) == lowerArg then
+						if not bestMatch or dn < string.lower(bestMatch) then bestMatch = p.DisplayName end
+					end
+				end
+			end
+			if bestMatch then
+				local beforeLast = string.match(argText, "^(.*%s)%S*$") or ""
+				suggestion = cmdName .. " " .. beforeLast .. bestMatch
 			end
 		end
 	end
@@ -806,7 +899,8 @@ local configFile = "unexpected_config.json"
 local defaultConfig = {
     keepUX = true,
     Plugins = {},
-    Autoruns = {}
+    Autoruns = {},
+	Events = {}
 }
 
 CONFIG = CONFIG or {}
@@ -876,11 +970,13 @@ local MENUON, HOVERED, shithover = false, false, false
 local MENUFRAMES = {
 	command = MENUFRAME:WaitForChild("commandFrame"),
 	autorun = MENUFRAME:WaitForChild("autorunFrame"),
+	event = MENUFRAME:WaitForChild("eventFrame"),
 }
 local MENUS = {
 	MENUFRAME:WaitForChild("cmdsButton"),
 	MENUFRAME:WaitForChild("discordButton"),
 	MENUFRAME:WaitForChild("autorunsButton"),
+	MENUFRAME:WaitForChild("eventsButton"),
 }
 
 --#fadesHandler
@@ -1027,6 +1123,81 @@ local function showARList(filter)
 		end
 	end
 	unexpected_UI.ARBTNLIST.CanvasSize = UDim2.new(0,0,0,index * 32)
+end
+
+local evButtonCache = {}
+local evBtnExample = mk("TextButton", nil, {
+	BorderSizePixel = 0,
+	TextXAlignment = Enum.TextXAlignment.Left,
+	TextSize = 18,
+	TextColor3 = FQ.COLORS.TEXT_MAIN,
+	BackgroundColor3 = FQ.COLORS.BACKGROUND,
+	FontFace = FQ.FONTS.REGULAR,
+	Size = UDim2.new(0,278,0,33),
+	BorderColor3 = FQ.COLORS.BACKGROUND,
+	Text = "",
+	Name = "eventEntry",
+	Visible = false,
+})
+
+local function clearEVList()
+	for _, btn in ipairs(evButtonCache) do
+		btn.Visible = false
+		btn.Parent = nil
+	end
+	evButtonCache = {}
+	unexpected_UI.EVBTNLIST.CanvasSize = UDim2.new(0,0,0,0)
+end
+
+local function showEVList(filter)
+	clearEVList()
+	filter = string.lower(filter or "")
+	CONFIG.Events = CONFIG.Events or {}
+	local index = 0
+	for i, ev in ipairs(CONFIG.Events) do
+		local display = ev.event .. (ev.filter and (" [" .. ev.filter .. "]") or "") .. " → " .. ev.cmd
+		if filter == "" or display:lower():find(filter, 1, true) then
+			local btn = evBtnExample:Clone()
+			btn.Text = display
+			btn.Visible = true
+			btn.Position = UDim2.new(0,0,0,index * 32)
+			btn.Parent = unexpected_UI.EVBTNLIST
+			btn.MouseButton1Click:Connect(function()
+				table.remove(CONFIG.Events, i)
+				UX_config()
+				unexpected:notify("events", "Removed: " .. display)
+				showEVList(unexpected_UI.EVSEARCHBAR.Text)
+			end)
+			table.insert(evButtonCache, btn)
+			index = index + 1
+		end
+	end
+	unexpected_UI.EVBTNLIST.CanvasSize = UDim2.new(0,0,0,index * 32)
+end
+
+unexpected_UI.EVENTS_BUTTON.MouseButton1Click:Connect(function()
+	openMenuFrame(MENUFRAMES.event, function()
+		unexpected_UI.EVSEARCHBAR.Text = ""
+		showEVList("")
+	end)
+end)
+
+unexpected_UI.EVBACK.MouseButton1Click:Connect(function()
+	fadeOut(MENUFRAMES.event)
+	clearEVList()
+	task.delay(0.1, function() for _, b in ipairs(MENUS) do b.Visible = true end end)
+end)
+
+do
+	local evToken = 0
+	unexpected_UI.EVSEARCHBAR:GetPropertyChangedSignal("Text"):Connect(function()
+		evToken = evToken + 1
+		local my = evToken
+		local txt = unexpected_UI.EVSEARCHBAR.Text
+		task.delay(0.12, function()
+			if my == evToken then showEVList(txt) end
+		end)
+	end)
 end
 
 unexpected_UI["PILL"].InputBegan:Connect(function(input)
@@ -1350,6 +1521,196 @@ end, nil, {"name"})
 --#pluginSystemEnd
 
 --#commands
+local activeEventConns = {}
+
+local function runCmd(full)
+	local cmdName, argsText = string.match(full, "^(%S+)%s*(.*)$")
+	if not cmdName then return end
+	local cmd = commandListData[string.lower(cmdName)]
+	if cmd then
+		local args = {}
+		for arg in string.gmatch(argsText, "%S+") do table.insert(args, arg) end
+		pcall(cmd.Execute, table.unpack(args))
+	end
+end
+
+local function disconnectEvents()
+	for _, c in ipairs(activeEventConns) do pcall(function() c:Disconnect() end) end
+	activeEventConns = {}
+end
+
+local function hookEvents()
+	disconnectEvents()
+	CONFIG.Events = CONFIG.Events or {}
+	for _, ev in ipairs(CONFIG.Events) do
+		local event, filter, cmd = ev.event, ev.filter, ev.cmd
+		local conn
+		if event == "died" then
+			conn = HUM.Died:Connect(function() runCmd(cmd) end)
+		elseif event == "respawned" then
+			conn = LP.CharacterAdded:Connect(function() task.wait(0.5) runCmd(cmd) end)
+		elseif event == "jumped" then
+			conn = HUM.Jumping:Connect(function(active) if active then runCmd(cmd) end end)
+		elseif event == "seated" then
+			conn = HUM.Seated:Connect(function(active) if active then runCmd(cmd) end end)
+		elseif event == "statechanged" then
+			conn = HUM.StateChanged:Connect(function(_, new)
+				if not filter or new.Name:lower() == filter:lower() then runCmd(cmd) end
+			end)
+		elseif event == "healthchanged" then
+			conn = HUM.HealthChanged:Connect(function() runCmd(cmd) end)
+		elseif event == "fallendamage" then
+			local last = HUM.Health
+			conn = HUM.HealthChanged:Connect(function(hp)
+				if hp < last and HUM:GetState() == Enum.HumanoidStateType.Freefall then runCmd(cmd) end
+				last = hp
+			end)
+		elseif event == "playerjoined" then
+			conn = PLRS.PlayerAdded:Connect(function(p)
+				if not filter or filter == "any" or p.Name:lower() == filter:lower() or p.DisplayName:lower() == filter:lower() then
+					runCmd(cmd)
+				end
+			end)
+		elseif event == "playerleft" then
+			conn = PLRS.PlayerRemoving:Connect(function(p)
+				if not filter or filter == "any" or p.Name:lower() == filter:lower() or p.DisplayName:lower() == filter:lower() then
+					runCmd(cmd)
+				end
+			end)
+		elseif event == "chatted" then
+			conn = PLRS.PlayerAdded:Connect(function() end)
+			for _, p in ipairs(PLRS:GetPlayers()) do
+				local c = p.Chatted:Connect(function(msg)
+					if not filter or filter == "any" or msg:lower():find(filter:lower(), 1, true) then
+						runCmd(cmd)
+					end
+				end)
+				table.insert(activeEventConns, c)
+			end
+			PLRS.PlayerAdded:Connect(function(p)
+				local c = p.Chatted:Connect(function(msg)
+					if not filter or filter == "any" or msg:lower():find(filter:lower(), 1, true) then
+						runCmd(cmd)
+					end
+				end)
+				table.insert(activeEventConns, c)
+			end)
+		elseif event == "keypressed" then
+			conn = UIS.InputBegan:Connect(function(input, processed)
+				if processed then return end
+				if filter and input.KeyCode.Name:lower() == filter:lower() then runCmd(cmd) end
+			end)
+		elseif event == "keyreleased" then
+			conn = UIS.InputEnded:Connect(function(input)
+				if filter and input.KeyCode.Name:lower() == filter:lower() then runCmd(cmd) end
+			end)
+		elseif event == "clicked" then
+			conn = UIS.InputBegan:Connect(function(input, processed)
+				if processed then return end
+				if input.UserInputType == Enum.UserInputType.MouseButton1 then runCmd(cmd) end
+			end)
+		elseif event == "touched" then
+			conn = HRP.Touched:Connect(function(part)
+				if not filter or part.Name:lower() == filter:lower() then runCmd(cmd) end
+			end)
+		elseif event == "equipped" then
+			conn = LP.Character and LP.Character.ChildAdded:Connect(function(c)
+				if c:IsA("Tool") then
+					if not filter or c.Name:lower() == filter:lower() then runCmd(cmd) end
+				end
+			end)
+		elseif event == "unequipped" then
+			conn = LP.Character and LP.Character.ChildRemoved:Connect(function(c)
+				if c:IsA("Tool") then
+					if not filter or c.Name:lower() == filter:lower() then runCmd(cmd) end
+				end
+			end)
+		elseif event == "teleported" then
+			conn = LP.OnTeleport:Connect(function(state)
+				if state == Enum.TeleportState.Started then runCmd(cmd) end
+			end)
+		elseif event == "zoomchanged" then
+			conn = CAM:GetPropertyChangedSignal("CameraDistance"):Connect(function() runCmd(cmd) end)
+		end
+		if conn then table.insert(activeEventConns, conn) end
+	end
+end
+
+unexpected:addcmd("onevent", "Add an event trigger", function(event, ...)
+	if not event then return unexpected:notify("events", "Usage: onevent [event] [filter/cmd] [cmd...]") end
+	local args = {...}
+	if #args == 0 then return unexpected:notify("events", "Usage: onevent [event] [filter/cmd] [cmd...]") end
+
+	local noFilterEvents = {died=true, respawned=true, jumped=true, seated=true, healthchanged=true, fallendamage=true, clicked=true, teleported=true, shutdown=true, zoomchanged=true}
+	local filter, cmd
+
+	if noFilterEvents[event:lower()] then
+		filter = nil
+		cmd = table.concat(args, " ")
+	else
+		filter = args[1]
+		cmd = table.concat(args, " ", 2)
+	end
+
+	if not cmd or cmd == "" then return unexpected:notify("events", "No command specified.") end
+
+	CONFIG.Events = CONFIG.Events or {}
+	table.insert(CONFIG.Events, {event = event:lower(), filter = filter, cmd = cmd})
+	UX_config()
+	hookEvents()
+	unexpected:notify("events", event:lower() .. (filter and (" [" .. filter .. "]") or "") .. " → " .. cmd)
+end, nil, {"event", "filter/cmd", "..."})
+
+unexpected:addcmd("unevent", "Remove an event trigger", function(event, ...)
+	if not event then return unexpected:notify("events", "Usage: unevent [event] [filter/cmd]") end
+	local args = {...}
+	local filter = #args > 0 and args[1] or nil
+	CONFIG.Events = CONFIG.Events or {}
+	for i, ev in ipairs(CONFIG.Events) do
+		if ev.event == event:lower() and (not filter or ev.filter == filter) then
+			table.remove(CONFIG.Events, i)
+			UX_config()
+			hookEvents()
+			unexpected:notify("events", "Removed event: " .. event)
+			return
+		end
+	end
+	unexpected:notify("events", "Event not found.")
+end, nil, {"event", "filter"})
+
+unexpected:addcmd("clearevents", "Remove all event triggers", function()
+	CONFIG.Events = {}
+	UX_config()
+	disconnectEvents()
+	unexpected:notify("events", "All events cleared.")
+end)
+
+unexpected:addcmd("events", "Show events tab", function()
+	if not MENUON then
+		MENUON = true
+		MENUFRAME.Size, MENUFRAME.Visible = UDim2.new(0, 339, 0, 0), true
+		playTween(unexpected_UI["PILL"], {Size = UDim2.new(0, 339, 0, 71)}, 0.25, Enum.EasingStyle.Quint):Play()
+		local NS = UDim2.new(0, 230, 0, 54)
+		playTween(CLI, {Size = NS}, 0.25, Enum.EasingStyle.Quint):Play()
+		playTween(unexpected_UI["PREDICTOR"], {Size = NS}, 0.25, Enum.EasingStyle.Quint):Play()
+		playTween(MENUFRAME, {Size = UDim2.new(0, 339, 0, 348)}, 0.25, Enum.EasingStyle.Quint):Play()
+		buttonTP(MENU, 0)
+		task.delay(0.3, function()
+			openMenuFrame(MENUFRAMES.event, function()
+				unexpected_UI.EVSEARCHBAR.Text = ""
+				showEVList("")
+			end)
+		end)
+	else
+		if not MENUFRAMES.event.Visible then
+			openMenuFrame(MENUFRAMES.event, function()
+				unexpected_UI.EVSEARCHBAR.Text = ""
+				showEVList("")
+			end)
+		end
+	end
+end)
+
 unexpected:addcmd("discord", "Discord Server", function()
     setclipboard("https://discord.gg/J73SnGB2y2")
 	if typeof(httprequest) == "function" then
@@ -1384,7 +1745,7 @@ unexpected:addcmd("goto", "Teleport to a player", function(targetName)
 	end
 	local root = target and target.Character and target.Character:FindFirstChild("HumanoidRootPart")
 	if root then HRP.CFrame = root.CFrame + Vector3.new(0, 3, 0) end
-end, nil, {"playerName"})
+end, nil, {"player"})
 
 local noclip
 unexpected:addcmd("noclip", "Walk through walls", function()
@@ -1406,6 +1767,88 @@ unexpected:addcmd("unnoclip", "Disable noclip", function()
     end
 end, {"clip"}, nil)
 
+unexpected:addcmd("tp", "Teleport to coordinates", function(x, y, z)
+    x, y, z = tonumber(x), tonumber(y), tonumber(z)
+    if not x or not y or not z then return unexpected:notify("tp", "Usage: tp [x] [y] [z]") end
+    HRP.CFrame = CFrame.new(x, y, z)
+end, nil, {"x", "y", "z"})
+
+unexpected:addcmd("copypos", "Copy position to clipboard", function()
+    local p = HRP.Position
+    setclipboard(string.format("%.2f, %.2f, %.2f", p.X, p.Y, p.Z))
+    unexpected:notify("copypos", string.format("%.2f, %.2f, %.2f", p.X, p.Y, p.Z))
+end)
+
+oldFOV = nil
+unexpected:addcmd("fov", "Set camera field of view", function(value)
+    value = tonumber(value)
+    if not value then return unexpected:notify("fov", "Usage: fov [number]") end
+    oldFOV = CAM.FieldOfView
+	CAM.FieldOfView = math.clamp(value, 1, 120)
+    unexpected:notify("fov", "FOV set to " .. CAM.FieldOfView)
+end, nil, {"value"})
+
+unexpected:addcmd("resetfov", "Reset FOV to default", function()
+    CAM.FieldOfView = oldFOV or 70
+end)
+
+unexpected:addcmd("serverid", "Copy server Job ID to clipboard", function()
+    setclipboard(game.JobId)
+    unexpected:notify("serverid", game.JobId)
+end)
+
+unexpected:addcmd("ping", "Show current ping", function()
+    unexpected:notify("ping", math.floor(PLRS.LocalPlayer:GetNetworkPing() * 1000) .. "ms")
+end)
+
+unexpected:addcmd("time", "Show server time", function()
+    local t = game:GetService("Lighting").ClockTime
+    local h = math.floor(t)
+    local m = math.floor((t - h) * 60)
+    unexpected:notify("time", string.format("%02d:%02d", h, m))
+end)
+
+unexpected:addcmd("getpos", "Get a player's position", function(name)
+    if not name then return unexpected:notify("getpos", "Usage: getpos [player]") end
+    for _, p in ipairs(PLRS:GetPlayers()) do
+        if p.Name:lower() == name:lower() or p.DisplayName:lower() == name:lower() then
+            local hrp = p.Character and p.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                local pos = hrp.Position
+                local str = string.format("%.2f, %.2f, %.2f", pos.X, pos.Y, pos.Z)
+                setclipboard(str)
+                unexpected:notify("getpos", p.Name .. ": " .. str)
+            else
+                unexpected:notify("getpos", p.Name .. " has no character.")
+            end
+            return
+        end
+    end
+    unexpected:notify("getpos", "Player not found: " .. name)
+end, nil, {"player"})
+
+unexpected:addcmd("version", "Show current script version", function()
+    unexpected:notify("version", "unexpected " .. currentVersion)
+end)
+
+unexpected:addcmd("who", "Show info about a player", function(name)
+    if not name then return unexpected:notify("who", "Usage: who [player]") end
+    for _, p in ipairs(PLRS:GetPlayers()) do
+        if p.Name:lower() == name:lower() or p.DisplayName:lower() == name:lower() then
+            local age = p.AccountAge
+            local years = math.floor(age / 365)
+            local months = math.floor((age % 365) / 30)
+            unexpected:notify("who",
+                "name: " .. p.Name ..
+                "\nuserid: " .. p.UserId ..
+                "\naccount age: " .. years .. "y " .. months .. "m"
+            )
+            return
+        end
+    end
+    unexpected:notify("who", "Player not found: " .. name)
+end, nil, {"player"})
+
 unexpected:addcmd("reset", "Resets your character", function()
     CHAR:BreakJoints()
 end)
@@ -1421,6 +1864,62 @@ end)
 unexpected:addcmd("pos", "Prints your position", function()
     unexpected:notify("position", tostring(HRP.Position))
 end)
+
+unexpected:addcmd("gameid", "Copy Place ID to clipboard", function()
+    setclipboard(tostring(game.PlaceId))
+    unexpected:notify("gameid", tostring(game.PlaceId))
+end)
+
+unexpected:addcmd("playercount", "Show player count", function()
+    local players = PLRS:GetPlayers()
+    unexpected:notify("playercount", #players .. "/" .. PLRS.MaxPlayers)
+end)
+
+unexpected:addcmd("copyname", "Copy a player's username to clipboard", function(name)
+    if not name then return unexpected:notify("copyname", "Usage: copyname [player]") end
+    for _, p in ipairs(PLRS:GetPlayers()) do
+        if p.Name:lower() == name:lower() or p.DisplayName:lower() == name:lower() then
+            setclipboard(p.Name)
+            unexpected:notify("copyname", "Copied: " .. p.Name)
+            return
+        end
+    end
+    unexpected:notify("copyname", "Player not found: " .. name)
+end, nil, {"player"})
+
+local spectating = false
+local spectateConn = nil
+unexpected:addcmd("spectate", "Spectate a player", function(name)
+    if not name then return unexpected:notify("spectate", "Usage: spectate [player]") end
+    for _, p in ipairs(PLRS:GetPlayers()) do
+        if p.Name:lower() == name:lower() or p.DisplayName:lower() == name:lower() then
+            local hrp = p.Character and p.Character:FindFirstChild("HumanoidRootPart")
+            if not hrp then return unexpected:notify("spectate", p.Name .. " has no character.") end
+            spectating = true
+            if spectateConn then spectateConn:Disconnect() end
+            CAM.CameraType = Enum.CameraType.Scriptable
+            spectateConn = RS.Heartbeat:Connect(function()
+                if not spectating then return end
+                local char = p.Character
+                local root = char and char:FindFirstChild("HumanoidRootPart")
+                if root then
+                    CAM.CFrame = CFrame.new(root.Position + Vector3.new(0, 5, 10), root.Position)
+                end
+            end)
+            unexpected:notify("spectate", "Spectating: " .. p.Name)
+            return
+        end
+    end
+    unexpected:notify("spectate", "Player not found: " .. name)
+end, {"spec"}, {"player"})
+
+unexpected:addcmd("unspectate", "Stop spectating", function()
+    spectating = false
+    if spectateConn then spectateConn:Disconnect() spectateConn = nil end
+    CAM.CameraType = Enum.CameraType.Custom
+    CAM.CameraSubject = HUM
+    unexpected:notify("spectate", "Stopped.")
+end, {"unspec"}, nil)
 
 unexpected:addcmd("platformstand", "Toggles PlatformStand", function()
     HUM.PlatformStand = not HUM.PlatformStand
@@ -1677,37 +2176,6 @@ unexpected:addcmd("unantifling", "Disables fling protection", function()
     if afConn then afConn:Disconnect() afConn = nil end
 end)
 
-local banging, conn = false
-unexpected:addcmd("bang", "Bang someone", function(name, speedArg)
-	if banging then return end
-	local target = table.find(PLRS:GetPlayers(), function(p)
-		local n = name:lower()
-		return p.Name:lower() == n or p.DisplayName:lower() == n
-	end)
-	if not target or not target.Character or not target.Character:FindFirstChild("HumanoidRootPart") then return end
-
-	local speed, thrp = tonumber(speedArg) or 5, target.Character.HumanoidRootPart
-	local t, inwards = 0, true
-	banging = true
-
-	conn = RS.Heartbeat:Connect(function(dt)
-		if not banging then conn:Disconnect() conn = nil return end
-		local lv = thrp.CFrame.LookVector.Unit
-		local back = thrp.Position - lv * 2
-		local front = thrp.Position - lv
-		local cf = CFrame.new(inwards and front or back, thrp.Position)
-
-		t = math.min(t + dt * speed, 1)
-		HRP.CFrame = HRP.CFrame:Lerp(cf, t)
-		if t >= 1 then inwards = not inwards t = 0 end
-	end)
-end)
-
-unexpected:addcmd("unbang", "Stop banging", function()
-	banging = false
-	conn = conn and conn:Disconnect()
-end)
-
 unexpected:addcmd("antiafk", "Never get kicked", function()
     LP.Idled:Connect(function()
         VU:ClickButton2(Vector2.new())
@@ -1719,6 +2187,7 @@ unexpected:addcmd("execute", "Execute code", function(...)
 end, nil, {...})
 
 --#locales
+hookEvents()
 UX_rconfig()
 task.delay(1, function()
     CONFIG.Autoruns = CONFIG.Autoruns or {}
