@@ -636,6 +636,23 @@ unexpected_UI["CLI"].FocusLost:Connect(function(enterPressed)
 		unexpected_UI["PREDICTOR"].Text = ""
 	end
 end)
+
+local suppress = false
+unexpected_UI["CLI"]:GetPropertyChangedSignal("Text"):Connect(function()
+    if suppress then return end
+    if unexpected_UI["CLI"].Text:find("	") then
+        suppress = true
+        local suggestion = unexpected_UI["PREDICTOR"].Text
+        if suggestion ~= "" then
+            unexpected_UI["CLI"].Text = suggestion
+            unexpected_UI["PREDICTOR"].Text = ""
+        else
+			unexpected_UI["CLI"].Text = unexpected_UI["CLI"].Text:gsub("	", "")
+        end
+        unexpected_UI["CLI"].CursorPosition = #unexpected_UI["CLI"].Text + 1
+        suppress = false
+    end
+end)
 --#inputsEnd
 
 --#search
@@ -1309,6 +1326,7 @@ unexpected:addcmd("keepUX", "Keep 'unexpected' running even on rejoin", function
 		unexpected:notify("keepUX", "Usage: keepUX true/false")
 		return
 	end
+	CONFIG.keepUX = getgenv().keepUX
 	UX_config()
 	unexpected:notify("keepUX", "Now set to:", tostring(getgenv().keepUX))
 end, nil, {"true/false"})
