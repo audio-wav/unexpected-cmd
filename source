@@ -593,7 +593,7 @@ end
 unexpected_UI["CLI"]:GetPropertyChangedSignal("Text"):Connect(function()
 	local input = unexpected_UI["CLI"].Text
 	local cmdName = string.match(input, "^%S+") or ""
-	local suggestion = "
+	local suggestion = ""
 	if cmdName ~= "" then
 		local lowerCmd = string.lower(cmdName)
 		local node = trieRoot
