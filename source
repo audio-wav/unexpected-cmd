@@ -1072,6 +1072,16 @@ local arBtnExample = mk("TextButton", nil, {
 	Visible = false,
 })
 
+local function clearARList()
+	for _, btn in ipairs(arButtonCache) do
+		btn.Visible = false
+		btn.Parent = nil
+	end
+	arButtonCache = {}
+	unexpected_UI.ARBTNLIST.CanvasSize = UDim2.new(0,0,0,0)
+end
+
+
 unexpected_UI.ARBACK.MouseButton1Click:Connect(function()
 	fadeOut(MENUFRAMES.autorun)
 	clearARList()
@@ -1088,15 +1098,6 @@ do
 			if my == arToken then showARList(txt) end
 		end)
 	end)
-end
-
-local function clearARList()
-	for _, btn in ipairs(arButtonCache) do
-		btn.Visible = false
-		btn.Parent = nil
-	end
-	arButtonCache = {}
-	unexpected_UI.ARBTNLIST.CanvasSize = UDim2.new(0,0,0,0)
 end
 
 local function showARList(filter)
