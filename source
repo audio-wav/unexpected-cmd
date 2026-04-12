@@ -1681,7 +1681,7 @@ local function UX_unbind(keyName)
 	end
 end
 
-local function makePluginEnv()
+local function mkPLUGINENV()
 	local function getString(idx, args)
 		if not args or #args < idx then return "" end
 		local t = {}
@@ -1767,14 +1767,14 @@ local function makePluginEnv()
 			end)
 			keyBinds[keyName] = { conn = conn, cmd = "[plugin-fn]", toggle = false }
 		end,
-		unkeybind= function(key)
+		unkeybind = function(key)
 			local keyName = (typeof(key) == "EnumItem" and key.Name or tostring(key)):lower()
 			UX_unbind(keyName)
 		end,
-		respawn  = function() LP:LoadCharacter() end,
-		refresh  = function() LP:LoadCharacter() end,
-		r15  = function() return CHAR and CHAR:FindFirstChild("UpperTorso") ~= nil end,
-		tools= function()
+		respawn = function() LP:LoadCharacter() end,
+		refresh = function() LP:LoadCharacter() end,
+		r15 = function() return CHAR and CHAR:FindFirstChild("UpperTorso") ~= nil end,
+		tools = function()
 			local t = {}
 			for _, v in ipairs(LP.Backpack:GetChildren()) do
 				if v:IsA("Tool") then t[#t+1] = v end
@@ -1789,19 +1789,19 @@ local function makePluginEnv()
 		writefileExploit = function(path, content)
 			if writefile then pcall(writefile, path, content) end
 		end,
-		Players   = PLRS,
-		Player= LP,
+		Players = PLRS,
+		Player = LP,
 		Character = CHAR,
-		Humanoid  = HUM,
-		RootPart  = HRP,
-		Camera= CAM,
+		Humanoid = HUM,
+		RootPart = HRP,
+		Camera = CAM,
 		unexpected = unexpected,
 	}
 end
 
 local function loadPlugin(name, source, isIY)
 	if isIY then
-		local ENV = setmetatable(makePluginEnv(), { __index = getfenv() })
+		local ENV = setmetatable(mkPLUGINENV(), { __index = getfenv() })
 		local ok, result = pcall(function()
 			return setfenv(loadstring(source), ENV)()
 		end)
