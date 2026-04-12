@@ -53,24 +53,24 @@ end
 local FQ = {
 	FONTS = {
 		REGULAR = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
-		BOLD= Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal),
-		ITALIC  = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular, Enum.FontStyle.Italic),
+		BOLD = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal),
+		ITALIC = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular, Enum.FontStyle.Italic),
 	},
 	COLORS = {
 		BACKGROUND = Color3.fromRGB(0, 0, 0),
 		STROKE = Color3.fromRGB(50, 50, 50),
-		TEXT_MAIN  = Color3.fromRGB(220, 220, 220),
-		TEXT_DIM   = Color3.fromRGB(120, 120, 120),
+		TEXT_MAIN = Color3.fromRGB(220, 220, 220),
+		TEXT_DIM = Color3.fromRGB(120, 120, 120),
 		ACCENT = Color3.fromRGB(100, 100, 100),
 	},
 	SIZES = {
-		CLI_WIDTH  = 167,
+		CLI_WIDTH = 167,
 		CLI_WIDTH_FULL = 230,
 		CLI_HEIGHT = 54,
 		PILL_HEIGHT= 71,
 	},
 	PADDING = {
-		SMALL  = UDim.new(0, 4),
+		SMALL = UDim.new(0, 4),
 		MEDIUM = UDim.new(0, 8),
 	}
 }
@@ -250,13 +250,13 @@ local function mkMENUBTN(name, text, order)
 	return btn
 end
 
-unexpected_UI.CMDS_BUTTON  = mkMENUBTN("cmdsButton", "commands", 1)
-unexpected_UI.AUTORUNS_BUTTON  = mkMENUBTN("autorunsButton", "autoruns", 2)
-unexpected_UI.EVENTS_BUTTON= mkMENUBTN("eventsButton",   "events",   3)
+unexpected_UI.CMDS_BUTTON = mkMENUBTN("cmdsButton", "commands", 1)
+unexpected_UI.AUTORUNS_BUTTON = mkMENUBTN("autorunsButton", "autoruns", 2)
+unexpected_UI.EVENTS_BUTTON= mkMENUBTN("eventsButton", "events", 3)
 unexpected_UI.BINDS_BUTTON = mkMENUBTN("bindsButton","binds",4)
-unexpected_UI.PLUGINS_BUTTON   = mkMENUBTN("pluginsButton",  "plugins",  5)
-unexpected_UI.DISCORD  = mkMENUBTN("discordButton",  "discord",  6)
-unexpected_UI.SETTINGS_BUTTON  = mkMENUBTN("settingsButton", "settings", 7)
+unexpected_UI.PLUGINS_BUTTON = mkMENUBTN("pluginsButton", "plugins", 5)
+unexpected_UI.DISCORD = mkMENUBTN("discordButton", "discord", 6)
+unexpected_UI.SETTINGS_BUTTON = mkMENUBTN("settingsButton", "settings", 7)
 
 unexpected_UI.DISCORD.MouseButton1Click:Connect(function()
 	setclipboard("https://discord.gg/J73SnGB2y2")
@@ -526,28 +526,51 @@ local loadingBar = mk("Frame", notifUI, {
 	Size = UDim2.new(0.82,0,0,1),
 })
 
+local notifClose = mk("TextButton", notifUI, {
+	Name = "Close",
+	Text = "X",
+	TextColor3 = FQ.COLORS.TEXT_DIM,
+	TextSize = 16,
+	FontFace = FQ.FONTS.REGULAR,
+	BackgroundTransparency = 1,
+	BorderSizePixel = 0,
+	Size = UDim2.new(0, 24, 0, 24),
+	Position = UDim2.new(1, -50, 0.7, 8),
+	ZIndex = 2,
+})
+notifClose:SetAttribute("dimText", true)
+
+local activeBarTween = nil
 local notifPos = notifUI.Position
+
+local function notifFadeOut(then_fn)
+	isNotif = false
+	local fadeOutTween = playTween(notifUI, {
+		BackgroundTransparency = 1,
+		Position = notifPos + UDim2.new(0, 0, 0, 10),
+	}, 0.25)
+	for _, v in ipairs(notifUI:GetDescendants()) do
+		if v:IsA("TextLabel") or v:IsA("TextButton") then
+			playTween(v, { TextTransparency = 1 }, 0.25):Play()
+		end
+	end
+	fadeOutTween:Play()
+	task.delay(0.3, function()
+		notifUI.Visible = false
+		notifUI.Position = notifPos
+		notifUI.BackgroundTransparency = 0
+		for _, v in ipairs(notifUI:GetDescendants()) do
+			if v:IsA("TextLabel") or v:IsA("TextButton") then v.TextTransparency = 0 end
+		end
+		if then_fn then then_fn() end
+	end)
+end
+
 local function notifQueue()
 	notifSeq = notifSeq + 1
 	local mySeq = notifSeq
 	if #notificationQueue == 0 then
-		isNotif = false
-		local fadeOutTween = playTween(notifUI, {
-			BackgroundTransparency = 1,
-			Position = notifPos + UDim2.new(0, 0, 0, 10),
-		}, 0.25)
-		for _, v in ipairs(notifUI:GetDescendants()) do
-			if v:IsA("TextLabel") then playTween(v, { TextTransparency = 1 }, 0.25):Play() end
-		end
-		fadeOutTween:Play()
-		task.delay(0.3, function()
-			notifUI.Visible = false
-			notifUI.Position = notifPos
-			notifUI.BackgroundTransparency = 0
-			for _, v in ipairs(notifUI:GetDescendants()) do
-				if v:IsA("TextLabel") then v.TextTransparency = 0 end
-			end
-		end)
+		notifFadeOut()
 		return
 	end
 	isNotif = true
@@ -560,19 +583,40 @@ local function notifQueue()
 	if total == 1 then
 		notifUI.BackgroundTransparency = 1
 		for _, v in ipairs(notifUI:GetDescendants()) do
-			if v:IsA("TextLabel") then v.TextTransparency = 1 end
+			if v:IsA("TextLabel") or v:IsA("TextButton") then v.TextTransparency = 1 end
 		end
 		playTween(notifUI, { BackgroundTransparency = 0, Position = notifPos }, 0.25):Play()
 		for _, v in ipairs(notifUI:GetDescendants()) do
-			if v:IsA("TextLabel") then playTween(v, { TextTransparency = 0 }, 0.25):Play() end
+			if v:IsA("TextLabel") or v:IsA("TextButton") then playTween(v, { TextTransparency = 0 }, 0.25):Play() end
 		end
 	end
-	local barTween = playTween(loadingBar, { Size = UDim2.new(0, 0, 0, 1) }, 5, Enum.EasingStyle.Linear)
-	barTween:Play()
+	if activeBarTween then activeBarTween:Cancel() end
+	activeBarTween = playTween(loadingBar, { Size = UDim2.new(0, 0, 0, 1) }, 5, Enum.EasingStyle.Linear)
+	activeBarTween:Play()
 	task.delay(5, function()
 		if mySeq == notifSeq then notifQueue() end
 	end)
 end
+
+notifClose.MouseButton1Click:Connect(function()
+	if activeBarTween then activeBarTween:Cancel() activeBarTween = nil end
+	notifSeq = notifSeq + 1
+	if #notificationQueue > 0 then
+		local data = table.remove(notificationQueue, 1)
+		local total = #notificationQueue + 1
+		notiftitle.Text = string.format("%s (%d)", tostring(data.title), total)
+		notiftext.Text = tostring(data.text)
+		loadingBar.Size = UDim2.new(0.82, 0, 0, 1)
+		local mySeq = notifSeq
+		activeBarTween = playTween(loadingBar, { Size = UDim2.new(0, 0, 0, 1) }, 5, Enum.EasingStyle.Linear)
+		activeBarTween:Play()
+		task.delay(5, function()
+			if mySeq == notifSeq then notifQueue() end
+		end)
+	else
+		notifFadeOut()
+	end
+end)
 
 function unexpected:notify(title, ...)
 	local args = {...}
@@ -588,7 +632,6 @@ function unexpected:notify(title, ...)
 		notifQueue()
 	end
 end
-
 unexpected_UI["CLI"]:GetPropertyChangedSignal("Text"):Connect(function()
 	local input = unexpected_UI["CLI"].Text
 	local cmdName, argText = string.match(input, "^(%S+)%s(.*)$")
@@ -785,11 +828,11 @@ MENUFRAME.Size = UDim2.new(0, 339, 0, 0)
 
 local MENUON, HOVERED, shithover = false, false, false
 local MENUFRAMES = {
-	command  = MENUFRAME:WaitForChild("commandFrame"),
-	autorun  = MENUFRAME:WaitForChild("autorunFrame"),
-	event= MENUFRAME:WaitForChild("eventFrame"),
+	command = MENUFRAME:WaitForChild("commandFrame"),
+	autorun = MENUFRAME:WaitForChild("autorunFrame"),
+	event = MENUFRAME:WaitForChild("eventFrame"),
 	bind = MENUFRAME:WaitForChild("bindFrame"),
-	plugin   = MENUFRAME:WaitForChild("pluginFrame"),
+	plugin = MENUFRAME:WaitForChild("pluginFrame"),
 	settings = MENUFRAME:WaitForChild("settingsFrame"),
 }
 local MENUS = {
@@ -880,8 +923,8 @@ end
 local COLOR_KEYS = {
 	{ key = "BACKGROUND", label = "background" },
 	{ key = "STROKE", label = "stroke" },
-	{ key = "TEXT_MAIN",  label = "text main" },
-	{ key = "TEXT_DIM",   label = "text dim" },
+	{ key = "TEXT_MAIN", label = "text main" },
+	{ key = "TEXT_DIM", label = "text dim" },
 	{ key = "ACCENT", label = "accent" },
 }
 
@@ -1869,8 +1912,8 @@ local function loadPlugin(name, source, isIY)
 end
 
 local function LOAD_PLUGIN(NAME)
-	local UX_PATH  = ("%s/%s.ux"):format(PLUGIN_DIR, NAME)
-	local IY_PATH  = ("workspace/%s.iy"):format(NAME)
+	local UX_PATH = ("%s/%s.ux"):format(PLUGIN_DIR, NAME)
+	local IY_PATH = ("workspace/%s.iy"):format(NAME)
 	local IY_PATH2 = ("%s/%s.iy"):format(PLUGIN_DIR, NAME)
 
 	local source, isIY
