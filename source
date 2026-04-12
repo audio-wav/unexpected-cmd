@@ -1,17 +1,14 @@
 if unexpected_LOAD then return end
 pcall(function() getgenv().unexpected_LOAD = true end)
 
-local function missing(t, f, fallback) 
-	return type(f) == t and f or fallback 
+local function missing(t, f, fallback)
+	return type(f) == t and f or fallback
 end
 
---#core
 cloneref = missing("function", cloneref, function(...) return ... end)
 queueteleport = missing("function", queue_on_teleport or (syn and syn.queue_on_teleport) or (fluxus and fluxus.queue_on_teleport))
 uxgetcustomasset = missing("function", getcustomasset or getsynasset)
---#coreEnd
 
---#imports
 COREGUI = cloneref(game:GetService("CoreGui"))
 PLRS = cloneref(game:GetService("Players"))
 UIS = cloneref(game:GetService("UserInputService"))
@@ -25,9 +22,7 @@ WS = cloneref(game:GetService("Workspace"))
 VU = cloneref(game:GetService("VirtualUser"))
 CAM = cloneref(WS.CurrentCamera)
 MOBILE = UIS.TouchEnabled
---#importsEnd
 
---#importFuncs
 local function SETUPCHAR(c)
 	CHAR, HUM, HRP = c, cloneref(c:WaitForChild("Humanoid")), cloneref(c:WaitForChild("HumanoidRootPart"))
 end
@@ -41,89 +36,83 @@ local uxassets = {
 }
 
 if makefolder and isfolder and writefile and isfile then pcall(function()
-    if not isfolder("unexpected_assets") then makefolder("unexpected_assets") end
-    local base = "https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/"
-    for path in pairs(uxassets) do
-        if not isfile(path) then writefile(path, game:HttpGet(base .. path)) end
-    end
-    if MOBILE then writefile("unexpected_assets/.nomedia", "") end
+	if not isfolder("unexpected_assets") then makefolder("unexpected_assets") end
+	local base = "https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/"
+	for path in pairs(uxassets) do
+		if not isfile(path) then writefile(path, game:HttpGet(base .. path)) end
+	end
+	if MOBILE then writefile("unexpected_assets/.nomedia", "") end
 end) end
 
 local function getcustomasset(asset)
-    if not uxgetcustomasset then return uxassets[asset] end
-    local ok, r = pcall(uxgetcustomasset, asset)
-    return (ok and r ~= "" and r) or uxassets[asset]
+	if not uxgetcustomasset then return uxassets[asset] end
+	local ok, r = pcall(uxgetcustomasset, asset)
+	return (ok and r ~= "" and r) or uxassets[asset]
 end
---#importFuncsEnd
 
 local FQ = {
-    FONTS = {
-        REGULAR = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
-        BOLD    = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal),
-        ITALIC  = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular, Enum.FontStyle.Italic),
-   },
-    COLORS = {
-        BACKGROUND = Color3.fromRGB(0, 0, 0),
-        STROKE     = Color3.fromRGB(50, 50, 50),
-        TEXT_MAIN  = Color3.fromRGB(220, 220, 220),
-        TEXT_DIM   = Color3.fromRGB(120, 120, 120),
-        ACCENT     = Color3.fromRGB(100, 100, 100),
-   },
-    SIZES = {
-        CLI_WIDTH      = 167,
-        CLI_WIDTH_FULL = 230,
-        CLI_HEIGHT     = 54,
-        PILL_HEIGHT    = 71,
-   },
-    PADDING = {
-        SMALL  = UDim.new(0, 4),
-        MEDIUM = UDim.new(0, 8),
-   }
+	FONTS = {
+		REGULAR = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
+		BOLD= Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal),
+		ITALIC  = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular, Enum.FontStyle.Italic),
+	},
+	COLORS = {
+		BACKGROUND = Color3.fromRGB(0, 0, 0),
+		STROKE = Color3.fromRGB(50, 50, 50),
+		TEXT_MAIN  = Color3.fromRGB(220, 220, 220),
+		TEXT_DIM   = Color3.fromRGB(120, 120, 120),
+		ACCENT = Color3.fromRGB(100, 100, 100),
+	},
+	SIZES = {
+		CLI_WIDTH  = 167,
+		CLI_WIDTH_FULL = 230,
+		CLI_HEIGHT = 54,
+		PILL_HEIGHT= 71,
+	},
+	PADDING = {
+		SMALL  = UDim.new(0, 4),
+		MEDIUM = UDim.new(0, 8),
+	}
 }
 
 local function mk(class, parent, props)
 	local o = Instance.new(class, parent)
 	if props then
-		for k, v in pairs(props) do
-			o[k] = v
-		end
+		for k, v in pairs(props) do o[k] = v end
 	end
 	return o
 end
 
 local function CREATE_CORNER(PARENT, RADIUS_SCALE, RADIUS_OFFSET)
-    return mk("UICorner", PARENT, {
-        CornerRadius = UDim.new(RADIUS_SCALE or 0, RADIUS_OFFSET or 0)
-   })
+	return mk("UICorner", PARENT, { CornerRadius = UDim.new(RADIUS_SCALE or 0, RADIUS_OFFSET or 0) })
 end
 
 local function CREATE_STROKE(PARENT, COLOR, APPLY_MODE)
-    return mk("UIStroke", PARENT, {
-        Color = COLOR or FQ.COLORS.STROKE,
-        ApplyStrokeMode = APPLY_MODE or Enum.ApplyStrokeMode.Border
-   })
+	return mk("UIStroke", PARENT, {
+		Color = COLOR or FQ.COLORS.STROKE,
+		ApplyStrokeMode = APPLY_MODE or Enum.ApplyStrokeMode.Border
+	})
 end
 
 local function CREATE_ASPECT(PARENT, RATIO)
-    return mk("UIAspectRatioConstraint", PARENT, {
-        AspectRatio = RATIO
-   })
+	return mk("UIAspectRatioConstraint", PARENT, { AspectRatio = RATIO })
 end
 
-local unexpected_UI = {};
-local currentVersion = "v1.1"
+local unexpected_UI = {}
+local currentVersion = "v1.2"
+
 local function randomString(length, charset)
-    length = length or math.random(10, 20)
-    charset = charset or "abcdefghijklmnopqRStuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-    local chars = {}
-    for i = 1, length do
-        local r = math.random(#charset)
-        chars[i] = charset:sub(r, r)
-    end
-    return table.concat(chars)
+	length = length or math.random(10, 20)
+	charset = charset or "abcdefghijklmnopqRStuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	local chars = {}
+	for i = 1, length do
+		local r = math.random(#charset)
+		chars[i] = charset:sub(r, r)
+	end
+	return table.concat(chars)
 end
 
-unexpected_UI.UI = mk("ScreenGui", gethui() or COREGUI, {Name = randomString()})
+unexpected_UI.UI = mk("ScreenGui", gethui() or COREGUI, { Name = randomString() })
 unexpected_UI.PILL = mk("Frame", unexpected_UI.UI, {
 	ZIndex = 0,
 	BorderSizePixel = 0,
@@ -216,7 +205,6 @@ unexpected_UI.LABEL = mk("TextLabel", unexpected_UI.MENUFRAME, {
 	Position = UDim2.new(0.0885,0,0.07471,0),
 })
 
-
 unexpected_UI.MENU_SCROLL = mk("ScrollingFrame", unexpected_UI.MENUFRAME, {
 	Name = "MenuScroll",
 	BackgroundTransparency = 1,
@@ -240,104 +228,35 @@ mk("UIListLayout", unexpected_UI.MENU_SCROLL, {
 
 mk("UIPadding", unexpected_UI.MENU_SCROLL, {
 	PaddingTop = UDim.new(0, 1),
-	PaddingBottom = UDim.new(0,1)
+	PaddingBottom = UDim.new(0, 1)
 })
 
-unexpected_UI.CMDS_BUTTON = mk("TextButton", unexpected_UI.MENU_SCROLL, {
-	BorderSizePixel = 0,
-	TextSize = 18,
-	TextColor3 = FQ.COLORS.TEXT_MAIN,
-	BackgroundColor3 = FQ.COLORS.BACKGROUND,
-	FontFace = FQ.FONTS.REGULAR,
-	Size = UDim2.new(0, 278, 0, 51),
-	BorderColor3 = FQ.COLORS.BACKGROUND,
-	Text = "commands",
-	Name = "cmdsButton",
-	Visible = true,
-	LayoutOrder = 1,
-})
-CREATE_CORNER(unexpected_UI.CMDS_BUTTON, 0.3, 0)
-CREATE_STROKE(unexpected_UI.CMDS_BUTTON, FQ.COLORS.STROKE)
+local function mkMENUBTN(name, text, order)
+	local btn = mk("TextButton", unexpected_UI.MENU_SCROLL, {
+		BorderSizePixel = 0,
+		TextSize = 18,
+		TextColor3 = FQ.COLORS.TEXT_MAIN,
+		BackgroundColor3 = FQ.COLORS.BACKGROUND,
+		FontFace = FQ.FONTS.REGULAR,
+		Size = UDim2.new(0, 278, 0, 51),
+		BorderColor3 = FQ.COLORS.BACKGROUND,
+		Text = text,
+		Name = name,
+		Visible = true,
+		LayoutOrder = order,
+	})
+	CREATE_CORNER(btn, 0.3, 0)
+	CREATE_STROKE(btn, FQ.COLORS.STROKE)
+	return btn
+end
 
-unexpected_UI.AUTORUNS_BUTTON = mk("TextButton", unexpected_UI.MENU_SCROLL, {
-	BorderSizePixel = 0,
-	TextSize = 18,
-	TextColor3 = FQ.COLORS.TEXT_MAIN,
-	BackgroundColor3 = FQ.COLORS.BACKGROUND,
-	FontFace = FQ.FONTS.REGULAR,
-	Size = UDim2.new(0, 278, 0, 51),
-	BorderColor3 = FQ.COLORS.BACKGROUND,
-	Text = "autoruns",
-	Name = "autorunsButton",
-	Visible = true,
-	LayoutOrder = 2,
-})
-CREATE_CORNER(unexpected_UI.AUTORUNS_BUTTON, 0.3, 0)
-CREATE_STROKE(unexpected_UI.AUTORUNS_BUTTON, FQ.COLORS.STROKE)
-
-unexpected_UI.EVENTS_BUTTON = mk("TextButton", unexpected_UI.MENU_SCROLL, {
-	BorderSizePixel = 0,
-	TextSize = 18,
-	TextColor3 = FQ.COLORS.TEXT_MAIN,
-	BackgroundColor3 = FQ.COLORS.BACKGROUND,
-	FontFace = FQ.FONTS.REGULAR,
-	Size = UDim2.new(0, 278, 0, 51),
-	BorderColor3 = FQ.COLORS.BACKGROUND,
-	Text = "events",
-	Name = "eventsButton",
-	Visible = true,
-	LayoutOrder = 3,
-})
-CREATE_CORNER(unexpected_UI.EVENTS_BUTTON, 0.3, 0)
-CREATE_STROKE(unexpected_UI.EVENTS_BUTTON, FQ.COLORS.STROKE)
-
-unexpected_UI.PLUGINS_BUTTON = mk("TextButton", unexpected_UI.MENU_SCROLL, {
-	BorderSizePixel = 0,
-	TextSize = 18,
-	TextColor3 = FQ.COLORS.TEXT_MAIN,
-	BackgroundColor3 = FQ.COLORS.BACKGROUND,
-	FontFace = FQ.FONTS.REGULAR,
-	Size = UDim2.new(0, 278, 0, 51),
-	BorderColor3 = FQ.COLORS.BACKGROUND,
-	Text = "plugins",
-	Name = "pluginsButton",
-	Visible = true,
-	LayoutOrder = 4,
-})
-CREATE_CORNER(unexpected_UI.PLUGINS_BUTTON, 0.3, 0)
-CREATE_STROKE(unexpected_UI.PLUGINS_BUTTON, FQ.COLORS.STROKE)
-
-unexpected_UI.DISCORD = mk("TextButton", unexpected_UI.MENU_SCROLL, {
-	BorderSizePixel = 0,
-	TextSize = 18,
-	TextColor3 = FQ.COLORS.TEXT_MAIN,
-	BackgroundColor3 = FQ.COLORS.BACKGROUND,
-	FontFace = FQ.FONTS.REGULAR,
-	Size = UDim2.new(0, 278, 0, 51),
-	BorderColor3 = FQ.COLORS.BACKGROUND,
-	Text = "discord",
-	Name = "discordButton",
-	Visible = true,
-	LayoutOrder = 5,
-})
-CREATE_CORNER(unexpected_UI.DISCORD, 0.3, 0)
-CREATE_STROKE(unexpected_UI.DISCORD, FQ.COLORS.STROKE)
-
-unexpected_UI.SETTINGS_BUTTON = mk("TextButton", unexpected_UI.MENU_SCROLL, {
-	BorderSizePixel = 0,
-	TextSize = 18,
-	TextColor3 = FQ.COLORS.TEXT_MAIN,
-	BackgroundColor3 = FQ.COLORS.BACKGROUND,
-	FontFace = FQ.FONTS.REGULAR,
-	Size = UDim2.new(0, 278, 0, 51),
-	BorderColor3 = FQ.COLORS.BACKGROUND,
-	Text = "settings",
-	Name = "settingsButton",
-	Visible = true,
-	LayoutOrder = 6,
-})
-CREATE_CORNER(unexpected_UI.SETTINGS_BUTTON, 0.3, 0)
-CREATE_STROKE(unexpected_UI.SETTINGS_BUTTON, FQ.COLORS.STROKE)
+unexpected_UI.CMDS_BUTTON  = mkMENUBTN("cmdsButton", "commands", 1)
+unexpected_UI.AUTORUNS_BUTTON  = mkMENUBTN("autorunsButton", "autoruns", 2)
+unexpected_UI.EVENTS_BUTTON= mkMENUBTN("eventsButton",   "events",   3)
+unexpected_UI.BINDS_BUTTON = mkMENUBTN("bindsButton","binds",4)
+unexpected_UI.PLUGINS_BUTTON   = mkMENUBTN("pluginsButton",  "plugins",  5)
+unexpected_UI.DISCORD  = mkMENUBTN("discordButton",  "discord",  6)
+unexpected_UI.SETTINGS_BUTTON  = mkMENUBTN("settingsButton", "settings", 7)
 
 unexpected_UI.DISCORD.MouseButton1Click:Connect(function()
 	setclipboard("https://discord.gg/J73SnGB2y2")
@@ -345,42 +264,85 @@ unexpected_UI.DISCORD.MouseButton1Click:Connect(function()
 		httprequest({
 			Url = "http://127.0.0.1:6463/rpc?v=1",
 			Method = "POST",
-			Headers = {
-				["Content-Type"] = "application/json",
-				Origin = "https://discord.com"
-			},
+			Headers = { ["Content-Type"] = "application/json", Origin = "https://discord.com" },
 			Body = HS:JSONEncode({
 				cmd = "INVITE_BROWSER",
 				nonce = HS:GenerateGUID(false),
-				args = {code = "J73SnGB2y2"}
+				args = { code = "J73SnGB2y2" }
 			})
 		})
 	end
 end)
 
-unexpected_UI.CMDFRAME = mk("Frame", unexpected_UI.MENUFRAME, {
-	BorderSizePixel = 0,
-	BackgroundColor3 = Color3.fromRGB(255,255,255),
-	Size = UDim2.new(0,339,0,348),
-	BorderColor3 = FQ.COLORS.BACKGROUND,
-	Name = "commandFrame",
-	BackgroundTransparency = 1,
-	Visible = false,
-})
+local function mkTAB(name)
+	local f = mk("Frame", unexpected_UI.MENUFRAME, {
+		BorderSizePixel = 0,
+		BackgroundColor3 = Color3.fromRGB(255,255,255),
+		Size = UDim2.new(0,339,0,348),
+		BorderColor3 = FQ.COLORS.BACKGROUND,
+		Name = name,
+		BackgroundTransparency = 1,
+		Visible = false,
+	})
+	return f
+end
 
-unexpected_UI.BTNLIST = mk("ScrollingFrame", unexpected_UI.CMDFRAME, {
-    Active = true,
-    BorderSizePixel = 0,
-    CanvasSize = UDim2.new(0,0,10,0),
-    BackgroundColor3 = Color3.fromRGB(255,255,255),
-    Name = "buttonList",
-    Size = UDim2.new(0,278,0,210),
-    ScrollBarImageColor3 = FQ.COLORS.ACCENT,
-    Position = UDim2.new(0.0885,0,0.32184,0),
-    BorderColor3 = FQ.COLORS.BACKGROUND,
-    ScrollBarThickness = 1,
-    BackgroundTransparency = 1,
-})
+local function mkTABSCROLL(parent, name)
+	local s = mk("ScrollingFrame", parent, {
+		Active = true,
+		BorderSizePixel = 0,
+		CanvasSize = UDim2.new(0,0,0,0),
+		BackgroundColor3 = Color3.fromRGB(255,255,255),
+		Name = name,
+		Size = UDim2.new(0,278,0,210),
+		ScrollBarImageColor3 = FQ.COLORS.ACCENT,
+		Position = UDim2.new(0.0885,0,0.32184,0),
+		BorderColor3 = FQ.COLORS.BACKGROUND,
+		ScrollBarThickness = 1,
+		BackgroundTransparency = 1,
+	})
+	return s
+end
+
+local function mkTABSEARCH(parent, name, placeholder)
+	return mk("TextBox", parent, {
+		CursorPosition = -1,
+		Name = name,
+		PlaceholderColor3 = FQ.COLORS.TEXT_DIM,
+		BorderSizePixel = 0,
+		TextSize = 18,
+		TextColor3 = FQ.COLORS.TEXT_MAIN,
+		BackgroundColor3 = Color3.fromRGB(255,255,255),
+		FontFace = FQ.FONTS.REGULAR,
+		PlaceholderText = placeholder,
+		Size = UDim2.new(0,278,0,41),
+		Position = UDim2.new(0.0885,0,0.17816,0),
+		BorderColor3 = FQ.COLORS.BACKGROUND,
+		Text = "",
+		BackgroundTransparency = 1,
+	})
+end
+
+local function mkTABBACK(parent, name)
+	local b = mk("ImageButton", parent, {
+		BorderSizePixel = 0,
+		BackgroundTransparency = 1,
+		BackgroundColor3 = Color3.fromRGB(255,255,255),
+		ImageColor3 = FQ.COLORS.ACCENT,
+		Image = getcustomasset("unexpected_assets/back.png"),
+		Size = UDim2.new(0,38,0,30),
+		BorderColor3 = FQ.COLORS.BACKGROUND,
+		Name = name,
+		Position = UDim2.new(0.0885,0,0.82759,0),
+	})
+	CREATE_ASPECT(b)
+	return b
+end
+
+unexpected_UI.CMDFRAME = mkTAB("commandFrame")
+unexpected_UI.BTNLIST = mkTABSCROLL(unexpected_UI.CMDFRAME, "buttonList")
+unexpected_UI.CMDBACK = mkTABBACK(unexpected_UI.CMDFRAME, "commandBack")
+unexpected_UI.SEARCHBAR = mkTABSEARCH(unexpected_UI.CMDFRAME, "searchBar", "search a command")
 
 unexpected_UI.CMDEXAMPLE = mk("TextButton", nil, {
 	BorderSizePixel = 0,
@@ -396,191 +358,27 @@ unexpected_UI.CMDEXAMPLE = mk("TextButton", nil, {
 	Visible = false,
 })
 
-unexpected_UI.CMDBACK = mk("ImageButton", unexpected_UI.CMDFRAME, {
-	BorderSizePixel = 0,
-	BackgroundTransparency = 1,
-	BackgroundColor3 = Color3.fromRGB(255,255,255),
-	ImageColor3 = FQ.COLORS.ACCENT,
-	Image = getcustomasset("unexpected_assets/back.png"),
-	Size = UDim2.new(0,38,0,30),
-	BorderColor3 = FQ.COLORS.BACKGROUND,
-	Name = "commandBack",
-	Position = UDim2.new(0.0885,0,0.82759,0),
-})
-CREATE_ASPECT(unexpected_UI.CMDBACK)
+unexpected_UI.ARFRAME = mkTAB("autorunFrame")
+unexpected_UI.ARBTNLIST = mkTABSCROLL(unexpected_UI.ARFRAME, "autorunList")
+unexpected_UI.ARSEARCHBAR = mkTABSEARCH(unexpected_UI.ARFRAME, "autorunSearch", "search autoruns")
+unexpected_UI.ARBACK = mkTABBACK(unexpected_UI.ARFRAME, "autorunBack")
 
-unexpected_UI.ARFRAME = mk("Frame", unexpected_UI.MENUFRAME, {
-	BorderSizePixel = 0,
-	BackgroundColor3 = Color3.fromRGB(255,255,255),
-	Size = UDim2.new(0,339,0,348),
-	BorderColor3 = FQ.COLORS.BACKGROUND,
-	Name = "autorunFrame",
-	BackgroundTransparency = 1,
-	Visible = false,
-})
+unexpected_UI.EVFRAME = mkTAB("eventFrame")
+unexpected_UI.EVBTNLIST = mkTABSCROLL(unexpected_UI.EVFRAME, "eventList")
+unexpected_UI.EVSEARCHBAR = mkTABSEARCH(unexpected_UI.EVFRAME, "eventSearch", "search events")
+unexpected_UI.EVBACK = mkTABBACK(unexpected_UI.EVFRAME, "eventBack")
 
-unexpected_UI.ARBTNLIST = mk("ScrollingFrame", unexpected_UI.ARFRAME, {
-	Active = true,
-	BorderSizePixel = 0,
-	CanvasSize = UDim2.new(0,0,0,0),
-	BackgroundColor3 = Color3.fromRGB(255,255,255),
-	Name = "autorunList",
-	Size = UDim2.new(0,278,0,210),
-	ScrollBarImageColor3 = FQ.COLORS.ACCENT,
-	Position = UDim2.new(0.0885,0,0.32184,0),
-	BorderColor3 = FQ.COLORS.BACKGROUND,
-	ScrollBarThickness = 1,
-	BackgroundTransparency = 1,
-})
+unexpected_UI.BDFRAME = mkTAB("bindFrame")
+unexpected_UI.BDBTNLIST = mkTABSCROLL(unexpected_UI.BDFRAME, "bindList")
+unexpected_UI.BDSEARCHBAR = mkTABSEARCH(unexpected_UI.BDFRAME, "bindSearch", "search binds")
+unexpected_UI.BDBACK = mkTABBACK(unexpected_UI.BDFRAME, "bindBack")
 
-unexpected_UI.ARSEARCHBAR = mk("TextBox", unexpected_UI.ARFRAME, {
-	CursorPosition = -1,
-	Name = "autorunSearch",
-	PlaceholderColor3 = FQ.COLORS.TEXT_DIM,
-	BorderSizePixel = 0,
-	TextSize = 18,
-	TextColor3 = FQ.COLORS.TEXT_MAIN,
-	BackgroundColor3 = Color3.fromRGB(255,255,255),
-	FontFace = FQ.FONTS.REGULAR,
-	PlaceholderText = "search autoruns",
-	Size = UDim2.new(0,278,0,41),
-	Position = UDim2.new(0.0885,0,0.17816,0),
-	BorderColor3 = FQ.COLORS.BACKGROUND,
-	Text = "",
-	BackgroundTransparency = 1,
-})
+unexpected_UI.PLFRAME = mkTAB("pluginFrame")
+unexpected_UI.PLBTNLIST = mkTABSCROLL(unexpected_UI.PLFRAME, "pluginList")
+unexpected_UI.PLSEARCHBAR = mkTABSEARCH(unexpected_UI.PLFRAME, "pluginSearch", "search plugins")
+unexpected_UI.PLBACK = mkTABBACK(unexpected_UI.PLFRAME, "pluginBack")
 
-unexpected_UI.ARBACK = mk("ImageButton", unexpected_UI.ARFRAME, {
-	BorderSizePixel = 0,
-	BackgroundTransparency = 1,
-	BackgroundColor3 = Color3.fromRGB(255,255,255),
-	ImageColor3 = FQ.COLORS.ACCENT,
-	Image = getcustomasset("unexpected_assets/back.png"),
-	Size = UDim2.new(0,38,0,30),
-	BorderColor3 = FQ.COLORS.BACKGROUND,
-	Name = "autorunBack",
-	Position = UDim2.new(0.0885,0,0.82759,0),
-})
-CREATE_ASPECT(unexpected_UI.ARBACK)
-
-unexpected_UI.EVFRAME = mk("Frame", unexpected_UI.MENUFRAME, {
-	BorderSizePixel = 0,
-	BackgroundColor3 = Color3.fromRGB(255,255,255),
-	Size = UDim2.new(0,339,0,348),
-	BorderColor3 = FQ.COLORS.BACKGROUND,
-	Name = "eventFrame",
-	BackgroundTransparency = 1,
-	Visible = false,
-})
-
-unexpected_UI.EVBTNLIST = mk("ScrollingFrame", unexpected_UI.EVFRAME, {
-	Active = true,
-	BorderSizePixel = 0,
-	CanvasSize = UDim2.new(0,0,0,0),
-	BackgroundColor3 = Color3.fromRGB(255,255,255),
-	Name = "eventList",
-	Size = UDim2.new(0,278,0,210),
-	ScrollBarImageColor3 = FQ.COLORS.ACCENT,
-	Position = UDim2.new(0.0885,0,0.32184,0),
-	BorderColor3 = FQ.COLORS.BACKGROUND,
-	ScrollBarThickness = 1,
-	BackgroundTransparency = 1,
-})
-
-unexpected_UI.EVSEARCHBAR = mk("TextBox", unexpected_UI.EVFRAME, {
-	CursorPosition = -1,
-	Name = "eventSearch",
-	PlaceholderColor3 = FQ.COLORS.TEXT_DIM,
-	BorderSizePixel = 0,
-	TextSize = 18,
-	TextColor3 = FQ.COLORS.TEXT_MAIN,
-	BackgroundColor3 = Color3.fromRGB(255,255,255),
-	FontFace = FQ.FONTS.REGULAR,
-	PlaceholderText = "search events",
-	Size = UDim2.new(0,278,0,41),
-	Position = UDim2.new(0.0885,0,0.17816,0),
-	BorderColor3 = FQ.COLORS.BACKGROUND,
-	Text = "",
-	BackgroundTransparency = 1,
-})
-
-unexpected_UI.EVBACK = mk("ImageButton", unexpected_UI.EVFRAME, {
-	BorderSizePixel = 0,
-	BackgroundTransparency = 1,
-	BackgroundColor3 = Color3.fromRGB(255,255,255),
-	ImageColor3 = FQ.COLORS.ACCENT,
-	Image = getcustomasset("unexpected_assets/back.png"),
-	Size = UDim2.new(0,38,0,30),
-	BorderColor3 = FQ.COLORS.BACKGROUND,
-	Name = "eventBack",
-	Position = UDim2.new(0.0885,0,0.82759,0),
-})
-CREATE_ASPECT(unexpected_UI.EVBACK)
-
-unexpected_UI.PLFRAME = mk("Frame", unexpected_UI.MENUFRAME, {
-	BorderSizePixel = 0,
-	BackgroundColor3 = Color3.fromRGB(255,255,255),
-	Size = UDim2.new(0,339,0,348),
-	BorderColor3 = FQ.COLORS.BACKGROUND,
-	Name = "pluginFrame",
-	BackgroundTransparency = 1,
-	Visible = false,
-})
-
-unexpected_UI.PLBTNLIST = mk("ScrollingFrame", unexpected_UI.PLFRAME, {
-	Active = true,
-	BorderSizePixel = 0,
-	CanvasSize = UDim2.new(0,0,0,0),
-	BackgroundColor3 = Color3.fromRGB(255,255,255),
-	Name = "pluginList",
-	Size = UDim2.new(0,278,0,210),
-	ScrollBarImageColor3 = FQ.COLORS.ACCENT,
-	Position = UDim2.new(0.0885,0,0.32184,0),
-	BorderColor3 = FQ.COLORS.BACKGROUND,
-	ScrollBarThickness = 1,
-	BackgroundTransparency = 1,
-})
-
-unexpected_UI.PLSEARCHBAR = mk("TextBox", unexpected_UI.PLFRAME, {
-	CursorPosition = -1,
-	Name = "pluginSearch",
-	PlaceholderColor3 = FQ.COLORS.TEXT_DIM,
-	BorderSizePixel = 0,
-	TextSize = 18,
-	TextColor3 = FQ.COLORS.TEXT_MAIN,
-	BackgroundColor3 = Color3.fromRGB(255,255,255),
-	FontFace = FQ.FONTS.REGULAR,
-	PlaceholderText = "search plugins",
-	Size = UDim2.new(0,278,0,41),
-	Position = UDim2.new(0.0885,0,0.17816,0),
-	BorderColor3 = FQ.COLORS.BACKGROUND,
-	Text = "",
-	BackgroundTransparency = 1,
-})
-
-unexpected_UI.PLBACK = mk("ImageButton", unexpected_UI.PLFRAME, {
-	BorderSizePixel = 0,
-	BackgroundTransparency = 1,
-	BackgroundColor3 = Color3.fromRGB(255,255,255),
-	ImageColor3 = FQ.COLORS.ACCENT,
-	Image = getcustomasset("unexpected_assets/back.png"),
-	Size = UDim2.new(0,38,0,30),
-	BorderColor3 = FQ.COLORS.BACKGROUND,
-	Name = "pluginBack",
-	Position = UDim2.new(0.0885,0,0.82759,0),
-})
-CREATE_ASPECT(unexpected_UI.PLBACK)
-
-unexpected_UI.STFRAME = mk("Frame", unexpected_UI.MENUFRAME, {
-	BorderSizePixel = 0,
-	BackgroundColor3 = Color3.fromRGB(255,255,255),
-	Size = UDim2.new(0,339,0,348),
-	BorderColor3 = FQ.COLORS.BACKGROUND,
-	Name = "settingsFrame",
-	BackgroundTransparency = 1,
-	Visible = false,
-})
-
+unexpected_UI.STFRAME = mkTAB("settingsFrame")
 unexpected_UI.STSCROLL = mk("ScrollingFrame", unexpected_UI.STFRAME, {
 	Name = "settingsScroll",
 	BackgroundTransparency = 1,
@@ -593,7 +391,6 @@ unexpected_UI.STSCROLL = mk("ScrollingFrame", unexpected_UI.STFRAME, {
 	ScrollBarImageColor3 = FQ.COLORS.ACCENT,
 	ClipsDescendants = true,
 })
-
 mk("UIListLayout", unexpected_UI.STSCROLL, {
 	SortOrder = Enum.SortOrder.LayoutOrder,
 	Padding = UDim.new(0, 6),
@@ -601,24 +398,8 @@ mk("UIListLayout", unexpected_UI.STSCROLL, {
 	HorizontalAlignment = Enum.HorizontalAlignment.Center,
 	VerticalAlignment = Enum.VerticalAlignment.Top,
 })
-
-mk("UIPadding", unexpected_UI.STSCROLL, {
-	PaddingTop = UDim.new(0, 1),
-	PaddingBottom = UDim.new(0, 1)
-})
-
-unexpected_UI.STBACK = mk("ImageButton", unexpected_UI.STFRAME, {
-	BorderSizePixel = 0,
-	BackgroundTransparency = 1,
-	BackgroundColor3 = Color3.fromRGB(255,255,255),
-	ImageColor3 = FQ.COLORS.ACCENT,
-	Image = getcustomasset("unexpected_assets/back.png"),
-	Size = UDim2.new(0,38,0,30),
-	BorderColor3 = FQ.COLORS.BACKGROUND,
-	Name = "settingsBack",
-	Position = UDim2.new(0.0885,0,0.82759,0),
-})
-CREATE_ASPECT(unexpected_UI.STBACK)
+mk("UIPadding", unexpected_UI.STSCROLL, { PaddingTop = UDim.new(0,1), PaddingBottom = UDim.new(0,1) })
+unexpected_UI.STBACK = mkTABBACK(unexpected_UI.STFRAME, "settingsBack")
 
 local unexpected = {}
 local commandListData = {}
@@ -628,16 +409,16 @@ local _sharedTooltip = nil
 local _sharedTooltipToken = 0
 local _sharedTooltipConn = nil
 local _btnPool = {}
-local _btnMeta = setmetatable({}, {__mode = "k"})
+local _btnMeta = setmetatable({}, { __mode = "k" })
 
-local trieRoot = {children = {}, entries = {}}
+local trieRoot = { children = {}, entries = {} }
 local function trieInsert(key, entry)
 	local node = trieRoot
 	for i = 1, #key do
 		local c = key:sub(i, i)
-		if not node.children[c] then node.children[c] = {children = {}, entries = {}} end
+		if not node.children[c] then node.children[c] = { children = {}, entries = {} } end
 		node = node.children[c]
-		table.insert(node.entries, {key = key, entry = entry})
+		table.insert(node.entries, { key = key, entry = entry })
 	end
 end
 
@@ -654,25 +435,19 @@ function unexpected:addcmd(name, desc, func, aliases, usageArgs)
 		UsageArgs = usageArgs,
 		DisplayName = displayName,
 	}
-
 	entry._lowerOriginal = string.lower(actualName)
 	entry._lowerAliases = {}
 	for _, alias in ipairs(aliases) do table.insert(entry._lowerAliases, string.lower(alias)) end
-
 	commandListData[entry._lowerOriginal] = entry
 	for _, l in ipairs(entry._lowerAliases) do commandListData[l] = entry end
-
 	trieInsert(entry._lowerOriginal, entry)
 	for _, l in ipairs(entry._lowerAliases) do trieInsert(l, entry) end
-
 	table.insert(commandListArray, entry)
 end
 
 function execmd(cmdName, ...)
 	local cmd = commandListData[string.lower(cmdName)]
-	if cmd then
-		cmd.Execute(...)
-	end
+	if cmd then cmd.Execute(...) end
 end
 
 local function clearcmdList()
@@ -687,7 +462,7 @@ local function clearcmdList()
 	if _sharedTooltip then _sharedTooltip.Visible = false end
 end
 
-local _fadeTargets = setmetatable({}, {__mode = "k"})
+local _fadeTargets = setmetatable({}, { __mode = "k" })
 local function getfadeTargets(frame)
 	local t = _fadeTargets[frame]
 	if t then return t end
@@ -704,7 +479,7 @@ end
 local function playTween(obj, props, time, style)
 	return TS:Create(obj, TweenInfo.new(time or 0.2, style or Enum.EasingStyle.Sine), props)
 end
---#notification
+
 local notificationQueue = {}
 local isNotif = false
 local notifSeq = 0
@@ -761,27 +536,20 @@ local function notifQueue()
 			BackgroundTransparency = 1,
 			Position = notifPos + UDim2.new(0, 0, 0, 10),
 		}, 0.25)
-
 		for _, v in ipairs(notifUI:GetDescendants()) do
-			if v:IsA("TextLabel") then
-				playTween(v, {TextTransparency = 1}, 0.25):Play()
-			end
+			if v:IsA("TextLabel") then playTween(v, { TextTransparency = 1 }, 0.25):Play() end
 		end
-
 		fadeOutTween:Play()
 		task.delay(0.3, function()
 			notifUI.Visible = false
 			notifUI.Position = notifPos
 			notifUI.BackgroundTransparency = 0
 			for _, v in ipairs(notifUI:GetDescendants()) do
-				if v:IsA("TextLabel") then
-					v.TextTransparency = 0
-				end
+				if v:IsA("TextLabel") then v.TextTransparency = 0 end
 			end
 		end)
 		return
 	end
-
 	isNotif = true
 	local data = table.remove(notificationQueue, 1)
 	local total = #notificationQueue + 1
@@ -792,30 +560,17 @@ local function notifQueue()
 	if total == 1 then
 		notifUI.BackgroundTransparency = 1
 		for _, v in ipairs(notifUI:GetDescendants()) do
-			if v:IsA("TextLabel") then
-				v.TextTransparency = 1
-			end
+			if v:IsA("TextLabel") then v.TextTransparency = 1 end
 		end
-
-		playTween(notifUI, {
-			BackgroundTransparency = 0,
-			Position = notifPos,
-		}, 0.25):Play()
-
+		playTween(notifUI, { BackgroundTransparency = 0, Position = notifPos }, 0.25):Play()
 		for _, v in ipairs(notifUI:GetDescendants()) do
-			if v:IsA("TextLabel") then
-				playTween(v, {TextTransparency = 0}, 0.25):Play()
-			end
+			if v:IsA("TextLabel") then playTween(v, { TextTransparency = 0 }, 0.25):Play() end
 		end
 	end
-
-	local barTween = playTween(loadingBar, {Size = UDim2.new(0, 0, 0, 1)}, 5, Enum.EasingStyle.Linear)
+	local barTween = playTween(loadingBar, { Size = UDim2.new(0, 0, 0, 1) }, 5, Enum.EasingStyle.Linear)
 	barTween:Play()
-
 	task.delay(5, function()
-		if mySeq == notifSeq then
-			notifQueue()
-		end
+		if mySeq == notifSeq then notifQueue() end
 	end)
 end
 
@@ -826,7 +581,6 @@ function unexpected:notify(title, ...)
 		title = tostring(title or "Notification"),
 		text = text
 	})
-
 	if isNotif then
 		local currentTitle = string.match(notiftitle.Text, "^(.-) %(%d+%)$") or notiftitle.Text
 		notiftitle.Text = string.format("%s (%d)", currentTitle, #notificationQueue + 1)
@@ -835,7 +589,6 @@ function unexpected:notify(title, ...)
 	end
 end
 
---#inputs
 unexpected_UI["CLI"]:GetPropertyChangedSignal("Text"):Connect(function()
 	local input = unexpected_UI["CLI"].Text
 	local cmdName, argText = string.match(input, "^(%S+)%s(.*)$")
@@ -882,7 +635,6 @@ unexpected_UI["CLI"]:GetPropertyChangedSignal("Text"):Connect(function()
 			end
 		end
 	end
-
 	unexpected_UI["PREDICTOR"].Text = suggestion
 end)
 
@@ -891,16 +643,12 @@ unexpected_UI["CLI"].FocusLost:Connect(function(enterPressed)
 		local inputText = unexpected_UI["CLI"].Text
 		local cmdName, argsText = string.match(inputText, "^(%S+)%s*(.*)$")
 		if not cmdName then return end
-
 		local cmd = commandListData[string.lower(cmdName)]
 		if cmd then
 			local args = {}
-			for arg in string.gmatch(argsText, "%S+") do
-				table.insert(args, arg)
-			end
+			for arg in string.gmatch(argsText, "%S+") do table.insert(args, arg) end
 			cmd.Execute(table.unpack(args))
 		end
-
 		unexpected_UI["CLI"].Text = ""
 		unexpected_UI["PREDICTOR"].Text = ""
 	end
@@ -908,48 +656,27 @@ end)
 
 local suppress = false
 unexpected_UI["CLI"]:GetPropertyChangedSignal("Text"):Connect(function()
-    if suppress then return end
-    if unexpected_UI["CLI"].Text:find("	") then
-        suppress = true
-        local suggestion = unexpected_UI["PREDICTOR"].Text
-        if suggestion ~= "" then
-            unexpected_UI["CLI"].Text = suggestion
-            unexpected_UI["PREDICTOR"].Text = ""
-        else
+	if suppress then return end
+	if unexpected_UI["CLI"].Text:find("	") then
+		suppress = true
+		local suggestion = unexpected_UI["PREDICTOR"].Text
+		if suggestion ~= "" then
+			unexpected_UI["CLI"].Text = suggestion
+			unexpected_UI["PREDICTOR"].Text = ""
+		else
 			unexpected_UI["CLI"].Text = unexpected_UI["CLI"].Text:gsub("	", "")
-        end
-        unexpected_UI["CLI"].CursorPosition = #unexpected_UI["CLI"].Text + 1
-        suppress = false
-    end
+		end
+		unexpected_UI["CLI"].CursorPosition = #unexpected_UI["CLI"].Text + 1
+		suppress = false
+	end
 end)
---#inputsEnd
-
---#search
-unexpected_UI.SEARCHBAR = mk("TextBox", unexpected_UI.CMDFRAME, {
-	CursorPosition = -1,
-	Name = "searchBar",
-	PlaceholderColor3 = FQ.COLORS.TEXT_DIM,
-	BorderSizePixel = 0,
-	TextSize = 18,
-	TextColor3 = FQ.COLORS.TEXT_MAIN,
-	BackgroundColor3 = Color3.fromRGB(255,255,255),
-	FontFace = FQ.FONTS.REGULAR,
-	PlaceholderText = "search a command",
-	Size = UDim2.new(0,278,0,41),
-	Position = UDim2.new(0.0885,0,0.17816,0),
-	BorderColor3 = FQ.COLORS.BACKGROUND,
-	Text = "",
-	BackgroundTransparency = 1,
-})
 
 local function updateList(filter)
 	filter = string.lower(filter or "")
 	local all, filtered = {}, {}
-
 	for _, c in ipairs(unexpected_UI["BTNLIST"]:GetChildren()) do
 		if c:IsA("TextButton") then table.insert(all, c) end
 	end
-
 	if filter == "" then
 		for i, btn in ipairs(all) do
 			btn.Visible = true
@@ -957,13 +684,11 @@ local function updateList(filter)
 		end
 		return
 	end
-
 	local node = trieRoot
 	for i = 1, #filter do
 		node = node.children and node.children[filter:sub(i, i)] or nil
 		if not node then break end
 	end
-
 	if node and node.entries then
 		for _, rec in ipairs(node.entries) do
 			for _, btn in ipairs(all) do
@@ -974,13 +699,11 @@ local function updateList(filter)
 			end
 		end
 	end
-
 	table.sort(filtered, function(a, b) return a.Text < b.Text end)
 	for i, btn in ipairs(filtered) do
 		btn.Position = UDim2.new(0, 0, 0, (i - 1) * 32)
 		btn.Visible = true
 	end
-
 	for _, btn in ipairs(all) do
 		btn.Visible = table.find(filtered, btn) ~= nil
 	end
@@ -997,54 +720,45 @@ do
 		end)
 	end)
 end
---#searchEnd
 
---#utils
 local configFile = "unexpected_config.json"
 local defaultConfig = {
-    keepUX = true,
-    Plugins = {},
-    Autoruns = {},
-    Events = {},
-    Colors = {}
+	keepUX = true,
+	Plugins = {},
+	Autoruns = {},
+	Events = {},
+	Binds = {},
+	Colors = {}
 }
 
 CONFIG = CONFIG or {}
 local function lc()
-    local config = {}
-    if isfile(configFile) then
-        local success, content = pcall(readfile, configFile)
-        if success and content then
-            local ok, parsed = pcall(function()
-                return HS:JSONDecode(content)
-            end)
-            if ok and typeof(parsed) == "table" then
-                config = parsed
-            end
-        end
-    end
-    for key, default in pairs(defaultConfig) do
-        if config[key] == nil then
-            config[key] = default
-        end
-        getgenv()[key] = config[key]
-    end
-    CONFIG = config
-    return config
+	local config = {}
+	if isfile(configFile) then
+		local success, content = pcall(readfile, configFile)
+		if success and content then
+			local ok, parsed = pcall(function() return HS:JSONDecode(content) end)
+			if ok and typeof(parsed) == "table" then config = parsed end
+		end
+	end
+	for key, default in pairs(defaultConfig) do
+		if config[key] == nil then config[key] = default end
+		getgenv()[key] = config[key]
+	end
+	CONFIG = config
+	return config
 end
 
 function UX_rconfig()
-    CONFIG = lc()
-    pcall(writefile, configFile, HS:JSONEncode(CONFIG))
+	CONFIG = lc()
+	pcall(writefile, configFile, HS:JSONEncode(CONFIG))
 end
 
 function UX_config()
-    if not CONFIG then CONFIG = lc() end
-    pcall(writefile, configFile, HS:JSONEncode(CONFIG))
+	if not CONFIG then CONFIG = lc() end
+	pcall(writefile, configFile, HS:JSONEncode(CONFIG))
 end
---#utilsEnd
 
---#imports
 local MENU = unexpected_UI["PILL"]:FindFirstChild("Menu")
 local CLI = unexpected_UI["PILL"]:FindFirstChild("CLI")
 local MENUFRAME = unexpected_UI["PILL"]:WaitForChild("MenuFrame")
@@ -1061,22 +775,21 @@ local indicator = mk("ImageButton", unexpected_UI.PILL.Parent, {
 	BorderSizePixel = 0,
 })
 CREATE_CORNER(indicator, 1, 0)
---#importsEnd
 
---#initiliaze
 unexpected_UI["PILL"].AnchorPoint = Vector2.new(0.5, 0.5)
 unexpected_UI["PILL"].Position = UDim2.new(0.5, 0, 1, -150)
 unexpected_UI["PILL"].Visible = false
 MENUFRAME.AnchorPoint = Vector2.new(0.5, 1)
 MENUFRAME.Position = UDim2.new(0.5, 0, 1, -80)
 MENUFRAME.Size = UDim2.new(0, 339, 0, 0)
---#initializeEnd
+
 local MENUON, HOVERED, shithover = false, false, false
 local MENUFRAMES = {
-	command = MENUFRAME:WaitForChild("commandFrame"),
-	autorun = MENUFRAME:WaitForChild("autorunFrame"),
-	event = MENUFRAME:WaitForChild("eventFrame"),
-	plugin = MENUFRAME:WaitForChild("pluginFrame"),
+	command  = MENUFRAME:WaitForChild("commandFrame"),
+	autorun  = MENUFRAME:WaitForChild("autorunFrame"),
+	event= MENUFRAME:WaitForChild("eventFrame"),
+	bind = MENUFRAME:WaitForChild("bindFrame"),
+	plugin   = MENUFRAME:WaitForChild("pluginFrame"),
 	settings = MENUFRAME:WaitForChild("settingsFrame"),
 }
 local MENUS = {
@@ -1084,13 +797,14 @@ local MENUS = {
 	unexpected_UI.MENU_SCROLL:WaitForChild("discordButton"),
 	unexpected_UI.MENU_SCROLL:WaitForChild("autorunsButton"),
 	unexpected_UI.MENU_SCROLL:WaitForChild("eventsButton"),
+	unexpected_UI.MENU_SCROLL:WaitForChild("bindsButton"),
 	unexpected_UI.MENU_SCROLL:WaitForChild("pluginsButton"),
 	unexpected_UI.MENU_SCROLL:WaitForChild("settingsButton"),
 }
---#fadesHandler
+
 local function buttonTP(button, target)
 	local prop = button:IsA("ImageButton") and "ImageTransparency" or "TextTransparency"
-	playTween(button, {[prop] = target}, 0.2, Enum.EasingStyle.Sine):Play()
+	playTween(button, { [prop] = target }, 0.2, Enum.EasingStyle.Sine):Play()
 end
 
 local function fadeIn(frame)
@@ -1099,10 +813,10 @@ local function fadeIn(frame)
 	for _, c in ipairs(targets) do
 		if c:IsA("TextLabel") or c:IsA("TextButton") or c:IsA("TextBox") then
 			c.TextTransparency = 1
-			playTween(c, {TextTransparency = 0}):Play()
+			playTween(c, { TextTransparency = 0 }):Play()
 		elseif c:IsA("ImageLabel") or c:IsA("ImageButton") then
 			c.ImageTransparency = 1
-			playTween(c, {ImageTransparency = 0}):Play()
+			playTween(c, { ImageTransparency = 0 }):Play()
 		end
 	end
 end
@@ -1111,9 +825,9 @@ local function fadeOut(frame)
 	local targets = getfadeTargets(frame)
 	for _, c in ipairs(targets) do
 		if c:IsA("TextLabel") or c:IsA("TextButton") or c:IsA("TextBox") then
-			playTween(c, {TextTransparency = 1}):Play()
+			playTween(c, { TextTransparency = 1 }):Play()
 		elseif c:IsA("ImageLabel") or c:IsA("ImageButton") then
-			playTween(c, {ImageTransparency = 1}):Play()
+			playTween(c, { ImageTransparency = 1 }):Play()
 		end
 	end
 	task.delay(0.2, function() frame.Visible = false end)
@@ -1121,9 +835,7 @@ end
 
 local function openMenuFrame(frame, onOpen)
 	for name, f in pairs(MENUFRAMES) do
-		if f.Visible and f ~= frame then
-			fadeOut(f)
-		end
+		if f.Visible and f ~= frame then fadeOut(f) end
 	end
 	for _, b in ipairs(MENUS) do b.Visible = false end
 	task.delay(0.2, function()
@@ -1140,7 +852,6 @@ UIS.InputChanged:Connect(function(input)
 	end
 end)
 
---#lovetween
 local function SHS(hovered)
 	if MOBILE then
 		HOVERED = true
@@ -1151,27 +862,27 @@ local function SHS(hovered)
 	end
 	if MENUON and hovered then
 		HOVERED = true
-		playTween(unexpected_UI["PILL"], {Size = UDim2.new(0, 339, 0, 71)}, 0.25, Enum.EasingStyle.Quint):Play()
+		playTween(unexpected_UI["PILL"], { Size = UDim2.new(0, 339, 0, 71) }, 0.25, Enum.EasingStyle.Quint):Play()
 		local NS = UDim2.new(0, 230, 0, 54)
-		playTween(CLI, {Size = NS}, 0.25, Enum.EasingStyle.Quint):Play()
-		playTween(unexpected_UI["PREDICTOR"], {Size = NS}, 0.25, Enum.EasingStyle.Quint):Play()
+		playTween(CLI, { Size = NS }, 0.25, Enum.EasingStyle.Quint):Play()
+		playTween(unexpected_UI["PREDICTOR"], { Size = NS }, 0.25, Enum.EasingStyle.Quint):Play()
 		buttonTP(MENU, 0)
 		return
 	end
 	HOVERED = hovered
 	local gSize = hovered and 339 or 218
 	local cSize = hovered and 230 or 167
-	playTween(unexpected_UI["PILL"], {Size = UDim2.new(0, gSize, 0, 71)}, 0.25, Enum.EasingStyle.Quint):Play()
-	playTween(CLI, {Size = UDim2.new(0, cSize, 0, 54)}, 0.25, Enum.EasingStyle.Quint):Play()
+	playTween(unexpected_UI["PILL"], { Size = UDim2.new(0, gSize, 0, 71) }, 0.25, Enum.EasingStyle.Quint):Play()
+	playTween(CLI, { Size = UDim2.new(0, cSize, 0, 54) }, 0.25, Enum.EasingStyle.Quint):Play()
 	buttonTP(MENU, hovered and 0 or 1)
 end
 
 local COLOR_KEYS = {
-	{key = "BACKGROUND", label = "background"},
-	{key = "STROKE",     label = "stroke"},
-	{key = "TEXT_MAIN",  label = "text main"},
-	{key = "TEXT_DIM",   label = "text dim"},
-	{key = "ACCENT",     label = "accent"},
+	{ key = "BACKGROUND", label = "background" },
+	{ key = "STROKE", label = "stroke" },
+	{ key = "TEXT_MAIN",  label = "text main" },
+	{ key = "TEXT_DIM",   label = "text dim" },
+	{ key = "ACCENT", label = "accent" },
 }
 
 local function applyColors()
@@ -1183,7 +894,6 @@ local function applyColors()
 			if s:IsA("UIStroke") then s.Color = stroke end
 		end
 	end
-
 	for _, obj in ipairs(unexpected_UI.UI:GetDescendants()) do
 		if obj:IsA("UIStroke") then obj.Color = stroke
 		elseif obj:IsA("ScrollingFrame") then obj.ScrollBarImageColor3 = accent
@@ -1200,7 +910,6 @@ local function applyColors()
 			obj.BackgroundColor3 = bg
 		end
 	end
-
 	unexpected_UI.PREDICTOR.TextColor3 = textDim
 	loadingBar.BackgroundColor3 = accent
 end
@@ -1210,35 +919,29 @@ local function rgbRows()
 		if not c:IsA("UIListLayout") and not c:IsA("UIPadding") then c:Destroy() end
 	end
 	for _, def in ipairs(COLOR_KEYS) do
-		local row = mk("Frame", unexpected_UI.STSCROLL, {Size=UDim2.new(0,278,0,40), BackgroundTransparency=1, BorderSizePixel=0})
-		mk("TextLabel", row, {Size=UDim2.new(0,140,1,0), BackgroundTransparency=1, Text=def.label, TextColor3=FQ.COLORS.TEXT_MAIN, TextSize=16, FontFace=FQ.FONTS.REGULAR, TextXAlignment=Enum.TextXAlignment.Left, BorderSizePixel=0})
-
-		local preview = mk("TextButton", row, {Size=UDim2.new(0,120,0,30), Position=UDim2.new(1,-120,0.5,-15), BackgroundColor3=FQ.COLORS[def.key], Text="", BorderSizePixel=0})
+		local row = mk("Frame", unexpected_UI.STSCROLL, { Size = UDim2.new(0,278,0,40), BackgroundTransparency = 1, BorderSizePixel = 0 })
+		mk("TextLabel", row, { Size = UDim2.new(0,140,1,0), BackgroundTransparency = 1, Text = def.label, TextColor3 = FQ.COLORS.TEXT_MAIN, TextSize = 16, FontFace = FQ.FONTS.REGULAR, TextXAlignment = Enum.TextXAlignment.Left, BorderSizePixel = 0 })
+		local preview = mk("TextButton", row, { Size = UDim2.new(0,120,0,30), Position = UDim2.new(1,-120,0.5,-15), BackgroundColor3 = FQ.COLORS[def.key], Text = "", BorderSizePixel = 0 })
 		CREATE_CORNER(preview, 0.15, 0)
 		CREATE_STROKE(preview, FQ.COLORS.STROKE)
 		preview:SetAttribute("colorKey", def.key)
-
-		local inputRow = mk("Frame", unexpected_UI.STSCROLL, {Size=UDim2.new(0,278,0,0), BackgroundTransparency=1, BorderSizePixel=0, ClipsDescendants=true})
+		local inputRow = mk("Frame", unexpected_UI.STSCROLL, { Size = UDim2.new(0,278,0,0), BackgroundTransparency = 1, BorderSizePixel = 0, ClipsDescendants = true })
 		local expanded = false
-
 		local function mkCR(label, x)
-			local b = mk("TextBox", inputRow, {Size=UDim2.new(0,78,0,30), Position=UDim2.new(0,x,0,4), BackgroundColor3=FQ.COLORS.BACKGROUND, TextColor3=FQ.COLORS.TEXT_MAIN, PlaceholderColor3=FQ.COLORS.TEXT_DIM, PlaceholderText=label, Text="", TextSize=14, FontFace=FQ.FONTS.REGULAR, BorderSizePixel=0, ClearTextOnFocus=false})
+			local b = mk("TextBox", inputRow, { Size = UDim2.new(0,78,0,30), Position = UDim2.new(0,x,0,4), BackgroundColor3 = FQ.COLORS.BACKGROUND, TextColor3 = FQ.COLORS.TEXT_MAIN, PlaceholderColor3 = FQ.COLORS.TEXT_DIM, PlaceholderText = label, Text = "", TextSize = 14, FontFace = FQ.FONTS.REGULAR, BorderSizePixel = 0, ClearTextOnFocus = false })
 			CREATE_CORNER(b, 0.1, 0) CREATE_STROKE(b, FQ.COLORS.STROKE) return b
 		end
-
 		local rBox = mkCR("R", 5)
 		local gBox = mkCR("G", 98)
 		local bBox = mkCR("B", 191)
-
 		local function commit()
 			local r, g, b = math.clamp(tonumber(rBox.Text) or 0, 0, 255), math.clamp(tonumber(gBox.Text) or 0, 0, 255), math.clamp(tonumber(bBox.Text) or 0, 0, 255)
 			FQ.COLORS[def.key] = Color3.fromRGB(r, g, b)
 			applyColors()
 			preview.BackgroundColor3 = FQ.COLORS[def.key]
-			CONFIG.Colors[def.key] = {r=r, g=g, b=b}
+			CONFIG.Colors[def.key] = { r = r, g = g, b = b }
 			UX_config()
 		end
-
 		rBox.FocusLost:Connect(commit)
 		gBox.FocusLost:Connect(commit)
 		bBox.FocusLost:Connect(commit)
@@ -1248,7 +951,7 @@ local function rgbRows()
 				local c = FQ.COLORS[def.key]
 				rBox.Text, gBox.Text, bBox.Text = tostring(math.floor(c.R*255)), tostring(math.floor(c.G*255)), tostring(math.floor(c.B*255))
 			end
-			playTween(inputRow, {Size=UDim2.new(0,278,0,expanded and 40 or 0)}, 0.15):Play()
+			playTween(inputRow, { Size = UDim2.new(0,278,0,expanded and 40 or 0) }, 0.15):Play()
 		end)
 	end
 end
@@ -1305,19 +1008,18 @@ local function showcmdList()
 			Size = UDim2.new(0,300,0,0),
 			BorderSizePixel = 0,
 		})
-		mk("UIStroke", _sharedTooltip, {ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Color = FQ.COLORS.STROKE})
-		mk("UICorner", _sharedTooltip, {CornerRadius = UDim.new(0.1, 0)})
-		mk("UIPadding", _sharedTooltip, {PaddingBottom = UDim.new(0,6), PaddingLeft = UDim.new(0,8), PaddingRight = UDim.new(0,8)})
-		mk("UITextSizeConstraint", _sharedTooltip, {MaxTextSize = 18})
-			_localGuiInset = GS:GetGuiInset()
-			_sharedTooltipConn = RS.RenderStepped:Connect(function()
-				if _sharedTooltip and _sharedTooltip.Visible then
-						local mousePos = UIS:GetMouseLocation() - _localGuiInset
-					_sharedTooltip.Position = UDim2.new(0, mousePos.X + 10, 0, mousePos.Y + 10)
-				end
-			end)
+		mk("UIStroke", _sharedTooltip, { ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Color = FQ.COLORS.STROKE })
+		mk("UICorner", _sharedTooltip, { CornerRadius = UDim.new(0.1, 0) })
+		mk("UIPadding", _sharedTooltip, { PaddingBottom = UDim.new(0,6), PaddingLeft = UDim.new(0,8), PaddingRight = UDim.new(0,8) })
+		mk("UITextSizeConstraint", _sharedTooltip, { MaxTextSize = 18 })
+		_localGuiInset = GS:GetGuiInset()
+		_sharedTooltipConn = RS.RenderStepped:Connect(function()
+			if _sharedTooltip and _sharedTooltip.Visible then
+				local mousePos = UIS:GetMouseLocation() - _localGuiInset
+				_sharedTooltip.Position = UDim2.new(0, mousePos.X + 10, 0, mousePos.Y + 10)
+			end
+		end)
 	end
-
 	for _, entry in ipairs(commandListArray) do
 		if not used[entry] then
 			used[entry] = true
@@ -1349,14 +1051,16 @@ local function showcmdList()
 					task.defer(function() unexpected_UI.CLI:CaptureFocus() end)
 				end)
 			end
-
-			local allNames = {entry.DisplayName}
+			local allNames = { entry.DisplayName }
 			for _, alias in ipairs(entry.Aliases) do table.insert(allNames, alias) end
 			btn.Text = table.concat(allNames, " / ")
 			btn.Visible = true
 			btn.Position = UDim2.new(0, 0, 0, index * 32)
 			btn.Parent = BTNLIST
-			_btnMeta[btn] = {data = entry, usage = ( (#entry.UsageArgs > 0) and ("usage: " .. entry.Original .. " [" .. table.concat(entry.UsageArgs, "] [") .. "]") ) or ("usage: " .. entry.Original)}
+			_btnMeta[btn] = {
+				data = entry,
+				usage = ((#entry.UsageArgs > 0) and ("usage: " .. entry.Original .. " [" .. table.concat(entry.UsageArgs, "] [") .. "]")) or ("usage: " .. entry.Original)
+			}
 			table.insert(commandButtonCache, btn)
 			index = index + 1
 		end
@@ -1495,6 +1199,82 @@ do
 	end)
 end
 
+local bdButtonCache = {}
+local bdBtnExample = mk("TextButton", nil, {
+	BorderSizePixel = 0,
+	TextXAlignment = Enum.TextXAlignment.Left,
+	TextSize = 18,
+	TextColor3 = FQ.COLORS.TEXT_MAIN,
+	BackgroundColor3 = FQ.COLORS.BACKGROUND,
+	FontFace = FQ.FONTS.REGULAR,
+	Size = UDim2.new(0,278,0,33),
+	BorderColor3 = FQ.COLORS.BACKGROUND,
+	Text = "",
+	Name = "bindEntry",
+	Visible = false,
+})
+
+local function clearBDList()
+	for _, btn in ipairs(bdButtonCache) do
+		btn.Visible = false
+		btn.Parent = nil
+	end
+	bdButtonCache = {}
+	unexpected_UI.BDBTNLIST.CanvasSize = UDim2.new(0,0,0,0)
+end
+
+local function showBDList(filter)
+	clearBDList()
+	filter = string.lower(filter or "")
+	CONFIG.Binds = CONFIG.Binds or {}
+	local index = 0
+	for i, bd in ipairs(CONFIG.Binds) do
+		local display = "[".. bd.key .. "]" .. (bd.toggle and " (toggle)" or "") .. " → " .. bd.cmd
+		if filter == "" or display:lower():find(filter, 1, true) then
+			local btn = bdBtnExample:Clone()
+			btn.Text = display
+			btn.Visible = true
+			btn.Position = UDim2.new(0,0,0,index * 32)
+			btn.Parent = unexpected_UI.BDBTNLIST
+			btn.MouseButton1Click:Connect(function()
+				table.remove(CONFIG.Binds, i)
+				UX_config()
+				unexpected:notify("binds", "Removed: " .. display)
+				showBDList(unexpected_UI.BDSEARCHBAR.Text)
+			end)
+			table.insert(bdButtonCache, btn)
+			index = index + 1
+		end
+	end
+	unexpected_UI.BDBTNLIST.CanvasSize = UDim2.new(0,0,0,index * 32)
+	applyColors()
+end
+
+unexpected_UI.BINDS_BUTTON.MouseButton1Click:Connect(function()
+	openMenuFrame(MENUFRAMES.bind, function()
+		unexpected_UI.BDSEARCHBAR.Text = ""
+		showBDList("")
+	end)
+end)
+
+unexpected_UI.BDBACK.MouseButton1Click:Connect(function()
+	fadeOut(MENUFRAMES.bind)
+	clearBDList()
+	task.delay(0.1, function() for _, b in ipairs(MENUS) do b.Visible = true end end)
+end)
+
+do
+	local bdToken = 0
+	unexpected_UI.BDSEARCHBAR:GetPropertyChangedSignal("Text"):Connect(function()
+		bdToken = bdToken + 1
+		local my = bdToken
+		local txt = unexpected_UI.BDSEARCHBAR.Text
+		task.delay(0.12, function()
+			if my == bdToken then showBDList(txt) end
+		end)
+	end)
+end
+
 local plButtonCache = {}
 local plBtnExample = mk("TextButton", nil, {
 	BorderSizePixel = 0,
@@ -1593,14 +1373,14 @@ MENU.MouseButton1Click:Connect(function()
 	MENUON = not MENUON
 	if MENUON then
 		MENUFRAME.Size, MENUFRAME.Visible = UDim2.new(0, 339, 0, 0), true
-		playTween(unexpected_UI["PILL"], {Size = UDim2.new(0, 339, 0, 71)}, 0.25, Enum.EasingStyle.Quint):Play()
+		playTween(unexpected_UI["PILL"], { Size = UDim2.new(0, 339, 0, 71) }, 0.25, Enum.EasingStyle.Quint):Play()
 		local NS = UDim2.new(0, 230, 0, 54)
-		playTween(CLI, {Size = NS}, 0.25, Enum.EasingStyle.Quint):Play()
-		playTween(unexpected_UI["PREDICTOR"], {Size = NS}, 0.25, Enum.EasingStyle.Quint):Play()
-		playTween(MENUFRAME, {Size = UDim2.new(0, 339, 0, 348)}, 0.25, Enum.EasingStyle.Quint):Play()
+		playTween(CLI, { Size = NS }, 0.25, Enum.EasingStyle.Quint):Play()
+		playTween(unexpected_UI["PREDICTOR"], { Size = NS }, 0.25, Enum.EasingStyle.Quint):Play()
+		playTween(MENUFRAME, { Size = UDim2.new(0, 339, 0, 348) }, 0.25, Enum.EasingStyle.Quint):Play()
 		buttonTP(MENU, 0)
 	else
-		local collapse = playTween(MENUFRAME, {Size = UDim2.new(0, 339, 0, 0)}, 0.25, Enum.EasingStyle.Quint)
+		local collapse = playTween(MENUFRAME, { Size = UDim2.new(0, 339, 0, 0) }, 0.25, Enum.EasingStyle.Quint)
 		collapse:Play()
 		collapse.Completed:Once(function()
 			if not MENUON then MENUFRAME.Visible = false end
@@ -1610,9 +1390,7 @@ MENU.MouseButton1Click:Connect(function()
 end)
 
 MENUS[1].MouseButton1Click:Connect(function()
-	openMenuFrame(MENUFRAMES.command, function()
-		showcmdList()
-	end)
+	openMenuFrame(MENUFRAMES.command, function() showcmdList() end)
 end)
 
 unexpected_UI.AUTORUNS_BUTTON.MouseButton1Click:Connect(function()
@@ -1623,9 +1401,9 @@ unexpected_UI.AUTORUNS_BUTTON.MouseButton1Click:Connect(function()
 end)
 
 MENUFRAMES.command:WaitForChild("commandBack").MouseButton1Click:Connect(function()
-    fadeOut(MENUFRAMES.command)
-    clearcmdList()
-    task.delay(0.1, function() for _, b in ipairs(MENUS) do b.Visible = true end end)
+	fadeOut(MENUFRAMES.command)
+	clearcmdList()
+	task.delay(0.1, function() for _, b in ipairs(MENUS) do b.Visible = true end end)
 end)
 
 local shrinkTween = nil
@@ -1633,12 +1411,12 @@ local function hidePILL()
 	HIDING = true
 	for _, c in ipairs(unexpected_UI["PILL"]:GetDescendants()) do
 		if c:IsA("TextLabel") or c:IsA("TextButton") or c:IsA("TextBox") then
-			playTween(c, {TextTransparency = 1}, 0.03, Enum.EasingStyle.Sine):Play()
+			playTween(c, { TextTransparency = 1 }, 0.03, Enum.EasingStyle.Sine):Play()
 		elseif c:IsA("ImageLabel") or c:IsA("ImageButton") then
-			playTween(c, {ImageTransparency = 1}, 0.03, Enum.EasingStyle.Sine):Play()
+			playTween(c, { ImageTransparency = 1 }, 0.03, Enum.EasingStyle.Sine):Play()
 		end
 	end
-	shrinkTween = playTween(unexpected_UI["PILL"], {Size = UDim2.new(0, 0, 0, 0)}, 0.25, Enum.EasingStyle.Quint)
+	shrinkTween = playTween(unexpected_UI["PILL"], { Size = UDim2.new(0, 0, 0, 0) }, 0.25, Enum.EasingStyle.Quint)
 	shrinkTween:Play()
 	shrinkTween.Completed:Once(function()
 		if HIDING then
@@ -1668,13 +1446,13 @@ local function showPILL(yn)
 	if MOBILE and not MENUON then SHS(true) end
 	for _, c in ipairs(unexpected_UI["PILL"]:GetDescendants()) do
 		if c:IsA("TextLabel") or c:IsA("TextButton") or c:IsA("TextBox") then
-			playTween(c, {TextTransparency = 0}, 0.2, Enum.EasingStyle.Sine):Play()
+			playTween(c, { TextTransparency = 0 }, 0.2, Enum.EasingStyle.Sine):Play()
 		elseif c:IsA("ImageLabel") or c:IsA("ImageButton") then
 			if not oneMenu then
 				c.ImageTransparency = 1
 				oneMenu = true
 			elseif yn == 1 then
-				playTween(c, {ImageTransparency = 0}, 0.1, Enum.EasingStyle.Sine):Play()
+				playTween(c, { ImageTransparency = 0 }, 0.1, Enum.EasingStyle.Sine):Play()
 			else
 				c.ImageTransparency = 1
 			end
@@ -1707,10 +1485,10 @@ UIS.InputBegan:Connect(function(input, processed)
 			buttonTP(MENU, 0)
 		else
 			SHS(true)
-			playTween(unexpected_UI["PILL"], {Size = UDim2.new(0, 339, 0, 71)}, 0.25, Enum.EasingStyle.Quint):Play()
+			playTween(unexpected_UI["PILL"], { Size = UDim2.new(0, 339, 0, 71) }, 0.25, Enum.EasingStyle.Quint):Play()
 			local NS = UDim2.new(0, 230, 0, 54)
-			playTween(CLI, {Size = NS}, 0.25, Enum.EasingStyle.Quint):Play()
-			playTween(unexpected_UI["PREDICTOR"], {Size = NS}, 0.25, Enum.EasingStyle.Quint):Play()
+			playTween(CLI, { Size = NS }, 0.25, Enum.EasingStyle.Quint):Play()
+			playTween(unexpected_UI["PREDICTOR"], { Size = NS }, 0.25, Enum.EasingStyle.Quint):Play()
 			buttonTP(MENU, 0)
 		end
 	end
@@ -1720,8 +1498,8 @@ UIS.InputEnded:Connect(function(input, processed)
 	if input.KeyCode == Enum.KeyCode.Semicolon then
 		HOVERED = false
 		if not shithover and not MENUON and not CLI:IsFocused() then
-			playTween(unexpected_UI["PILL"], {Size = UDim2.new(0, 218, 0, 71)}, 0.25, Enum.EasingStyle.Quint):Play()
-			playTween(CLI, {Size = UDim2.new(0, 167, 0, 54)}, 0.25, Enum.EasingStyle.Quint):Play()
+			playTween(unexpected_UI["PILL"], { Size = UDim2.new(0, 218, 0, 71) }, 0.25, Enum.EasingStyle.Quint):Play()
+			playTween(CLI, { Size = UDim2.new(0, 167, 0, 54) }, 0.25, Enum.EasingStyle.Quint):Play()
 			buttonTP(MENU, 1)
 		elseif MENUON then
 			unexpected_UI["PILL"].Size, CLI.Size = UDim2.new(0, 339, 0, 71), UDim2.new(0, 230, 0, 54)
@@ -1740,140 +1518,7 @@ if type(CONFIG.Colors) == "table" then
 	applyColors()
 end
 
---#pluginSystem
-local PLUGIN_DIR = "unexpected_plugins"
-if not isfolder(PLUGIN_DIR) then
-    makefolder(PLUGIN_DIR)
-end
-
-if type(CONFIG.Plugins) ~= "table" then
-    CONFIG.Plugins = {}
-end
-
-local function LOAD_PLUGIN(NAME)
-    local PATH = string.format("%s/%s.ux", PLUGIN_DIR, NAME)
-    if not isfile(PATH) then
-        unexpected:notify("unexpected", ("Plugin '%s' missing, removed from config."):format(NAME))
-        CONFIG.Plugins[NAME] = nil
-        UX_config()
-        return false
-    end
-
-    local ENV = setmetatable({unexpected = unexpected}, {__index = getfenv()})
-
-    local OK, RESULT = pcall(function()
-        return setfenv(loadstring(readfile(PATH)), ENV)()
-    end)
-
-    if not OK then
-        unexpected:notify("unexpected", ("Error in plugin '%s': %s"):format(NAME, tostring(RESULT)))
-        return false
-    end
-
-    if type(RESULT) == "table" and RESULT.Commands then
-        for CMD_NAME, CMD in pairs(RESULT.Commands) do
-            if type(CMD.Function) == "function" then
-                unexpected:addcmd(
-                    CMD.ListName or CMD_NAME,
-                    CMD.Description or "No description.",
-                    CMD.Function,
-                    CMD.Aliases or {},
-                    CMD.Args or {}
-                )
-            end
-        end
-    end
-
-    unexpected:notify("unexpected", "Loaded plugin: " .. (RESULT.PluginName or NAME))
-    return true
-end
-
-for NAME, ENABLED in pairs(CONFIG.Plugins) do
-    if ENABLED then
-        LOAD_PLUGIN(NAME)
-    end
-end
-
-unexpected:addcmd("autorun", "Add a command to autorun on load", function(...)
-    local args = {...}
-    if #args == 0 then return unexpected:notify("autorun", "Usage: autorun [command] [args]") end
-    local full = table.concat(args, " ")
-    CONFIG.Autoruns = CONFIG.Autoruns or {}
-    table.insert(CONFIG.Autoruns, full)
-    UX_config()
-    unexpected:notify("autorun", "Added: " .. full)
-    if MENUFRAMES.autorun.Visible then showARList(unexpected_UI.ARSEARCHBAR.Text) end
-end, nil, {"command", "..."})
-
-unexpected:addcmd("unautorun", "Remove an autorun command", function(...)
-    local args = {...}
-    if #args == 0 then return unexpected:notify("autorun", "Usage: unautorun [command] [args]") end
-    local full = table.concat(args, " ")
-    CONFIG.Autoruns = CONFIG.Autoruns or {}
-    for i, v in ipairs(CONFIG.Autoruns) do
-        if v == full then
-            table.remove(CONFIG.Autoruns, i)
-            UX_config()
-			if MENUFRAMES.autorun.Visible then showARList(unexpected_UI.ARSEARCHBAR.Text) end
-            return unexpected:notify("autorun", "Removed: " .. full)
-        end
-    end
-    unexpected:notify("autorun", "Not found: " .. full)
-end, nil, {"command", "..."})
-
-unexpected:addcmd("autoruns", "List all autoruns", function()
-	if not MENUON then
-		MENUON = true
-		MENUFRAME.Size, MENUFRAME.Visible = UDim2.new(0, 339, 0, 0), true
-		playTween(unexpected_UI["PILL"], {Size = UDim2.new(0, 339, 0, 71)}, 0.25, Enum.EasingStyle.Quint):Play()
-		local NS = UDim2.new(0, 230, 0, 54)
-		playTween(CLI, {Size = NS}, 0.25, Enum.EasingStyle.Quint):Play()
-		playTween(unexpected_UI["PREDICTOR"], {Size = NS}, 0.25, Enum.EasingStyle.Quint):Play()
-		playTween(MENUFRAME, {Size = UDim2.new(0, 339, 0, 348)}, 0.25, Enum.EasingStyle.Quint):Play()
-		buttonTP(MENU, 0)
-		task.delay(0.3, function()
-			openMenuFrame(MENUFRAMES.autorun, function()
-				unexpected_UI.ARSEARCHBAR.Text = ""
-				showARList("")
-			end)
-		end)
-	else
-		openMenuFrame(MENUFRAMES.autorun, function()
-			unexpected_UI.ARSEARCHBAR.Text = ""
-			showARList("")
-		end)
-	end
-end)
-
-unexpected:addcmd("plugin", "Add a plugin", function(NAME)
-    if not NAME or NAME == "" then
-        return unexpected:notify("unexpected", "Usage: plugin [name]")
-    end
-    if LOAD_PLUGIN(NAME) then
-        CONFIG.Plugins[NAME] = true
-        UX_config()
-        if MENUFRAMES.plugin.Visible then showPLList(unexpected_UI.PLSEARCHBAR.Text) end
-    end
-end, nil, {"name"})
-
-unexpected:addcmd("unplugin", "Remove a plugin", function(NAME)
-    if not NAME or NAME == "" then
-        return unexpected:notify("unexpected", "Usage: unplugin [name]")
-    end
-    if CONFIG.Plugins[NAME] then
-        CONFIG.Plugins[NAME] = nil
-        UX_config()
-        unexpected:notify("unexpected", "Plugin '" .. NAME .. "' removed.")
-        if MENUFRAMES.plugin.Visible then showPLList(unexpected_UI.PLSEARCHBAR.Text) end
-    else
-        unexpected:notify("unexpected", "Plugin '" .. NAME .. "' is not enabled.")
-    end
-end, nil, {"name"})
---#pluginSystemEnd
-
---#commands
 local activeEventConns = {}
-
 local function runCmd(full)
 	local cmdName, argsText = string.match(full, "^(%S+)%s*(.*)$")
 	if not cmdName then return end
@@ -1987,14 +1632,439 @@ local function hookEvents()
 	end
 end
 
+local PLUGIN_DIR = "unexpected_plugins"
+if not isfolder(PLUGIN_DIR) then makefolder(PLUGIN_DIR) end
+if type(CONFIG.Plugins) ~= "table" then CONFIG.Plugins = {} end
+
+local keyBinds = {}
+local bindToggleState = {}
+
+local function UX_addbind(keyName, cmdString, toggle)
+	keyName = keyName:lower()
+	if keyBinds[keyName] then
+		keyBinds[keyName].conn:Disconnect()
+	end
+	local conn
+	if toggle then
+		bindToggleState[keyName] = false
+		local parts = {}
+		for w in cmdString:gmatch("%S+") do parts[#parts+1] = w end
+		local baseCmd = parts[1] or ""
+		local unCmd = "un" .. baseCmd
+		conn = UIS.InputBegan:Connect(function(input, processed)
+			if not processed and input.KeyCode.Name:lower() == keyName then
+				if bindToggleState[keyName] then
+					bindToggleState[keyName] = false
+					runCmd(unCmd)
+				else
+					bindToggleState[keyName] = true
+					runCmd(cmdString)
+				end
+			end
+		end)
+	else
+		conn = UIS.InputBegan:Connect(function(input, processed)
+			if not processed and input.KeyCode.Name:lower() == keyName then
+				runCmd(cmdString)
+			end
+		end)
+	end
+	keyBinds[keyName] = { conn = conn, cmd = cmdString, toggle = toggle or false }
+end
+
+local function UX_unbind(keyName)
+	keyName = keyName:lower()
+	if keyBinds[keyName] then
+		keyBinds[keyName].conn:Disconnect()
+		keyBinds[keyName] = nil
+		bindToggleState[keyName] = nil
+	end
+end
+
+local function makePluginEnv()
+	local function getString(idx, args)
+		if not args or #args < idx then return "" end
+		local t = {}
+		for i = idx, #args do t[#t+1] = args[i] end
+		return table.concat(t, " ")
+	end
+
+	local function getPlayer(arg)
+		if not arg or arg == "" then return {} end
+		arg = arg:lower()
+		local results = {}
+		if arg == "all" then
+			for _, p in ipairs(PLRS:GetPlayers()) do results[#results+1] = p.Name end
+		elseif arg == "others" then
+			for _, p in ipairs(PLRS:GetPlayers()) do
+				if p ~= LP then results[#results+1] = p.Name end
+			end
+		elseif arg == "me" then
+			results[#results+1] = LP.Name
+		elseif arg:sub(1,1) == "%" then
+			local teamName = arg:sub(2)
+			for _, p in ipairs(PLRS:GetPlayers()) do
+				if p.Team and p.Team.Name:lower():find(teamName, 1, true) then
+					results[#results+1] = p.Name
+				end
+			end
+		else
+			for _, p in ipairs(PLRS:GetPlayers()) do
+				if p.Name:lower():sub(1, #arg) == arg or p.DisplayName:lower():sub(1, #arg) == arg then
+					results[#results+1] = p.Name
+					break
+				end
+			end
+		end
+		return results
+	end
+
+	return {
+		getstring = getString,
+		splitString = function(sep, str)
+			local t = {}
+			for s in str:gmatch("[^"..sep.."]+") do t[#t+1] = s end
+			return t
+		end,
+		FindInTable = function(t, val)
+			for i,v in ipairs(t) do if v == val then return i end end
+			return false
+		end,
+		GetInTable = function(t, key) return t[key] end,
+		Match = function(str, pat) return str:match(pat) end,
+		isNumber = function(str) return tonumber(str) ~= nil end,
+		round = function(num, places)
+			local m = 10^(places or 0)
+			return math.floor(num*m+0.5)/m
+		end,
+		parseBoolean = function(str)
+			if not str then return nil end
+			str = str:lower()
+			if str=="true" or str=="yes" or str=="on" or str=="1" then return true end
+			if str=="false" or str=="no" or str=="off" or str=="0" then return false end
+			return nil
+		end,
+		randomString = randomString,
+		getPlayer = getPlayer,
+		notify = function(title, text)
+			unexpected:notify(tostring(title), tostring(text or ""))
+		end,
+		toClipboard = function(str) setclipboard(tostring(str)) end,
+		execCmd = function(cmdName, args, _speaker)
+			if type(args) == "table" and #args > 0 then
+				runCmd(cmdName .. " " .. table.concat(args, " "))
+			else
+				runCmd(cmdName)
+			end
+		end,
+		addbind = function(key, fn)
+			local keyName = (typeof(key) == "EnumItem" and key.Name or tostring(key)):lower()
+			if keyBinds[keyName] then keyBinds[keyName].conn:Disconnect() end
+			local conn = UIS.InputBegan:Connect(function(input, processed)
+				if not processed and input.KeyCode.Name:lower() == keyName then
+					pcall(fn)
+				end
+			end)
+			keyBinds[keyName] = { conn = conn, cmd = "[plugin-fn]", toggle = false }
+		end,
+		unkeybind= function(key)
+			local keyName = (typeof(key) == "EnumItem" and key.Name or tostring(key)):lower()
+			UX_unbind(keyName)
+		end,
+		respawn  = function() LP:LoadCharacter() end,
+		refresh  = function() LP:LoadCharacter() end,
+		r15  = function() return CHAR and CHAR:FindFirstChild("UpperTorso") ~= nil end,
+		tools= function()
+			local t = {}
+			for _, v in ipairs(LP.Backpack:GetChildren()) do
+				if v:IsA("Tool") then t[#t+1] = v end
+			end
+			for _, v in ipairs(CHAR:GetChildren()) do
+				if v:IsA("Tool") then t[#t+1] = v end
+			end
+			return t
+		end,
+		addspawn = function(fn) LP.CharacterAdded:Connect(fn) end,
+		Time = function() return os.time() end,
+		writefileExploit = function(path, content)
+			if writefile then pcall(writefile, path, content) end
+		end,
+		Players   = PLRS,
+		Player= LP,
+		Character = CHAR,
+		Humanoid  = HUM,
+		RootPart  = HRP,
+		Camera= CAM,
+		unexpected = unexpected,
+	}
+end
+
+local function loadPlugin(name, source, isIY)
+	if isIY then
+		local ENV = setmetatable(makePluginEnv(), { __index = getfenv() })
+		local ok, result = pcall(function()
+			return setfenv(loadstring(source), ENV)()
+		end)
+		if not ok then
+			unexpected:notify("unexpected", ("Plugin '%s' error: %s"):format(name, tostring(result)))
+			return false
+		end
+		if type(result) ~= "table" then
+			unexpected:notify("unexpected", ("Plugin '%s' returned non-table"):format(name))
+			return false
+		end
+		local pluginName = result.PluginName or name
+		local cmds = result.Commands
+		if type(cmds) ~= "table" then
+			unexpected:notify("unexpected", ("Plugin '%s' has no Commands table"):format(name))
+			return false
+		end
+		local count = 0
+		for cmdKey, cmdDef in pairs(cmds) do
+			if type(cmdDef) == "table" and type(cmdDef.Function) == "function" then
+				local listName = cmdDef.ListName or cmdKey
+				local usageArgs = {}
+				for arg in listName:gmatch("%[(.-)%]") do usageArgs[#usageArgs+1] = arg end
+				local displayBase = listName:gsub("%s*%[.-%]", ""):match("^%s*(.-)%s*$")
+				local aliases = {}
+				if type(cmdDef.Aliases) == "table" then
+					for _, a in ipairs(cmdDef.Aliases) do aliases[#aliases+1] = a end
+				end
+				local fn = cmdDef.Function
+				local wrapped = function(...)
+					local args = {...}
+					pcall(fn, args, LP)
+				end
+				unexpected:addcmd(displayBase, cmdDef.Description or "No description.", wrapped, aliases, usageArgs)
+				count = count + 1
+			end
+		end
+		unexpected:notify("unexpected", ("%s loaded (%d cmd%s)"):format(pluginName, count, count==1 and "" or "s"))
+		return true
+	else
+		local ENV = setmetatable({ unexpected = unexpected }, { __index = getfenv() })
+		local OK, RESULT = pcall(function()
+			return setfenv(loadstring(source), ENV)()
+		end)
+		if not OK then
+			unexpected:notify("unexpected", ("Error in plugin '%s': %s"):format(name, tostring(RESULT)))
+			return false
+		end
+		if type(RESULT) == "table" and RESULT.Commands then
+			for CMD_NAME, CMD in pairs(RESULT.Commands) do
+				if type(CMD.Function) == "function" then
+					unexpected:addcmd(
+						CMD.ListName or CMD_NAME,
+						CMD.Description or "No description.",
+						CMD.Function,
+						CMD.Aliases or {},
+						CMD.Args or {}
+					)
+				end
+			end
+		end
+		unexpected:notify("unexpected", "Loaded plugin: " .. (RESULT and RESULT.PluginName or name))
+		return true
+	end
+end
+
+local function LOAD_PLUGIN(NAME)
+	local UX_PATH  = ("%s/%s.ux"):format(PLUGIN_DIR, NAME)
+	local IY_PATH  = ("workspace/%s.iy"):format(NAME)
+	local IY_PATH2 = ("%s/%s.iy"):format(PLUGIN_DIR, NAME)
+
+	local source, isIY
+
+	if isfile(UX_PATH) then
+		source, isIY = readfile(UX_PATH), false
+	elseif isfile(IY_PATH) then
+		source, isIY = readfile(IY_PATH), true
+	elseif isfile(IY_PATH2) then
+		source, isIY = readfile(IY_PATH2), true
+	else
+		unexpected:notify("unexpected", ("Plugin '%s' not found (.ux/.iy), removed."):format(NAME))
+		CONFIG.Plugins[NAME] = nil
+		UX_config()
+		return false
+	end
+
+	return loadPlugin(NAME, source, isIY)
+end
+
+for NAME, ENABLED in pairs(CONFIG.Plugins) do
+	if ENABLED then LOAD_PLUGIN(NAME) end
+end
+
+local function hookBinds()
+	for keyName, _ in pairs(keyBinds) do
+		if keyBinds[keyName] and keyBinds[keyName].conn then
+			keyBinds[keyName].conn:Disconnect()
+		end
+	end
+	keyBinds = {}
+	bindToggleState = {}
+	CONFIG.Binds = CONFIG.Binds or {}
+	for _, bd in ipairs(CONFIG.Binds) do
+		UX_addbind(bd.key, bd.cmd, bd.toggle)
+	end
+end
+
+unexpected:addcmd("autorun", "Add a command to autorun on load", function(...)
+	local args = {...}
+	if #args == 0 then return unexpected:notify("autorun", "Usage: autorun [command] [args]") end
+	local full = table.concat(args, " ")
+	CONFIG.Autoruns = CONFIG.Autoruns or {}
+	table.insert(CONFIG.Autoruns, full)
+	UX_config()
+	unexpected:notify("autorun", "Added: " .. full)
+	if MENUFRAMES.autorun.Visible then showARList(unexpected_UI.ARSEARCHBAR.Text) end
+end, nil, {"command", "..."})
+
+unexpected:addcmd("unautorun", "Remove an autorun command", function(...)
+	local args = {...}
+	if #args == 0 then return unexpected:notify("autorun", "Usage: unautorun [command] [args]") end
+	local full = table.concat(args, " ")
+	CONFIG.Autoruns = CONFIG.Autoruns or {}
+	for i, v in ipairs(CONFIG.Autoruns) do
+		if v == full then
+			table.remove(CONFIG.Autoruns, i)
+			UX_config()
+			if MENUFRAMES.autorun.Visible then showARList(unexpected_UI.ARSEARCHBAR.Text) end
+			return unexpected:notify("autorun", "Removed: " .. full)
+		end
+	end
+	unexpected:notify("autorun", "Not found: " .. full)
+end, nil, {"command", "..."})
+
+unexpected:addcmd("autoruns", "List all autoruns", function()
+	if not MENUON then
+		MENUON = true
+		MENUFRAME.Size, MENUFRAME.Visible = UDim2.new(0, 339, 0, 0), true
+		playTween(unexpected_UI["PILL"], { Size = UDim2.new(0, 339, 0, 71) }, 0.25, Enum.EasingStyle.Quint):Play()
+		local NS = UDim2.new(0, 230, 0, 54)
+		playTween(CLI, { Size = NS }, 0.25, Enum.EasingStyle.Quint):Play()
+		playTween(unexpected_UI["PREDICTOR"], { Size = NS }, 0.25, Enum.EasingStyle.Quint):Play()
+		playTween(MENUFRAME, { Size = UDim2.new(0, 339, 0, 348) }, 0.25, Enum.EasingStyle.Quint):Play()
+		buttonTP(MENU, 0)
+		task.delay(0.3, function()
+			openMenuFrame(MENUFRAMES.autorun, function()
+				unexpected_UI.ARSEARCHBAR.Text = ""
+				showARList("")
+			end)
+		end)
+	else
+		openMenuFrame(MENUFRAMES.autorun, function()
+			unexpected_UI.ARSEARCHBAR.Text = ""
+			showARList("")
+		end)
+	end
+end)
+
+unexpected:addcmd("plugin", "Add a plugin", function(NAME)
+	if not NAME or NAME == "" then
+		return unexpected:notify("unexpected", "Usage: plugin [name]")
+	end
+	if LOAD_PLUGIN(NAME) then
+		CONFIG.Plugins[NAME] = true
+		UX_config()
+		if MENUFRAMES.plugin.Visible then showPLList(unexpected_UI.PLSEARCHBAR.Text) end
+	end
+end, nil, {"name"})
+
+unexpected:addcmd("unplugin", "Remove a plugin", function(NAME)
+	if not NAME or NAME == "" then
+		return unexpected:notify("unexpected", "Usage: unplugin [name]")
+	end
+	if CONFIG.Plugins[NAME] then
+		CONFIG.Plugins[NAME] = nil
+		UX_config()
+		unexpected:notify("unexpected", "Plugin '" .. NAME .. "' removed.")
+		if MENUFRAMES.plugin.Visible then showPLList(unexpected_UI.PLSEARCHBAR.Text) end
+	else
+		unexpected:notify("unexpected", "Plugin '" .. NAME .. "' is not enabled.")
+	end
+end, nil, {"name"})
+
+unexpected:addcmd("bind", "Bind a key to run a command. Use []toggle=true] for toggle mode", function(key, ...)
+	if not key or key == "" then
+		return unexpected:notify("bind", "Usage: bind [key] [command] [args] [toggle=true/false]")
+	end
+	local args = {...}
+	if #args == 0 then
+		return unexpected:notify("bind", "Usage: bind [key] [command] [args] [toggle=true/false]")
+	end
+	local toggle = false
+	if args[#args] == "true" or args[#args] == "toggle=true" then
+		toggle = true
+		table.remove(args, #args)
+	elseif args[#args] == "false" or args[#args] == "toggle=false" then
+		table.remove(args, #args)
+	end
+	if #args == 0 then
+		return unexpected:notify("bind", "No command specified.")
+	end
+	local cmdString = table.concat(args, " ")
+	UX_addbind(key, cmdString, toggle)
+	CONFIG.Binds = CONFIG.Binds or {}
+	for i, bd in ipairs(CONFIG.Binds) do
+		if bd.key == key:lower() then
+			table.remove(CONFIG.Binds, i)
+			break
+		end
+	end
+	table.insert(CONFIG.Binds, { key = key:lower(), cmd = cmdString, toggle = toggle })
+	UX_config()
+	unexpected:notify("bind [", key .. "] → " .. cmdString .. (toggle and " (toggle)" or ""))
+	if MENUFRAMES.bind.Visible then showBDList(unexpected_UI.BDSEARCHBAR.Text) end
+end, nil, {"key", "command", "...", "[toggle=true/false]"})
+
+unexpected:addcmd("unbind", "Remove a key binding", function(key)
+	if not key or key == "" then
+		return unexpected:notify("unbind", "Usage: unbind [key]")
+	end
+	UX_unbind(key)
+	CONFIG.Binds = CONFIG.Binds or {}
+	for i, bd in ipairs(CONFIG.Binds) do
+		if bd.key == key:lower() then
+			table.remove(CONFIG.Binds, i)
+			break
+		end
+	end
+	UX_config()
+	unexpected:notify("unbind", "Unbound: " .. key)
+	if MENUFRAMES.bind.Visible then showBDList(unexpected_UI.BDSEARCHBAR.Text) end
+end, nil, {"key"})
+
+unexpected:addcmd("binds", "Show binds tab", function()
+	if not MENUON then
+		MENUON = true
+		MENUFRAME.Size, MENUFRAME.Visible = UDim2.new(0, 339, 0, 0), true
+		playTween(unexpected_UI["PILL"], { Size = UDim2.new(0, 339, 0, 71) }, 0.25, Enum.EasingStyle.Quint):Play()
+		local NS = UDim2.new(0, 230, 0, 54)
+		playTween(CLI, { Size = NS }, 0.25, Enum.EasingStyle.Quint):Play()
+		playTween(unexpected_UI["PREDICTOR"], { Size = NS }, 0.25, Enum.EasingStyle.Quint):Play()
+		playTween(MENUFRAME, { Size = UDim2.new(0, 339, 0, 348) }, 0.25, Enum.EasingStyle.Quint):Play()
+		buttonTP(MENU, 0)
+		task.delay(0.3, function()
+			openMenuFrame(MENUFRAMES.bind, function()
+				unexpected_UI.BDSEARCHBAR.Text = ""
+				showBDList("")
+			end)
+		end)
+	else
+		openMenuFrame(MENUFRAMES.bind, function()
+			unexpected_UI.BDSEARCHBAR.Text = ""
+			showBDList("")
+		end)
+	end
+end)
+
 unexpected:addcmd("onevent", "Add an event trigger", function(event, ...)
 	if not event then return unexpected:notify("events", "Usage: onevent [event] [filter/cmd] [cmd...]") end
 	local args = {...}
 	if #args == 0 then return unexpected:notify("events", "Usage: onevent [event] [filter/cmd] [cmd...]") end
-
-	local noFilterEvents = {died=true, respawned=true, jumped=true, seated=true, healthchanged=true, fallendamage=true, clicked=true, teleported=true, shutdown=true, zoomchanged=true}
+	local noFilterEvents = { died=true, respawned=true, jumped=true, seated=true, healthchanged=true, fallendamage=true, clicked=true, teleported=true, shutdown=true, zoomchanged=true }
 	local filter, cmd
-
 	if noFilterEvents[event:lower()] then
 		filter = nil
 		cmd = table.concat(args, " ")
@@ -2002,15 +2072,13 @@ unexpected:addcmd("onevent", "Add an event trigger", function(event, ...)
 		filter = args[1]
 		cmd = table.concat(args, " ", 2)
 	end
-
 	if not cmd or cmd == "" then return unexpected:notify("events", "No command specified.") end
-
 	CONFIG.Events = CONFIG.Events or {}
-	table.insert(CONFIG.Events, {event = event:lower(), filter = filter, cmd = cmd})
+	table.insert(CONFIG.Events, { event = event:lower(), filter = filter, cmd = cmd })
 	UX_config()
 	hookEvents()
-    unexpected:notify("events", event:lower() .. (filter and (" [" .. filter .. "]") or "") .. " → " .. cmd)
-    if MENUFRAMES.event.Visible then showEVList(unexpected_UI.EVSEARCHBAR.Text) end
+	unexpected:notify("events", event:lower() .. (filter and (" [" .. filter .. "]") or "") .. " → " .. cmd)
+	if MENUFRAMES.event.Visible then showEVList(unexpected_UI.EVSEARCHBAR.Text) end
 end, nil, {"event", "filter/cmd", "..."})
 
 unexpected:addcmd("unevent", "Remove an event trigger", function(event, ...)
@@ -2053,7 +2121,7 @@ unexpected:addcmd("clearplugins", "Remove all plugins", function()
 	UX_config()
 	if not MENUON then return end
 	if MENUFRAMES.plugin.Visible then showPLList(unexpected_UI.PLSEARCHBAR.Text) end
-	unexpected:notify("events", "All plugins cleared.")
+	unexpected:notify("plugins", "All plugins cleared.")
 end)
 
 unexpected:addcmd("clearautoruns", "Remove all autoruns", function()
@@ -2061,18 +2129,31 @@ unexpected:addcmd("clearautoruns", "Remove all autoruns", function()
 	UX_config()
 	if not MENUON then return end
 	if MENUFRAMES.autorun.Visible then showARList(unexpected_UI.ARSEARCHBAR.Text) end
-	unexpected:notify("events", "All autoruns cleared.")
+	unexpected:notify("autoruns", "All autoruns cleared.")
+end)
+
+unexpected:addcmd("clearbinds", "Remove all binds", function()
+	CONFIG.Binds = {}
+	UX_config()
+	for keyName, bd in pairs(keyBinds) do
+		if bd.conn then bd.conn:Disconnect() end
+	end
+	keyBinds = {}
+	bindToggleState = {}
+	if not MENUON then return end
+	if MENUFRAMES.bind.Visible then showBDList(unexpected_UI.BDSEARCHBAR.Text) end
+	unexpected:notify("binds", "All binds cleared.")
 end)
 
 unexpected:addcmd("events", "Show events tab", function()
 	if not MENUON then
 		MENUON = true
 		MENUFRAME.Size, MENUFRAME.Visible = UDim2.new(0, 339, 0, 0), true
-		playTween(unexpected_UI["PILL"], {Size = UDim2.new(0, 339, 0, 71)}, 0.25, Enum.EasingStyle.Quint):Play()
+		playTween(unexpected_UI["PILL"], { Size = UDim2.new(0, 339, 0, 71) }, 0.25, Enum.EasingStyle.Quint):Play()
 		local NS = UDim2.new(0, 230, 0, 54)
-		playTween(CLI, {Size = NS}, 0.25, Enum.EasingStyle.Quint):Play()
-		playTween(unexpected_UI["PREDICTOR"], {Size = NS}, 0.25, Enum.EasingStyle.Quint):Play()
-		playTween(MENUFRAME, {Size = UDim2.new(0, 339, 0, 348)}, 0.25, Enum.EasingStyle.Quint):Play()
+		playTween(CLI, { Size = NS }, 0.25, Enum.EasingStyle.Quint):Play()
+		playTween(unexpected_UI["PREDICTOR"], { Size = NS }, 0.25, Enum.EasingStyle.Quint):Play()
+		playTween(MENUFRAME, { Size = UDim2.new(0, 339, 0, 348) }, 0.25, Enum.EasingStyle.Quint):Play()
 		buttonTP(MENU, 0)
 		task.delay(0.3, function()
 			openMenuFrame(MENUFRAMES.event, function()
@@ -2094,11 +2175,11 @@ unexpected:addcmd("plugins", "Show plugins tab", function()
 	if not MENUON then
 		MENUON = true
 		MENUFRAME.Size, MENUFRAME.Visible = UDim2.new(0, 339, 0, 0), true
-		playTween(unexpected_UI["PILL"], {Size = UDim2.new(0, 339, 0, 71)}, 0.25, Enum.EasingStyle.Quint):Play()
+		playTween(unexpected_UI["PILL"], { Size = UDim2.new(0, 339, 0, 71) }, 0.25, Enum.EasingStyle.Quint):Play()
 		local NS = UDim2.new(0, 230, 0, 54)
-		playTween(CLI, {Size = NS}, 0.25, Enum.EasingStyle.Quint):Play()
-		playTween(unexpected_UI["PREDICTOR"], {Size = NS}, 0.25, Enum.EasingStyle.Quint):Play()
-		playTween(MENUFRAME, {Size = UDim2.new(0, 339, 0, 348)}, 0.25, Enum.EasingStyle.Quint):Play()
+		playTween(CLI, { Size = NS }, 0.25, Enum.EasingStyle.Quint):Play()
+		playTween(unexpected_UI["PREDICTOR"], { Size = NS }, 0.25, Enum.EasingStyle.Quint):Play()
+		playTween(MENUFRAME, { Size = UDim2.new(0, 339, 0, 348) }, 0.25, Enum.EasingStyle.Quint):Play()
 		buttonTP(MENU, 0)
 		task.delay(0.3, function()
 			openMenuFrame(MENUFRAMES.plugin, function()
@@ -2117,24 +2198,20 @@ unexpected:addcmd("plugins", "Show plugins tab", function()
 end)
 
 unexpected:addcmd("discord", "Discord Server", function()
-    setclipboard("https://discord.gg/J73SnGB2y2")
+	setclipboard("https://discord.gg/J73SnGB2y2")
 	if typeof(httprequest) == "function" then
 		httprequest({
 			Url = "http://127.0.0.1:6463/rpc?v=1",
 			Method = "POST",
-			Headers = {["Content-Type"] = "application/json", Origin = "https://discord.com"},
+			Headers = { ["Content-Type"] = "application/json", Origin = "https://discord.com" },
 			Body = HS:JSONEncode({
 				cmd = "INVITE_BROWSER",
 				nonce = HS:GenerateGUID(false),
-				args = {code = "J73SnGB2y2"}
+				args = { code = "J73SnGB2y2" }
 			})
 		})
 	end
 end, nil, nil)
-
-unexpected:addcmd("unexspy", "Remote spy", function()
-	unexpected:notify("unexspy", "Deprecated.")
-end, {"remotespy"}, nil)
 
 unexpected:addcmd("goto", "Teleport to a player", function(targetName)
 	local name = targetName:lower()
@@ -2153,341 +2230,331 @@ end, nil, {"player"})
 
 local noclip
 unexpected:addcmd("noclip", "Walk through walls", function()
-    if noclip then return unexpected:notify("noclip", "Already noclipping.") end
-    noclip = RS.Stepped:Connect(function()
-        for _, p in ipairs(CHAR:GetDescendants()) do
-            if typeof(p) == "Instance" and p:IsA("BasePart") then p.CanCollide = false end
-        end
-    end)
+	if noclip then return unexpected:notify("noclip", "Already noclipping.") end
+	noclip = RS.Stepped:Connect(function()
+		for _, p in ipairs(CHAR:GetDescendants()) do
+			if typeof(p) == "Instance" and p:IsA("BasePart") then p.CanCollide = false end
+		end
+	end)
 end)
 
 unexpected:addcmd("unnoclip", "Disable noclip", function()
-    if noclip then
-        noclip:Disconnect()
-        noclip = nil
-    end
-    for _, p in ipairs(CHAR:GetDescendants()) do
-        if typeof(p) == "Instance" and p:IsA("BasePart") then p.CanCollide = true end
-    end
+	if noclip then
+		noclip:Disconnect()
+		noclip = nil
+	end
+	for _, p in ipairs(CHAR:GetDescendants()) do
+		if typeof(p) == "Instance" and p:IsA("BasePart") then p.CanCollide = true end
+	end
 end, {"clip"}, nil)
 
 unexpected:addcmd("tp", "Teleport to coordinates", function(x, y, z)
-    x, y, z = tonumber(x), tonumber(y), tonumber(z)
-    if not x or not y or not z then return unexpected:notify("tp", "Usage: tp [x] [y] [z]") end
-    HRP.CFrame = CFrame.new(x, y, z)
+	x, y, z = tonumber(x), tonumber(y), tonumber(z)
+	if not x or not y or not z then return unexpected:notify("tp", "Usage: tp [x] [y] [z]") end
+	HRP.CFrame = CFrame.new(x, y, z)
 end, nil, {"x", "y", "z"})
 
 unexpected:addcmd("copypos", "Copy position to clipboard", function()
-    local p = HRP.Position
-    setclipboard(string.format("%.2f, %.2f, %.2f", p.X, p.Y, p.Z))
-    unexpected:notify("copypos", string.format("%.2f, %.2f, %.2f", p.X, p.Y, p.Z))
+	local p = HRP.Position
+	setclipboard(string.format("%.2f, %.2f, %.2f", p.X, p.Y, p.Z))
+	unexpected:notify("copypos", string.format("%.2f, %.2f, %.2f", p.X, p.Y, p.Z))
 end)
 
 oldFOV = nil
 unexpected:addcmd("fov", "Set camera field of view", function(value)
-    value = tonumber(value)
-    if not value then return unexpected:notify("fov", "Usage: fov [number]") end
-    oldFOV = CAM.FieldOfView
+	value = tonumber(value)
+	if not value then return unexpected:notify("fov", "Usage: fov [number]") end
+	oldFOV = CAM.FieldOfView
 	CAM.FieldOfView = math.clamp(value, 1, 120)
-    unexpected:notify("fov", "FOV set to " .. CAM.FieldOfView)
+	unexpected:notify("fov", "FOV set to " .. CAM.FieldOfView)
 end, nil, {"value"})
 
 unexpected:addcmd("resetfov", "Reset FOV to default", function()
-    CAM.FieldOfView = oldFOV or 70
+	CAM.FieldOfView = oldFOV or 70
 end)
 
 unexpected:addcmd("serverid", "Copy server Job ID to clipboard", function()
-    setclipboard(game.JobId)
-    unexpected:notify("serverid", game.JobId)
+	setclipboard(game.JobId)
+	unexpected:notify("serverid", game.JobId)
 end)
 
 unexpected:addcmd("ping", "Show current ping", function()
-    unexpected:notify("ping", math.floor(PLRS.LocalPlayer:GetNetworkPing() * 1000) .. "ms")
+	unexpected:notify("ping", math.floor(PLRS.LocalPlayer:GetNetworkPing() * 1000) .. "ms")
 end)
 
 unexpected:addcmd("time", "Show server time", function()
-    local t = game:GetService("Lighting").ClockTime
-    local h = math.floor(t)
-    local m = math.floor((t - h) * 60)
-    unexpected:notify("time", string.format("%02d:%02d", h, m))
+	local t = game:GetService("Lighting").ClockTime
+	local h = math.floor(t)
+	local m = math.floor((t - h) * 60)
+	unexpected:notify("time", string.format("%02d:%02d", h, m))
 end)
 
 unexpected:addcmd("getpos", "Get a player's position", function(name)
-    if not name then return unexpected:notify("getpos", "Usage: getpos [player]") end
-    for _, p in ipairs(PLRS:GetPlayers()) do
-        if p.Name:lower() == name:lower() or p.DisplayName:lower() == name:lower() then
-            local hrp = p.Character and p.Character:FindFirstChild("HumanoidRootPart")
-            if hrp then
-                local pos = hrp.Position
-                local str = string.format("%.2f, %.2f, %.2f", pos.X, pos.Y, pos.Z)
-                setclipboard(str)
-                unexpected:notify("getpos", p.Name .. ": " .. str)
-            else
-                unexpected:notify("getpos", p.Name .. " has no character.")
-            end
-            return
-        end
-    end
-    unexpected:notify("getpos", "Player not found: " .. name)
+	if not name then return unexpected:notify("getpos", "Usage: getpos [player]") end
+	for _, p in ipairs(PLRS:GetPlayers()) do
+		if p.Name:lower() == name:lower() or p.DisplayName:lower() == name:lower() then
+			local hrp = p.Character and p.Character:FindFirstChild("HumanoidRootPart")
+			if hrp then
+				local pos = hrp.Position
+				local str = string.format("%.2f, %.2f, %.2f", pos.X, pos.Y, pos.Z)
+				setclipboard(str)
+				unexpected:notify("getpos", p.Name .. ": " .. str)
+			else
+				unexpected:notify("getpos", p.Name .. " has no character.")
+			end
+			return
+		end
+	end
+	unexpected:notify("getpos", "Player not found: " .. name)
 end, nil, {"player"})
 
 unexpected:addcmd("version", "Show current script version", function()
-    unexpected:notify("version", "unexpected " .. currentVersion)
+	unexpected:notify("version", "unexpected " .. currentVersion)
 end)
 
 unexpected:addcmd("who", "Show info about a player", function(name)
-    if not name then return unexpected:notify("who", "Usage: who [player]") end
-    for _, p in ipairs(PLRS:GetPlayers()) do
-        if p.Name:lower() == name:lower() or p.DisplayName:lower() == name:lower() then
-            local age = p.AccountAge
-            local years = math.floor(age / 365)
-            local months = math.floor((age % 365) / 30)
-            unexpected:notify("who",
-                "name: " .. p.Name ..
-                "\nuserid: " .. p.UserId ..
-                "\naccount age: " .. years .. "y " .. months .. "m"
-            )
-            return
-        end
-    end
-    unexpected:notify("who", "Player not found: " .. name)
+	if not name then return unexpected:notify("who", "Usage: who [player]") end
+	for _, p in ipairs(PLRS:GetPlayers()) do
+		if p.Name:lower() == name:lower() or p.DisplayName:lower() == name:lower() then
+			local age = p.AccountAge
+			local years = math.floor(age / 365)
+			local months = math.floor((age % 365) / 30)
+			unexpected:notify("who",
+				"name: " .. p.Name ..
+				"\nuserid: " .. p.UserId ..
+				"\naccount age: " .. years .. "y " .. months .. "m"
+			)
+			return
+		end
+	end
+	unexpected:notify("who", "Player not found: " .. name)
 end, nil, {"player"})
 
 unexpected:addcmd("reset", "Resets your character", function()
-    CHAR:BreakJoints()
+	CHAR:BreakJoints()
 end)
 
 unexpected:addcmd("clearhats", "Removes all hats", function()
-    for _, item in ipairs(CHAR:GetChildren()) do
-        if item:IsA("Accessory") then
-            item:Destroy()
-        end
-    end
+	for _, item in ipairs(CHAR:GetChildren()) do
+		if item:IsA("Accessory") then item:Destroy() end
+	end
 end)
 
 unexpected:addcmd("pos", "Prints your position", function()
-    unexpected:notify("position", tostring(HRP.Position))
+	unexpected:notify("position", tostring(HRP.Position))
 end)
 
 unexpected:addcmd("gameid", "Copy Place ID to clipboard", function()
-    setclipboard(tostring(game.PlaceId))
-    unexpected:notify("gameid", tostring(game.PlaceId))
+	setclipboard(tostring(game.PlaceId))
+	unexpected:notify("gameid", tostring(game.PlaceId))
 end)
 
 unexpected:addcmd("playercount", "Show player count", function()
-    local players = PLRS:GetPlayers()
-    unexpected:notify("playercount", #players .. "/" .. PLRS.MaxPlayers)
+	local players = PLRS:GetPlayers()
+	unexpected:notify("playercount", #players .. "/" .. PLRS.MaxPlayers)
 end)
 
 unexpected:addcmd("copyname", "Copy a player's username to clipboard", function(name)
-    if not name then return unexpected:notify("copyname", "Usage: copyname [player]") end
-    for _, p in ipairs(PLRS:GetPlayers()) do
-        if p.Name:lower() == name:lower() or p.DisplayName:lower() == name:lower() then
-            setclipboard(p.Name)
-            unexpected:notify("copyname", "Copied: " .. p.Name)
-            return
-        end
-    end
-    unexpected:notify("copyname", "Player not found: " .. name)
+	if not name then return unexpected:notify("copyname", "Usage: copyname [player]") end
+	for _, p in ipairs(PLRS:GetPlayers()) do
+		if p.Name:lower() == name:lower() or p.DisplayName:lower() == name:lower() then
+			setclipboard(p.Name)
+			unexpected:notify("copyname", "Copied: " .. p.Name)
+			return
+		end
+	end
+	unexpected:notify("copyname", "Player not found: " .. name)
 end, nil, {"player"})
 
 local spectating = false
 local spectateConn = nil
 unexpected:addcmd("spectate", "Spectate a player", function(name)
-    if not name then return unexpected:notify("spectate", "Usage: spectate [player]") end
-    for _, p in ipairs(PLRS:GetPlayers()) do
-        if p.Name:lower() == name:lower() or p.DisplayName:lower() == name:lower() then
-            local hrp = p.Character and p.Character:FindFirstChild("HumanoidRootPart")
-            if not hrp then return unexpected:notify("spectate", p.Name .. " has no character.") end
-            spectating = true
-            if spectateConn then spectateConn:Disconnect() end
-            CAM.CameraType = Enum.CameraType.Scriptable
-            spectateConn = RS.Heartbeat:Connect(function()
-                if not spectating then return end
-                local char = p.Character
-                local root = char and char:FindFirstChild("HumanoidRootPart")
-                if root then
-                    CAM.CFrame = CFrame.new(root.Position + Vector3.new(0, 5, 10), root.Position)
-                end
-            end)
-            unexpected:notify("spectate", "Spectating: " .. p.Name)
-            return
-        end
-    end
-    unexpected:notify("spectate", "Player not found: " .. name)
+	if not name then return unexpected:notify("spectate", "Usage: spectate [player]") end
+	for _, p in ipairs(PLRS:GetPlayers()) do
+		if p.Name:lower() == name:lower() or p.DisplayName:lower() == name:lower() then
+			local hrp = p.Character and p.Character:FindFirstChild("HumanoidRootPart")
+			if not hrp then return unexpected:notify("spectate", p.Name .. " has no character.") end
+			spectating = true
+			if spectateConn then spectateConn:Disconnect() end
+			CAM.CameraType = Enum.CameraType.Scriptable
+			spectateConn = RS.Heartbeat:Connect(function()
+				if not spectating then return end
+				local char = p.Character
+				local root = char and char:FindFirstChild("HumanoidRootPart")
+				if root then
+					CAM.CFrame = CFrame.new(root.Position + Vector3.new(0, 5, 10), root.Position)
+				end
+			end)
+			unexpected:notify("spectate", "Spectating: " .. p.Name)
+			return
+		end
+	end
+	unexpected:notify("spectate", "Player not found: " .. name)
 end, {"spec"}, {"player"})
 
 unexpected:addcmd("unspectate", "Stop spectating", function()
-    spectating = false
-    if spectateConn then spectateConn:Disconnect() spectateConn = nil end
-    CAM.CameraType = Enum.CameraType.Custom
-    CAM.CameraSubject = HUM
-    unexpected:notify("spectate", "Stopped.")
+	spectating = false
+	if spectateConn then spectateConn:Disconnect() spectateConn = nil end
+	CAM.CameraType = Enum.CameraType.Custom
+	CAM.CameraSubject = HUM
+	unexpected:notify("spectate", "Stopped.")
 end, {"unspec"}, nil)
 
 unexpected:addcmd("platformstand", "Toggles PlatformStand", function()
-    HUM.PlatformStand = not HUM.PlatformStand
+	HUM.PlatformStand = not HUM.PlatformStand
 end)
 
 unexpected:addcmd("resetcam", "Resets the camera to your character", function()
-    WS.CurrentCamera.CameraSubject = HUM
+	WS.CurrentCamera.CameraSubject = HUM
 end)
 
 unexpected:addcmd("flip", "Flips your character upside down", function()
-    if HRP then
-        HRP.CFrame = HRP.CFrame * CFrame.Angles(math.pi, 0, 0)
-    end
+	if HRP then
+		HRP.CFrame = HRP.CFrame * CFrame.Angles(math.pi, 0, 0)
+	end
 end)
 
 unexpected:addcmd("glide", "Enable glide mode", function()
-    HUM.JumpPower = 0
-    HUM.AutoRotate = false
-    local sv = Instance.new("BodyVelocity")
-    sv.Name = "GlideVelocity"
-    sv.MaxForce = Vector3.new(0, math.huge, 0)
-    sv.Velocity = Vector3.new(0, -10, 0)
-    sv.Parent = HRP
+	HUM.JumpPower = 0
+	HUM.AutoRotate = false
+	local sv = Instance.new("BodyVelocity")
+	sv.Name = "GlideVelocity"
+	sv.MaxForce = Vector3.new(0, math.huge, 0)
+	sv.Velocity = Vector3.new(0, -10, 0)
+	sv.Parent = HRP
 end)
 
 unexpected:addcmd("unglide", "Disable glide mode", function()
-    local glide = HRP:FindFirstChild("GlideVelocity")
-    if glide then glide:Destroy() end
-    HUM.JumpPower = 50
-    HUM.AutoRotate = true
+	local glide = HRP:FindFirstChild("GlideVelocity")
+	if glide then glide:Destroy() end
+	HUM.JumpPower = 50
+	HUM.AutoRotate = true
 end)
 
 unexpected:addcmd("iceslide", "Slide around with low friction", function()
-    for _, part in ipairs(CHAR:GetDescendants()) do
-        if part:IsA("BasePart") then
-            part.CustomPhysicalProperties = PhysicalProperties.new(0.1, 0.3, 0.5)
-        end
-    end
+	for _, part in ipairs(CHAR:GetDescendants()) do
+		if part:IsA("BasePart") then
+			part.CustomPhysicalProperties = PhysicalProperties.new(0.1, 0.3, 0.5)
+		end
+	end
 end)
 
 unexpected:addcmd("uniceslide", "Restore normal walking friction", function()
-    for _, part in ipairs(CHAR:GetDescendants()) do
-        if part:IsA("BasePart") then
-            part.CustomPhysicalProperties = PhysicalProperties.new(0.7, 0.3, 0.5)
-        end
-    end
+	for _, part in ipairs(CHAR:GetDescendants()) do
+		if part:IsA("BasePart") then
+			part.CustomPhysicalProperties = PhysicalProperties.new(0.7, 0.3, 0.5)
+		end
+	end
 end)
 
 unexpected:addcmd("walkspeed", "Set your walkspeed", function(speed)
-    HUM.WalkSpeed = tonumber(speed) or 16
+	HUM.WalkSpeed = tonumber(speed) or 16
 end, nil, {"speed"})
 
 unexpected:addcmd("jumppower", "Set your jumppower", function(power)
-    HUM.JumpPower = tonumber(power) or 50
+	HUM.JumpPower = tonumber(power) or 50
 end, nil, {"power"})
 
 unexpected:addcmd("sit", "Force sit", function()
-    HUM.Sit = true
+	HUM.Sit = true
 end)
 
 unexpected:addcmd("stand", "Force stand", function()
-    HUM.Sit = false
-    HUM:ChangeState(Enum.HumanoidStateType.GettingUp)
+	HUM.Sit = false
+	HUM:ChangeState(Enum.HumanoidStateType.GettingUp)
 end, {"unsit"}, nil)
 
 local spinning, spinConnection = false, nil
 unexpected:addcmd("spin", "Spin your character", function(speed)
-    speed = tonumber(speed) or 5
-    if spinning and spinConnection then return end
-    spinning = true
-    spinConnection = RS.Heartbeat:Connect(function()
-        if HRP then
-            HRP.CFrame = HRP.CFrame * CFrame.Angles(0, math.rad(speed), 0)
-        end
-    end)
-    task.delay(10, function()
-        if spinning and spinConnection then
-            spinConnection:Disconnect()
-            spinConnection = nil
-            spinning = false
-        end
-    end)
+	speed = tonumber(speed) or 5
+	if spinning and spinConnection then return end
+	spinning = true
+	spinConnection = RS.Heartbeat:Connect(function()
+		if HRP then
+			HRP.CFrame = HRP.CFrame * CFrame.Angles(0, math.rad(speed), 0)
+		end
+	end)
+	task.delay(10, function()
+		if spinning and spinConnection then
+			spinConnection:Disconnect()
+			spinConnection = nil
+			spinning = false
+		end
+	end)
 end, nil, {"speed"})
 
 unexpected:addcmd("unspin", "Stop spinning your character", function()
-    if spinConnection then
-        spinConnection:Disconnect()
-        spinConnection = nil
-    end
-    spinning = false
+	if spinConnection then
+		spinConnection:Disconnect()
+		spinConnection = nil
+	end
+	spinning = false
 end)
 
 unexpected:addcmd("stun", "Freezes your character (PlatformStand)", function()
-    HUM.PlatformStand = true
+	HUM.PlatformStand = true
 end)
 
 unexpected:addcmd("unstun", "Remove fake stun", function()
-    HUM.PlatformStand = false
+	HUM.PlatformStand = false
 end)
 
 unexpected:addcmd("jump", "Forces local jump", function()
-    HUM:ChangeState(Enum.HumanoidStateType.Jumping)
+	HUM:ChangeState(Enum.HumanoidStateType.Jumping)
 end)
 
 unexpected:addcmd("state", "Set HumanoidState", function(args)
-    local input = args[1]
-    if not input then return end
-    input = input:upper()
-    for _, state in ipairs(Enum.HumanoidStateType:GetEnumItems()) do
-        if state.Name:upper() == input then
-            HUM:ChangeState(state)
-            return
-        end
-    end
+	local input = args[1]
+	if not input then return end
+	input = input:upper()
+	for _, state in ipairs(Enum.HumanoidStateType:GetEnumItems()) do
+		if state.Name:upper() == input then
+			HUM:ChangeState(state)
+			return
+		end
+	end
 end)
 
 unexpected:addcmd("[CLIENT] freeze", "Freeze character", function()
-    for _, p in ipairs(CHAR:GetChildren()) do
-        if p:IsA("BasePart") then
-            p.Anchored = true
-        end
-    end
+	for _, p in ipairs(CHAR:GetChildren()) do
+		if p:IsA("BasePart") then p.Anchored = true end
+	end
 end)
 
 unexpected:addcmd("[CLIENT] unfreeze", "Unfreeze your character", function()
-    for _, p in ipairs(CHAR:GetChildren()) do
-        if p:IsA("BasePart") then
-            p.Anchored = false
-        end
-    end
+	for _, p in ipairs(CHAR:GetChildren()) do
+		if p:IsA("BasePart") then p.Anchored = false end
+	end
 end)
 
-unexpected:addcmd("print", "Prints all arguments", function(...) 
-    print(...) 
+unexpected:addcmd("print", "Prints all arguments", function(...)
+	print(...)
 end, {"echo", "say"}, {"..."})
 
-unexpected:addcmd("notify", "Notify all arguments", function(...) 
-    unexpected:notify("unexpected", ...)
+unexpected:addcmd("notify", "Notify all arguments", function(...)
+	unexpected:notify("unexpected", ...)
 end, nil, {"..."})
 
 unexpected:addcmd("cmds", "Shows commands", function()
 	if not MENUON then
 		MENUON = true
 		MENUFRAME.Size, MENUFRAME.Visible = UDim2.new(0, 339, 0, 0), true
-		playTween(unexpected_UI["PILL"], {Size = UDim2.new(0, 339, 0, 71)}, 0.25, Enum.EasingStyle.Quint):Play()
+		playTween(unexpected_UI["PILL"], { Size = UDim2.new(0, 339, 0, 71) }, 0.25, Enum.EasingStyle.Quint):Play()
 		local NS = UDim2.new(0, 230, 0, 54)
-		playTween(CLI, {Size = NS}, 0.25, Enum.EasingStyle.Quint):Play()
-		playTween(unexpected_UI["PREDICTOR"], {Size = NS}, 0.25, Enum.EasingStyle.Quint):Play()
-		playTween(MENUFRAME, {Size = UDim2.new(0, 339, 0, 348)}, 0.25, Enum.EasingStyle.Quint):Play()
+		playTween(CLI, { Size = NS }, 0.25, Enum.EasingStyle.Quint):Play()
+		playTween(unexpected_UI["PREDICTOR"], { Size = NS }, 0.25, Enum.EasingStyle.Quint):Play()
+		playTween(MENUFRAME, { Size = UDim2.new(0, 339, 0, 348) }, 0.25, Enum.EasingStyle.Quint):Play()
 		buttonTP(MENU, 0)
 		task.delay(0.3, function()
-			openMenuFrame(MENUFRAMES.command, function()
-			showcmdList()
+			openMenuFrame(MENUFRAMES.command, function() showcmdList() end)
 		end)
-end)
 	else
-		openMenuFrame(MENUFRAMES.command, function()
-			showcmdList()
-		end)
+		openMenuFrame(MENUFRAMES.command, function() showcmdList() end)
 	end
 end)
 
 unexpected:addcmd("rejoin", "Rejoins the current server", function()
-    TPS:Teleport(game.PlaceId, LP)
+	TPS:Teleport(game.PlaceId, LP)
 end)
 
 unexpected:addcmd("keepUX", "Keep 'unexpected' running even on rejoin", function(state)
@@ -2509,12 +2576,10 @@ local flying, flyConnA, flyConnB = false, nil, nil
 unexpected:addcmd("fly", "Enable flying", function(spd)
 	if flying then return unexpected:notify("flying", "Unfly first before changing speed") end
 	spd, flying = tonumber(spd) or 3, true
-
 	HUM.PlatformStand = true
 	bv, bg = Instance.new("BodyVelocity", HRP), Instance.new("BodyGyro", HRP)
 	bv.MaxForce, bg.MaxTorque, bg.P = Vector3.one * 1e6, Vector3.one * 1e6, 1e4
-
-	local input = {w = 0, s = 0, a = 0, d = 0, up = 0, down = 0}
+	local input = { w = 0, s = 0, a = 0, d = 0, up = 0, down = 0 }
 	if MOBILE then
 		HUM.StateChanged:Connect(function(_, state)
 			if state == Enum.HumanoidStateType.Jumping then
@@ -2531,7 +2596,6 @@ unexpected:addcmd("fly", "Enable flying", function(spd)
 		flyConnA = UIS.InputBegan:Connect(function(i, g) if not g then set(i.KeyCode, 1) end end)
 		flyConnB = UIS.InputEnded:Connect(function(i) set(i.KeyCode, 0) end)
 	end
-
 	task.spawn(function()
 		while flying and HRP and CAM do
 			task.wait()
@@ -2577,49 +2641,51 @@ unexpected:addcmd("antifling", "Stops flings via velocity detection", function()
 end)
 
 unexpected:addcmd("unantifling", "Disables fling protection", function()
-    if afConn then afConn:Disconnect() afConn = nil end
+	if afConn then afConn:Disconnect() afConn = nil end
 end)
 
 unexpected:addcmd("antiafk", "Never get kicked", function()
-    LP.Idled:Connect(function()
-        VU:ClickButton2(Vector2.new())
-    end)
+	LP.Idled:Connect(function()
+		VU:ClickButton2(Vector2.new())
+	end)
 end)
 
 unexpected:addcmd("execute", "Execute code", function(...)
-    loadstring(...)()
+	loadstring(...)()
 end, nil, {...})
 
 unexpected:addcmd("execmd", "Execute command", function(cmdName, ...)
-    execmd(cmdName, ...)
+	execmd(cmdName, ...)
 end, nil, {"command", ...})
 
---#locales
 hookEvents()
+hookBinds()
 UX_rconfig()
+
 task.delay(1, function()
-    CONFIG.Autoruns = CONFIG.Autoruns or {}
-    for _, full in ipairs(CONFIG.Autoruns) do
-        local cmdName, argsText = string.match(full, "^(%S+)%s*(.*)$")
-        if cmdName then
-            local cmd = commandListData[string.lower(cmdName)]
-            if cmd then
-                local args = {}
-                for arg in string.gmatch(argsText, "%S+") do table.insert(args, arg) end
-                pcall(cmd.Execute, table.unpack(args))
-            else
-                unexpected:notify("autorun", "Unknown cmd: " .. cmdName)
-            end
-        end
-    end
+	CONFIG.Autoruns = CONFIG.Autoruns or {}
+	for _, full in ipairs(CONFIG.Autoruns) do
+		local cmdName, argsText = string.match(full, "^(%S+)%s*(.*)$")
+		if cmdName then
+			local cmd = commandListData[string.lower(cmdName)]
+			if cmd then
+				local args = {}
+				for arg in string.gmatch(argsText, "%S+") do table.insert(args, arg) end
+				pcall(cmd.Execute, table.unpack(args))
+			else
+				unexpected:notify("autorun", "Unknown cmd: " .. cmdName)
+			end
+		end
+	end
 end)
+
 showPILL()
 
 if MOBILE then
-    SHS(true)
-    unexpected_UI["PILL"].Size = UDim2.fromOffset(339, 71)
-    unexpected_UI["CLI"].Size = UDim2.fromOffset(230, 54)
-    unexpected_UI["MENU"].ImageTransparency = 0
+	SHS(true)
+	unexpected_UI["PILL"].Size = UDim2.fromOffset(339, 71)
+	unexpected_UI["CLI"].Size = UDim2.fromOffset(230, 54)
+	unexpected_UI["MENU"].ImageTransparency = 0
 end
 
 local tpCHECK = false
@@ -2631,13 +2697,12 @@ LP.OnTeleport:Connect(function()
 end)
 
 task.spawn(function()
-    local ok, d = pcall(function() return HS:JSONDecode(game:HttpGet("https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/version")) end)
-    if not (ok and type(d) == "table") then return end
-    if d.version ~= currentVersion then
-        unexpected:notify("unexpected", "You are using an old version (current: " .. currentVersion .. ", latest: " .. d.version .. ")")
-    end
-    if d.shout ~= "" then
-        unexpected:notify("unexpected", d.shout)
-    end
+	local ok, d = pcall(function() return HS:JSONDecode(game:HttpGet("https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/version")) end)
+	if not (ok and type(d) == "table") then return end
+	if d.version ~= currentVersion then
+		unexpected:notify("unexpected", "You are using an old version (current: " .. currentVersion .. ", latest: " .. d.version .. ")")
+	end
+	if d.shout ~= "" then
+		unexpected:notify("unexpected", d.shout)
+	end
 end)
---#localesEnd
