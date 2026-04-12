@@ -37,7 +37,7 @@ LP.CharacterAdded:Connect(SETUPCHAR)
 
 local uxassets = {
 	["unexpected_assets/menu.png"] = "rbxassetid://10734887784",
-	["unexpected_assets/back.png"]  = "rbxassetid://10709812784",
+	["unexpected_assets/back.png"] = "rbxassetid://10709812784"
 }
 
 if makefolder and isfolder and writefile and isfile then pcall(function()
