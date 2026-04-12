@@ -179,7 +179,7 @@ unexpected_UI.MENUFRAME = mk("Frame", unexpected_UI.PILL, {
 	Visible = false,
 })
 CREATE_CORNER(unexpected_UI.MENUFRAME, 0.1, 0)
-CREATE_STROKE(unexpected_UI.MENUFRAME, FQ.COLORS.STROKE);
+CREATE_STROKE(unexpected_UI.MENUFRAME, FQ.COLORS.STROKE)
 
 unexpected_UI.LABEL = mk("TextLabel", unexpected_UI.MENUFRAME, {
 	TextWrapped = true,
@@ -197,35 +197,96 @@ unexpected_UI.LABEL = mk("TextLabel", unexpected_UI.MENUFRAME, {
 	Position = UDim2.new(0.0885,0,0.07471,0),
 })
 
-unexpected_UI.CMDS_BUTTON = mk("TextButton", unexpected_UI.MENUFRAME, {
+
+unexpected_UI.MENU_SCROLL = mk("ScrollingFrame", unexpected_UI.MENUFRAME, {
+	Name = "MenuScroll",
+	BackgroundTransparency = 1,
+	BorderSizePixel = 0,
+	Size = UDim2.new(0, 300, 0, 230),
+	Position = UDim2.new(0, 19, 0, 77),
+	CanvasSize = UDim2.new(0, 0, 0, 0),
+	AutomaticCanvasSize = Enum.AutomaticSize.Y,
+	ScrollBarThickness = 1,
+	ScrollBarImageColor3 = FQ.COLORS.ACCENT,
+	ClipsDescendants = true,
+})
+
+mk("UIListLayout", unexpected_UI.MENU_SCROLL, {
+	SortOrder = Enum.SortOrder.LayoutOrder,
+	Padding = UDim.new(0, 8),
+	FillDirection = Enum.FillDirection.Vertical,
+	HorizontalAlignment = Enum.HorizontalAlignment.Center,
+	VerticalAlignment = Enum.VerticalAlignment.Top,
+})
+
+mk("UIPadding", unexpected_UI.MENU_SCROLL, {
+	PaddingTop = UDim.new(0, 1),
+	PaddingBottom = UDim.new(0,1)
+})
+
+unexpected_UI.CMDS_BUTTON = mk("TextButton", unexpected_UI.MENU_SCROLL, {
 	BorderSizePixel = 0,
 	TextSize = 18,
 	TextColor3 = FQ.COLORS.TEXT_MAIN,
 	BackgroundColor3 = FQ.COLORS.BACKGROUND,
 	FontFace = FQ.FONTS.REGULAR,
-	Size = UDim2.new(0,278,0,51),
+	Size = UDim2.new(0, 278, 0, 51),
 	BorderColor3 = FQ.COLORS.BACKGROUND,
 	Text = "commands",
 	Name = "cmdsButton",
 	Visible = true,
-	Position = UDim2.new(0.0885,0,0.17241,0),
+	LayoutOrder = 1,
 })
 CREATE_CORNER(unexpected_UI.CMDS_BUTTON, 0.3, 0)
 CREATE_STROKE(unexpected_UI.CMDS_BUTTON, FQ.COLORS.STROKE)
 
-unexpected_UI.DISCORD = mk("TextButton", unexpected_UI.MENUFRAME, {
+unexpected_UI.AUTORUNS_BUTTON = mk("TextButton", unexpected_UI.MENU_SCROLL, {
 	BorderSizePixel = 0,
 	TextSize = 18,
 	TextColor3 = FQ.COLORS.TEXT_MAIN,
 	BackgroundColor3 = FQ.COLORS.BACKGROUND,
 	FontFace = FQ.FONTS.REGULAR,
-	Size = UDim2.new(0,278,0,51),
+	Size = UDim2.new(0, 278, 0, 51),
+	BorderColor3 = FQ.COLORS.BACKGROUND,
+	Text = "autoruns",
+	Name = "autorunsButton",
+	Visible = true,
+	LayoutOrder = 2,
+})
+CREATE_CORNER(unexpected_UI.AUTORUNS_BUTTON, 0.3, 0)
+CREATE_STROKE(unexpected_UI.AUTORUNS_BUTTON, FQ.COLORS.STROKE)
+
+unexpected_UI.EVENTS_BUTTON = mk("TextButton", unexpected_UI.MENU_SCROLL, {
+	BorderSizePixel = 0,
+	TextSize = 18,
+	TextColor3 = FQ.COLORS.TEXT_MAIN,
+	BackgroundColor3 = FQ.COLORS.BACKGROUND,
+	FontFace = FQ.FONTS.REGULAR,
+	Size = UDim2.new(0, 278, 0, 51),
+	BorderColor3 = FQ.COLORS.BACKGROUND,
+	Text = "events",
+	Name = "eventsButton",
+	Visible = true,
+	LayoutOrder = 3,
+})
+CREATE_CORNER(unexpected_UI.EVENTS_BUTTON, 0.3, 0)
+CREATE_STROKE(unexpected_UI.EVENTS_BUTTON, FQ.COLORS.STROKE)
+
+unexpected_UI.DISCORD = mk("TextButton", unexpected_UI.MENU_SCROLL, {
+	BorderSizePixel = 0,
+	TextSize = 18,
+	TextColor3 = FQ.COLORS.TEXT_MAIN,
+	BackgroundColor3 = FQ.COLORS.BACKGROUND,
+	FontFace = FQ.FONTS.REGULAR,
+	Size = UDim2.new(0, 278, 0, 51),
 	BorderColor3 = FQ.COLORS.BACKGROUND,
 	Text = "discord",
 	Name = "discordButton",
 	Visible = true,
-	Position = UDim2.new(0.0885,0,0.735,0),
+	LayoutOrder = 4,
 })
+CREATE_CORNER(unexpected_UI.DISCORD, 0.3, 0)
+CREATE_STROKE(unexpected_UI.DISCORD, FQ.COLORS.STROKE)
 
 unexpected_UI.DISCORD.MouseButton1Click:Connect(function()
 	setclipboard("https://discord.gg/J73SnGB2y2")
@@ -245,8 +306,6 @@ unexpected_UI.DISCORD.MouseButton1Click:Connect(function()
 		})
 	end
 end)
-CREATE_CORNER(unexpected_UI.DISCORD, 0.3, 0)
-CREATE_STROKE(unexpected_UI.DISCORD, FQ.COLORS.STROKE)
 
 unexpected_UI.CMDFRAME = mk("Frame", unexpected_UI.MENUFRAME, {
 	BorderSizePixel = 0,
@@ -298,22 +357,6 @@ unexpected_UI.CMDBACK = mk("ImageButton", unexpected_UI.CMDFRAME, {
 	Position = UDim2.new(0.0885,0,0.82759,0),
 })
 CREATE_ASPECT(unexpected_UI.CMDBACK)
-
-unexpected_UI.AUTORUNS_BUTTON = mk("TextButton", unexpected_UI.MENUFRAME, {
-	BorderSizePixel = 0,
-	TextSize = 18,
-	TextColor3 = FQ.COLORS.TEXT_MAIN,
-	BackgroundColor3 = FQ.COLORS.BACKGROUND,
-	FontFace = FQ.FONTS.REGULAR,
-	Size = UDim2.new(0,278,0,51),
-	BorderColor3 = FQ.COLORS.BACKGROUND,
-	Text = "autoruns",
-	Name = "autorunsButton",
-	Visible = true,
-	Position = UDim2.new(0.0885,0,0.35991,0),
-})
-CREATE_CORNER(unexpected_UI.AUTORUNS_BUTTON, 0.3, 0)
-CREATE_STROKE(unexpected_UI.AUTORUNS_BUTTON, FQ.COLORS.STROKE)
 
 unexpected_UI.ARFRAME = mk("Frame", unexpected_UI.MENUFRAME, {
 	BorderSizePixel = 0,
@@ -368,22 +411,6 @@ unexpected_UI.ARBACK = mk("ImageButton", unexpected_UI.ARFRAME, {
 	Position = UDim2.new(0.0885,0,0.82759,0),
 })
 CREATE_ASPECT(unexpected_UI.ARBACK)
-
-unexpected_UI.EVENTS_BUTTON = mk("TextButton", unexpected_UI.MENUFRAME, {
-	BorderSizePixel = 0,
-	TextSize = 18,
-	TextColor3 = FQ.COLORS.TEXT_MAIN,
-	BackgroundColor3 = FQ.COLORS.BACKGROUND,
-	FontFace = FQ.FONTS.REGULAR,
-	Size = UDim2.new(0,278,0,51),
-	BorderColor3 = FQ.COLORS.BACKGROUND,
-	Text = "events",
-	Name = "eventsButton",
-	Visible = true,
-	Position = UDim2.new(0.0885,0,0.54741,0),
-})
-CREATE_CORNER(unexpected_UI.EVENTS_BUTTON, 0.3, 0)
-CREATE_STROKE(unexpected_UI.EVENTS_BUTTON, FQ.COLORS.STROKE)
 
 unexpected_UI.EVFRAME = mk("Frame", unexpected_UI.MENUFRAME, {
 	BorderSizePixel = 0,
@@ -955,7 +982,7 @@ local indicator = mk("ImageButton", unexpected_UI.PILL.Parent, {
 	BorderSizePixel = 0,
 })
 CREATE_CORNER(indicator, 1, 0)
---#importesEnd
+--#importsEnd
 
 --#initiliaze
 unexpected_UI["PILL"].AnchorPoint = Vector2.new(0.5, 0.5)
@@ -973,10 +1000,10 @@ local MENUFRAMES = {
 	event = MENUFRAME:WaitForChild("eventFrame"),
 }
 local MENUS = {
-	MENUFRAME:WaitForChild("cmdsButton"),
-	MENUFRAME:WaitForChild("discordButton"),
-	MENUFRAME:WaitForChild("autorunsButton"),
-	MENUFRAME:WaitForChild("eventsButton"),
+	unexpected_UI.MENU_SCROLL:WaitForChild("cmdsButton"),
+	unexpected_UI.MENU_SCROLL:WaitForChild("discordButton"),
+	unexpected_UI.MENU_SCROLL:WaitForChild("autorunsButton"),
+	unexpected_UI.MENU_SCROLL:WaitForChild("eventsButton"),
 }
 
 --#fadesHandler
@@ -1012,7 +1039,6 @@ local function fadeOut(frame)
 end
 
 local function openMenuFrame(frame, onOpen)
-	-- fadeout any currently visible subframe first
 	for name, f in pairs(MENUFRAMES) do
 		if f.Visible and f ~= frame then
 			fadeOut(f)
@@ -1081,25 +1107,6 @@ local function clearARList()
 	unexpected_UI.ARBTNLIST.CanvasSize = UDim2.new(0,0,0,0)
 end
 
-
-unexpected_UI.ARBACK.MouseButton1Click:Connect(function()
-	fadeOut(MENUFRAMES.autorun)
-	clearARList()
-	task.delay(0.1, function() for _, b in ipairs(MENUS) do b.Visible = true end end)
-end)
-
-do
-	local arToken = 0
-	unexpected_UI.ARSEARCHBAR:GetPropertyChangedSignal("Text"):Connect(function()
-		arToken = arToken + 1
-		local my = arToken
-		local txt = unexpected_UI.ARSEARCHBAR.Text
-		task.delay(0.12, function()
-			if my == arToken then showARList(txt) end
-		end)
-	end)
-end
-
 local function showARList(filter)
 	clearARList()
 	filter = string.lower(filter or "")
@@ -1124,6 +1131,24 @@ local function showARList(filter)
 		end
 	end
 	unexpected_UI.ARBTNLIST.CanvasSize = UDim2.new(0,0,0,index * 32)
+end
+
+unexpected_UI.ARBACK.MouseButton1Click:Connect(function()
+	fadeOut(MENUFRAMES.autorun)
+	clearARList()
+	task.delay(0.1, function() for _, b in ipairs(MENUS) do b.Visible = true end end)
+end)
+
+do
+	local arToken = 0
+	unexpected_UI.ARSEARCHBAR:GetPropertyChangedSignal("Text"):Connect(function()
+		arToken = arToken + 1
+		local my = arToken
+		local txt = unexpected_UI.ARSEARCHBAR.Text
+		task.delay(0.12, function()
+			if my == arToken then showARList(txt) end
+		end)
+	end)
 end
 
 local evButtonCache = {}
@@ -1251,44 +1276,12 @@ unexpected_UI.AUTORUNS_BUTTON.MouseButton1Click:Connect(function()
 		showARList("")
 	end)
 end)
+
 MENUFRAMES.command:WaitForChild("commandBack").MouseButton1Click:Connect(function()
     fadeOut(MENUFRAMES.command)
     clearcmdList()
     task.delay(0.1, function() for _, b in ipairs(MENUS) do b.Visible = true end end)
 end)
-
-local arButtonCache = {}
-local arBtnExample = mk("TextButton", nil, {
-	BorderSizePixel = 0,
-	TextXAlignment = Enum.TextXAlignment.Left,
-	TextSize = 18,
-	TextColor3 = FQ.COLORS.TEXT_MAIN,
-	BackgroundColor3 = FQ.COLORS.BACKGROUND,
-	FontFace = FQ.FONTS.REGULAR,
-	Size = UDim2.new(0,278,0,33),
-	BorderColor3 = FQ.COLORS.BACKGROUND,
-	Text = "",
-	Name = "autorunEntry",
-	Visible = false,
-})
-
-unexpected_UI.ARBACK.MouseButton1Click:Connect(function()
-	fadeOut(MENUFRAMES.autorun)
-	clearARList()
-	task.delay(0.1, function() for _, b in ipairs(MENUS) do b.Visible = true end end)
-end)
-
-do
-	local arToken = 0
-	unexpected_UI.ARSEARCHBAR:GetPropertyChangedSignal("Text"):Connect(function()
-		arToken = arToken + 1
-		local my = arToken
-		local txt = unexpected_UI.ARSEARCHBAR.Text
-		task.delay(0.12, function()
-			if my == arToken then showARList(txt) end
-		end)
-	end)
-end
 
 local shrinkTween = nil
 local function hidePILL()
@@ -1456,6 +1449,7 @@ unexpected:addcmd("autorun", "Add a command to autorun on load", function(...)
     table.insert(CONFIG.Autoruns, full)
     UX_config()
     unexpected:notify("autorun", "Added: " .. full)
+    if MENUFRAMES.autorun.Visible then showARList(unexpected_UI.ARSEARCHBAR.Text) end
 end, nil, {"command", "..."})
 
 unexpected:addcmd("unautorun", "Remove an autorun command", function(...)
@@ -1659,7 +1653,8 @@ unexpected:addcmd("onevent", "Add an event trigger", function(event, ...)
 	table.insert(CONFIG.Events, {event = event:lower(), filter = filter, cmd = cmd})
 	UX_config()
 	hookEvents()
-	unexpected:notify("events", event:lower() .. (filter and (" [" .. filter .. "]") or "") .. " → " .. cmd)
+    unexpected:notify("events", event:lower() .. (filter and (" [" .. filter .. "]") or "") .. " → " .. cmd)
+    if MENUFRAMES.event.Visible then showEVList(unexpected_UI.EVSEARCHBAR.Text) end
 end, nil, {"event", "filter/cmd", "..."})
 
 unexpected:addcmd("unevent", "Remove an event trigger", function(event, ...)
@@ -1727,7 +1722,6 @@ unexpected:addcmd("discord", "Discord Server", function()
 		})
 	end
 end, nil, nil)
-
 
 unexpected:addcmd("unexspy", "Remote spy", function()
 	unexpected:notify("unexspy", "Deprecated.")
