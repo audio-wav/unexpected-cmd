@@ -168,39 +168,6 @@ unexpected_UI.PREDICTOR = mk("TextLabel", unexpected_UI.PILL, {
 	ClipsDescendants = true
 })
 
-local MAX_VISIBLE = 19
-local CHAR_WIDTH = 9
-local SCROLL_OFFSET = 0
-local cliPad = mk("UIPadding", unexpected_UI.CLI)
-local predPad = mk("UIPadding", unexpected_UI.PREDICTOR)
-
-local function updateTB()
-	local cursor = unexpected_UI.CLI.CursorPosition
-	if cursor < 0 then return end
-	local VIEW_WIDTH = MAX_VISIBLE * CHAR_WIDTH
-	local TARGET_X = (cursor - 1) * CHAR_WIDTH
-
-	if TARGET_X < SCROLL_OFFSET then
-		SCROLL_OFFSET = TARGET_X
-	elseif TARGET_X > SCROLL_OFFSET + VIEW_WIDTH then
-		SCROLL_OFFSET = TARGET_X - VIEW_WIDTH
-	end
-end
-
-local function applyTB()
-	local OFFSET = UDim.new(0, -SCROLL_OFFSET)
-	cliPad.PaddingLeft = OFFSET
-	predPad.PaddingLeft = OFFSET
-end
-
-local function refresh()
-	updateTB()
-	applyTB()
-end
-
-unexpected_UI.CLI:GetPropertyChangedSignal("Text"):Connect(refresh)
-unexpected_UI.CLI:GetPropertyChangedSignal("CursorPosition"):Connect(refresh)
-
 unexpected_UI.MENU = mk("ImageButton", unexpected_UI.PILL, {
 	BorderSizePixel = 0,
 	BackgroundTransparency = 1,
@@ -711,8 +678,8 @@ unexpected_UI["CLI"]:GetPropertyChangedSignal("Text"):Connect(function()
 				end
 			end
 			if bestMatch then
-				local beforeLast = string.match(argText, "^(.*%s)%S*$") or ""
-				suggestion = cmdName .. " " .. beforeLast .. bestMatch
+				local beforeLast = string.match(argText, "^(.-%s)%S*$") or ""
+				suggestion = cmdName .. " " .. beforeLast .. lastArg .. string.sub(bestMatch, #lastArg + 1) -- gg
 			end
 		end
 	end
@@ -955,6 +922,7 @@ local function SHS(hovered)
 	local cSize = hovered and 230 or 167
 	playTween(unexpected_UI["PILL"], { Size = UDim2.new(0, gSize, 0, 71) }, 0.25, Enum.EasingStyle.Quint):Play()
 	playTween(CLI, { Size = UDim2.new(0, cSize, 0, 54) }, 0.25, Enum.EasingStyle.Quint):Play()
+	playTween(unexpected_UI["PREDICTOR"], { Size = UDim2.new(0, cSize, 0, 54)}, 0.25, Enum.EasingStyle.Quint):Play() -- WHY DID I NOT ADD THIS IVE BEEN FIXING THIS SHIT FOR SO LONG
 	buttonTP(MENU, hovered and 0 or 1)
 end
 
