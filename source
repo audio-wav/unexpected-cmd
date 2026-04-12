@@ -1,9 +1,8 @@
 if unexpected_LOAD then return end
 pcall(function() getgenv().unexpected_LOAD = true end)
 
-function missing(t, f, fallback)
-    if type(f) == t then return f end
-    return fallback
+local function missing(t, f, fallback) 
+	return type(f) == t and f or fallback 
 end
 
 --#core
@@ -114,15 +113,14 @@ end
 local unexpected_UI = {};
 local currentVersion = "v1.0"
 local function randomString(length, charset)
-	length = length or math.random(10, 20)
-	charset = charset or "abcdefghijklmnopqRStuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	local chars = {}
-	local charsetLength = #charset
-	for i = 1, length do
-		local rand = math.random(1, charsetLength)
-		chars[i] = charset:sub(rand, rand)
-	end
-	return table.concat(chars)
+    length = length or math.random(10, 20)
+    charset = charset or "abcdefghijklmnopqRStuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    local chars = {}
+    for i = 1, length do
+        local r = math.random(#charset)
+        chars[i] = charset:sub(r, r)
+    end
+    return table.concat(chars)
 end
 
 unexpected_UI.UI = mk("ScreenGui", gethui() or COREGUI, {Name = randomString()})
