@@ -2028,7 +2028,7 @@ unexpected:addcmd("unplugin", "Remove a plugin", function(NAME)
 	end
 end, nil, {"name"})
 
-unexpected:addcmd("bind", "Bind a key to run a command. Use []toggle=true] for toggle mode", function(key, ...)
+unexpected:addcmd("bind", "Bind a key to run a command. Use [toggle=true] for toggle mode", function(key, ...)
 	if not key or key == "" then
 		return unexpected:notify("bind", "Usage: bind [key] [command] [args] [toggle=true/false]")
 	end
