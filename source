@@ -111,7 +111,7 @@ local function CREATE_ASPECT(PARENT, RATIO)
 end
 
 local unexpected_UI = {};
-local currentVersion = "v1.0"
+local currentVersion = "v1.1"
 local function randomString(length, charset)
     length = length or math.random(10, 20)
     charset = charset or "abcdefghijklmnopqRStuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -322,6 +322,22 @@ unexpected_UI.DISCORD = mk("TextButton", unexpected_UI.MENU_SCROLL, {
 })
 CREATE_CORNER(unexpected_UI.DISCORD, 0.3, 0)
 CREATE_STROKE(unexpected_UI.DISCORD, FQ.COLORS.STROKE)
+
+unexpected_UI.SETTINGS_BUTTON = mk("TextButton", unexpected_UI.MENU_SCROLL, {
+	BorderSizePixel = 0,
+	TextSize = 18,
+	TextColor3 = FQ.COLORS.TEXT_MAIN,
+	BackgroundColor3 = FQ.COLORS.BACKGROUND,
+	FontFace = FQ.FONTS.REGULAR,
+	Size = UDim2.new(0, 278, 0, 51),
+	BorderColor3 = FQ.COLORS.BACKGROUND,
+	Text = "settings",
+	Name = "settingsButton",
+	Visible = true,
+	LayoutOrder = 6,
+})
+CREATE_CORNER(unexpected_UI.SETTINGS_BUTTON, 0.3, 0)
+CREATE_STROKE(unexpected_UI.SETTINGS_BUTTON, FQ.COLORS.STROKE)
 
 unexpected_UI.DISCORD.MouseButton1Click:Connect(function()
 	setclipboard("https://discord.gg/J73SnGB2y2")
@@ -555,6 +571,54 @@ unexpected_UI.PLBACK = mk("ImageButton", unexpected_UI.PLFRAME, {
 })
 CREATE_ASPECT(unexpected_UI.PLBACK)
 
+unexpected_UI.STFRAME = mk("Frame", unexpected_UI.MENUFRAME, {
+	BorderSizePixel = 0,
+	BackgroundColor3 = Color3.fromRGB(255,255,255),
+	Size = UDim2.new(0,339,0,348),
+	BorderColor3 = FQ.COLORS.BACKGROUND,
+	Name = "settingsFrame",
+	BackgroundTransparency = 1,
+	Visible = false,
+})
+
+unexpected_UI.STSCROLL = mk("ScrollingFrame", unexpected_UI.STFRAME, {
+	Name = "settingsScroll",
+	BackgroundTransparency = 1,
+	BorderSizePixel = 0,
+	Size = UDim2.new(0, 300, 0, 230),
+	Position = UDim2.new(0, 19, 0, 77),
+	CanvasSize = UDim2.new(0, 0, 0, 0),
+	AutomaticCanvasSize = Enum.AutomaticSize.Y,
+	ScrollBarThickness = 1,
+	ScrollBarImageColor3 = FQ.COLORS.ACCENT,
+	ClipsDescendants = true,
+})
+
+mk("UIListLayout", unexpected_UI.STSCROLL, {
+	SortOrder = Enum.SortOrder.LayoutOrder,
+	Padding = UDim.new(0, 6),
+	FillDirection = Enum.FillDirection.Vertical,
+	HorizontalAlignment = Enum.HorizontalAlignment.Center,
+	VerticalAlignment = Enum.VerticalAlignment.Top,
+})
+
+mk("UIPadding", unexpected_UI.STSCROLL, {
+	PaddingTop = UDim.new(0, 1),
+	PaddingBottom = UDim.new(0, 1)
+})
+
+unexpected_UI.STBACK = mk("ImageButton", unexpected_UI.STFRAME, {
+	BorderSizePixel = 0,
+	BackgroundTransparency = 1,
+	BackgroundColor3 = Color3.fromRGB(255,255,255),
+	ImageColor3 = FQ.COLORS.ACCENT,
+	Image = getcustomasset("unexpected_assets/back.png"),
+	Size = UDim2.new(0,38,0,30),
+	BorderColor3 = FQ.COLORS.BACKGROUND,
+	Name = "settingsBack",
+	Position = UDim2.new(0.0885,0,0.82759,0),
+})
+CREATE_ASPECT(unexpected_UI.STBACK)
 
 local unexpected = {}
 local commandListData = {}
@@ -640,88 +704,6 @@ end
 local function playTween(obj, props, time, style)
 	return TS:Create(obj, TweenInfo.new(time or 0.2, style or Enum.EasingStyle.Sine), props)
 end
-
-local function showcmdList()
-	clearcmdList()
-	local index = 0
-	local used = {}
-	local BTNLIST = unexpected_UI.BTNLIST
-	local CMDEXAMPLE = unexpected_UI.CMDEXAMPLE
-	if not _sharedTooltip then
-		_sharedTooltip = mk("TextLabel", unexpected_UI.UI, {
-			BackgroundColor3 = FQ.COLORS.BACKGROUND,
-			Visible = false,
-			Font = Enum.Font.Gotham,
-			TextColor3 = FQ.COLORS.TEXT_MAIN,
-			TextSize = 18,
-			TextWrapped = true,
-			TextXAlignment = Enum.TextXAlignment.Left,
-			TextYAlignment = Enum.TextYAlignment.Top,
-			ZIndex = 9999,
-			AutomaticSize = Enum.AutomaticSize.XY,
-			Size = UDim2.new(0,300,0,0),
-			BorderSizePixel = 0,
-		})
-		mk("UIStroke", _sharedTooltip, {ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Color = FQ.COLORS.STROKE})
-		mk("UICorner", _sharedTooltip, {CornerRadius = UDim.new(0.1, 0)})
-		mk("UIPadding", _sharedTooltip, {PaddingBottom = UDim.new(0,6), PaddingLeft = UDim.new(0,8), PaddingRight = UDim.new(0,8)})
-		mk("UITextSizeConstraint", _sharedTooltip, {MaxTextSize = 18})
-			_localGuiInset = GS:GetGuiInset()
-			_sharedTooltipConn = RS.RenderStepped:Connect(function()
-				if _sharedTooltip and _sharedTooltip.Visible then
-						local mousePos = UIS:GetMouseLocation() - _localGuiInset
-					_sharedTooltip.Position = UDim2.new(0, mousePos.X + 10, 0, mousePos.Y + 10)
-				end
-			end)
-	end
-
-	for _, entry in ipairs(commandListArray) do
-		if not used[entry] then
-			used[entry] = true
-			local btn = table.remove(_btnPool)
-			if not btn then
-				btn = CMDEXAMPLE:Clone()
-				btn.MouseEnter:Connect(function()
-					local meta = _btnMeta[btn]
-					local d = meta and meta.data
-					if not d or not _sharedTooltip then return end
-					_sharedTooltipToken = _sharedTooltipToken + 1
-					meta.myToken = _sharedTooltipToken
-					_sharedTooltip.Text = tostring(d.Description) .. "\n" .. tostring(meta.usage or "")
-					_sharedTooltip.Visible = true
-					local mousePos = UIS:GetMouseLocation() - _localGuiInset
-					_sharedTooltip.Position = UDim2.new(0, mousePos.X + 10, 0, mousePos.Y + 10)
-				end)
-				btn.MouseLeave:Connect(function()
-					local meta = _btnMeta[btn]
-					if meta and meta.myToken and meta.myToken == _sharedTooltipToken then
-						if _sharedTooltip then _sharedTooltip.Visible = false end
-					end
-				end)
-				btn.MouseButton1Click:Connect(function()
-					local meta = _btnMeta[btn]
-					local d = meta and meta.data
-					if not d then return end
-					unexpected_UI.CLI.Text = d.Original
-					task.defer(function() unexpected_UI.CLI:CaptureFocus() end)
-				end)
-			end
-
-			local allNames = {entry.DisplayName}
-			for _, alias in ipairs(entry.Aliases) do table.insert(allNames, alias) end
-			btn.Text = table.concat(allNames, " / ")
-			btn.Text = table.concat(allNames, " / ")
-			btn.Visible = true
-			btn.Position = UDim2.new(0, 0, 0, index * 32)
-			btn.Parent = BTNLIST
-			_btnMeta[btn] = {data = entry, usage = ( (#entry.UsageArgs > 0) and ("usage: " .. entry.Original .. " [" .. table.concat(entry.UsageArgs, "] [") .. "]") ) or ("usage: " .. entry.Original)}
-			table.insert(commandButtonCache, btn)
-			index = index + 1
-		end
-	end
-	unexpected_UI.BTNLIST.CanvasSize = UDim2.new(0, 0, 0, index * 32)
-end
-
 --#notification
 local notificationQueue = {}
 local isNotif = false
@@ -1023,7 +1005,8 @@ local defaultConfig = {
     keepUX = true,
     Plugins = {},
     Autoruns = {},
-	Events = {}
+    Events = {},
+    Colors = {}
 }
 
 CONFIG = CONFIG or {}
@@ -1088,13 +1071,13 @@ MENUFRAME.AnchorPoint = Vector2.new(0.5, 1)
 MENUFRAME.Position = UDim2.new(0.5, 0, 1, -80)
 MENUFRAME.Size = UDim2.new(0, 339, 0, 0)
 --#initializeEnd
-
 local MENUON, HOVERED, shithover = false, false, false
 local MENUFRAMES = {
 	command = MENUFRAME:WaitForChild("commandFrame"),
 	autorun = MENUFRAME:WaitForChild("autorunFrame"),
 	event = MENUFRAME:WaitForChild("eventFrame"),
 	plugin = MENUFRAME:WaitForChild("pluginFrame"),
+	settings = MENUFRAME:WaitForChild("settingsFrame"),
 }
 local MENUS = {
 	unexpected_UI.MENU_SCROLL:WaitForChild("cmdsButton"),
@@ -1102,8 +1085,8 @@ local MENUS = {
 	unexpected_UI.MENU_SCROLL:WaitForChild("autorunsButton"),
 	unexpected_UI.MENU_SCROLL:WaitForChild("eventsButton"),
 	unexpected_UI.MENU_SCROLL:WaitForChild("pluginsButton"),
+	unexpected_UI.MENU_SCROLL:WaitForChild("settingsButton"),
 }
-
 --#fadesHandler
 local function buttonTP(button, target)
 	local prop = button:IsA("ImageButton") and "ImageTransparency" or "TextTransparency"
@@ -1149,10 +1132,12 @@ local function openMenuFrame(frame, onOpen)
 	end)
 end
 
-RS.Heartbeat:Connect(function()
-	local m = LP:GetMouse()
-	local mp, pos, size = Vector2.new(m.X, m.Y), unexpected_UI["PILL"].AbsolutePosition, unexpected_UI["PILL"].AbsoluteSize
-	shithover = mp.X >= pos.X and mp.X <= pos.X + size.X and mp.Y >= pos.Y and mp.Y <= pos.Y + size.Y
+UIS.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement then
+		local mp = Vector2.new(input.Position.X, input.Position.Y)
+		local pos, size = unexpected_UI.PILL.AbsolutePosition, unexpected_UI.PILL.AbsoluteSize
+		shithover = mp.X >= pos.X and mp.X <= pos.X + size.X and mp.Y >= pos.Y and mp.Y <= pos.Y + size.Y
+	end
 end)
 
 --#lovetween
@@ -1181,6 +1166,109 @@ local function SHS(hovered)
 	buttonTP(MENU, hovered and 0 or 1)
 end
 
+local COLOR_KEYS = {
+	{key = "BACKGROUND", label = "background"},
+	{key = "STROKE",     label = "stroke"},
+	{key = "TEXT_MAIN",  label = "text main"},
+	{key = "TEXT_DIM",   label = "text dim"},
+	{key = "ACCENT",     label = "accent"},
+}
+
+local function applyColors()
+	local bg, stroke, textMain, textDim, accent = FQ.COLORS.BACKGROUND, FQ.COLORS.STROKE, FQ.COLORS.TEXT_MAIN, FQ.COLORS.TEXT_DIM, FQ.COLORS.ACCENT
+	if _sharedTooltip then
+		_sharedTooltip.BackgroundColor3 = bg
+		_sharedTooltip.TextColor3 = textMain
+		for _, s in ipairs(_sharedTooltip:GetChildren()) do
+			if s:IsA("UIStroke") then s.Color = stroke end
+		end
+	end
+
+	for _, obj in ipairs(unexpected_UI.UI:GetDescendants()) do
+		if obj:IsA("UIStroke") then obj.Color = stroke
+		elseif obj:IsA("ScrollingFrame") then obj.ScrollBarImageColor3 = accent
+		elseif obj:IsA("TextButton") then
+			obj.BackgroundColor3 = obj:GetAttribute("colorKey") and FQ.COLORS[obj:GetAttribute("colorKey")] or bg
+			obj.TextColor3 = textMain
+		elseif obj:IsA("TextLabel") then obj.TextColor3 = textMain
+		elseif obj:IsA("TextBox") then
+			obj.TextColor3 = textMain
+			obj.PlaceholderColor3 = textDim
+			if obj.BackgroundTransparency ~= 1 then obj.BackgroundColor3 = bg end
+		elseif obj:IsA("ImageButton") or obj:IsA("ImageLabel") then obj.ImageColor3 = accent
+		elseif obj:IsA("Frame") and obj.BackgroundTransparency ~= 1 and obj.Name ~= "Bar" then
+			obj.BackgroundColor3 = bg
+		end
+	end
+
+	unexpected_UI.PREDICTOR.TextColor3 = textDim
+	loadingBar.BackgroundColor3 = accent
+end
+
+local function rgbRows()
+	for _, c in ipairs(unexpected_UI.STSCROLL:GetChildren()) do
+		if not c:IsA("UIListLayout") and not c:IsA("UIPadding") then c:Destroy() end
+	end
+	for _, def in ipairs(COLOR_KEYS) do
+		local row = mk("Frame", unexpected_UI.STSCROLL, {Size=UDim2.new(0,278,0,40), BackgroundTransparency=1, BorderSizePixel=0})
+		mk("TextLabel", row, {Size=UDim2.new(0,140,1,0), BackgroundTransparency=1, Text=def.label, TextColor3=FQ.COLORS.TEXT_MAIN, TextSize=16, FontFace=FQ.FONTS.REGULAR, TextXAlignment=Enum.TextXAlignment.Left, BorderSizePixel=0})
+
+		local preview = mk("TextButton", row, {Size=UDim2.new(0,120,0,30), Position=UDim2.new(1,-120,0.5,-15), BackgroundColor3=FQ.COLORS[def.key], Text="", BorderSizePixel=0})
+		CREATE_CORNER(preview, 0.15, 0)
+		CREATE_STROKE(preview, FQ.COLORS.STROKE)
+		preview:SetAttribute("colorKey", def.key)
+
+		local inputRow = mk("Frame", unexpected_UI.STSCROLL, {Size=UDim2.new(0,278,0,0), BackgroundTransparency=1, BorderSizePixel=0, ClipsDescendants=true})
+		local expanded = false
+
+		local function mkCR(label, x)
+			local b = mk("TextBox", inputRow, {Size=UDim2.new(0,78,0,30), Position=UDim2.new(0,x,0,4), BackgroundColor3=FQ.COLORS.BACKGROUND, TextColor3=FQ.COLORS.TEXT_MAIN, PlaceholderColor3=FQ.COLORS.TEXT_DIM, PlaceholderText=label, Text="", TextSize=14, FontFace=FQ.FONTS.REGULAR, BorderSizePixel=0, ClearTextOnFocus=false})
+			CREATE_CORNER(b, 0.1, 0) CREATE_STROKE(b, FQ.COLORS.STROKE) return b
+		end
+
+		local rBox = mkCR("R", 5)
+		local gBox = mkCR("G", 98)
+		local bBox = mkCR("B", 191)
+
+		local function commit()
+			local r, g, b = math.clamp(tonumber(rBox.Text) or 0, 0, 255), math.clamp(tonumber(gBox.Text) or 0, 0, 255), math.clamp(tonumber(bBox.Text) or 0, 0, 255)
+			FQ.COLORS[def.key] = Color3.fromRGB(r, g, b)
+			applyColors()
+			preview.BackgroundColor3 = FQ.COLORS[def.key]
+			CONFIG.Colors[def.key] = {r=r, g=g, b=b}
+			UX_config()
+		end
+
+		rBox.FocusLost:Connect(commit)
+		gBox.FocusLost:Connect(commit)
+		bBox.FocusLost:Connect(commit)
+		preview.MouseButton1Click:Connect(function()
+			expanded = not expanded
+			if expanded then
+				local c = FQ.COLORS[def.key]
+				rBox.Text, gBox.Text, bBox.Text = tostring(math.floor(c.R*255)), tostring(math.floor(c.G*255)), tostring(math.floor(c.B*255))
+			end
+			playTween(inputRow, {Size=UDim2.new(0,278,0,expanded and 40 or 0)}, 0.15):Play()
+		end)
+	end
+end
+
+unexpected_UI.SETTINGS_BUTTON.MouseButton1Click:Connect(function()
+	openMenuFrame(MENUFRAMES.settings, function()
+		_fadeTargets[MENUFRAMES.settings] = nil
+		rgbRows()
+	end)
+end)
+
+unexpected_UI.STBACK.MouseButton1Click:Connect(function()
+	_fadeTargets[MENUFRAMES.settings] = nil
+	fadeOut(MENUFRAMES.settings)
+	for _, c in ipairs(unexpected_UI.STSCROLL:GetChildren()) do
+		if not c:IsA("UIListLayout") and not c:IsA("UIPadding") then c:Destroy() end
+	end
+	task.delay(0.1, function() for _, b in ipairs(MENUS) do b.Visible = true end end)
+end)
+
 local arButtonCache = {}
 local arBtnExample = mk("TextButton", nil, {
 	BorderSizePixel = 0,
@@ -1195,6 +1283,87 @@ local arBtnExample = mk("TextButton", nil, {
 	Name = "autorunEntry",
 	Visible = false,
 })
+
+local function showcmdList()
+	clearcmdList()
+	local index = 0
+	local used = {}
+	local BTNLIST = unexpected_UI.BTNLIST
+	local CMDEXAMPLE = unexpected_UI.CMDEXAMPLE
+	if not _sharedTooltip then
+		_sharedTooltip = mk("TextLabel", unexpected_UI.UI, {
+			BackgroundColor3 = FQ.COLORS.BACKGROUND,
+			Visible = false,
+			Font = Enum.Font.Gotham,
+			TextColor3 = FQ.COLORS.TEXT_MAIN,
+			TextSize = 18,
+			TextWrapped = true,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			TextYAlignment = Enum.TextYAlignment.Top,
+			ZIndex = 9999,
+			AutomaticSize = Enum.AutomaticSize.XY,
+			Size = UDim2.new(0,300,0,0),
+			BorderSizePixel = 0,
+		})
+		mk("UIStroke", _sharedTooltip, {ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Color = FQ.COLORS.STROKE})
+		mk("UICorner", _sharedTooltip, {CornerRadius = UDim.new(0.1, 0)})
+		mk("UIPadding", _sharedTooltip, {PaddingBottom = UDim.new(0,6), PaddingLeft = UDim.new(0,8), PaddingRight = UDim.new(0,8)})
+		mk("UITextSizeConstraint", _sharedTooltip, {MaxTextSize = 18})
+			_localGuiInset = GS:GetGuiInset()
+			_sharedTooltipConn = RS.RenderStepped:Connect(function()
+				if _sharedTooltip and _sharedTooltip.Visible then
+						local mousePos = UIS:GetMouseLocation() - _localGuiInset
+					_sharedTooltip.Position = UDim2.new(0, mousePos.X + 10, 0, mousePos.Y + 10)
+				end
+			end)
+	end
+
+	for _, entry in ipairs(commandListArray) do
+		if not used[entry] then
+			used[entry] = true
+			local btn = table.remove(_btnPool)
+			if not btn then
+				btn = CMDEXAMPLE:Clone()
+				btn.MouseEnter:Connect(function()
+					local meta = _btnMeta[btn]
+					local d = meta and meta.data
+					if not d or not _sharedTooltip then return end
+					_sharedTooltipToken = _sharedTooltipToken + 1
+					meta.myToken = _sharedTooltipToken
+					_sharedTooltip.Text = tostring(d.Description) .. "\n" .. tostring(meta.usage or "")
+					_sharedTooltip.Visible = true
+					local mousePos = UIS:GetMouseLocation() - _localGuiInset
+					_sharedTooltip.Position = UDim2.new(0, mousePos.X + 10, 0, mousePos.Y + 10)
+				end)
+				btn.MouseLeave:Connect(function()
+					local meta = _btnMeta[btn]
+					if meta and meta.myToken and meta.myToken == _sharedTooltipToken then
+						if _sharedTooltip then _sharedTooltip.Visible = false end
+					end
+				end)
+				btn.MouseButton1Click:Connect(function()
+					local meta = _btnMeta[btn]
+					local d = meta and meta.data
+					if not d then return end
+					unexpected_UI.CLI.Text = d.Original
+					task.defer(function() unexpected_UI.CLI:CaptureFocus() end)
+				end)
+			end
+
+			local allNames = {entry.DisplayName}
+			for _, alias in ipairs(entry.Aliases) do table.insert(allNames, alias) end
+			btn.Text = table.concat(allNames, " / ")
+			btn.Visible = true
+			btn.Position = UDim2.new(0, 0, 0, index * 32)
+			btn.Parent = BTNLIST
+			_btnMeta[btn] = {data = entry, usage = ( (#entry.UsageArgs > 0) and ("usage: " .. entry.Original .. " [" .. table.concat(entry.UsageArgs, "] [") .. "]") ) or ("usage: " .. entry.Original)}
+			table.insert(commandButtonCache, btn)
+			index = index + 1
+		end
+	end
+	unexpected_UI.BTNLIST.CanvasSize = UDim2.new(0, 0, 0, index * 32)
+	applyColors()
+end
 
 local function clearARList()
 	for _, btn in ipairs(arButtonCache) do
@@ -1229,6 +1398,7 @@ local function showARList(filter)
 		end
 	end
 	unexpected_UI.ARBTNLIST.CanvasSize = UDim2.new(0,0,0,index * 32)
+	applyColors()
 end
 
 unexpected_UI.ARBACK.MouseButton1Click:Connect(function()
@@ -1297,6 +1467,7 @@ local function showEVList(filter)
 		end
 	end
 	unexpected_UI.EVBTNLIST.CanvasSize = UDim2.new(0,0,0,index * 32)
+	applyColors()
 end
 
 unexpected_UI.EVENTS_BUTTON.MouseButton1Click:Connect(function()
@@ -1372,6 +1543,7 @@ local function showPLList(filter)
 		end
 	end
 	unexpected_UI.PLBTNLIST.CanvasSize = UDim2.new(0,0,0,index * 32)
+	applyColors()
 end
 
 unexpected_UI.PLUGINS_BUTTON.MouseButton1Click:Connect(function()
@@ -1559,6 +1731,14 @@ UIS.InputEnded:Connect(function(input, processed)
 end)
 
 UX_rconfig()
+if type(CONFIG.Colors) == "table" then
+	for key, rgb in pairs(CONFIG.Colors) do
+		if FQ.COLORS[key] and type(rgb) == "table" then
+			FQ.COLORS[key] = Color3.fromRGB(rgb.r or 0, rgb.g or 0, rgb.b or 0)
+		end
+	end
+	applyColors()
+end
 
 --#pluginSystem
 local PLUGIN_DIR = "unexpected_plugins"
