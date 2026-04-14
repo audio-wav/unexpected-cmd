@@ -1799,13 +1799,7 @@ local function mkPLUGINENV()
 			unexpected:notify(tostring(title), tostring(text or ""))
 		end,
 		toClipboard = function(str) setclipboard(tostring(str)) end,
-		execCmd = function(cmdName, args, _speaker)
-			if type(args) == "table" and #args > 0 then
-				runCmd(cmdName .. " " .. table.concat(args, " "))
-			else
-				runCmd(cmdName)
-			end
-		end,
+		execCmd = execmd,
 		addbind = function(key, fn)
 			local keyName = (typeof(key) == "EnumItem" and key.Name or tostring(key)):lower()
 			if keyBinds[keyName] then keyBinds[keyName].conn:Disconnect() end
