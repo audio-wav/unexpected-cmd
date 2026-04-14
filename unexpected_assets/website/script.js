@@ -1,18 +1,18 @@
 document.addEventListener("DOMContentLoaded", async () => {
 const tb = document.getElementById("tb"),
 esc = s => s.replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])),
-REG = /unexpected:addcmd\(\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*[^,]+(?:\s*,\s*(\{[^}]*\}))?(?:\s*,\s*(\{[^}]*\}))?/g
+REG = /unexpected:addcmd\(\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*[^,]+,\s*(nil|\{[^}]*\})\s*,\s*(nil|\{[^}]*\})/g
 let filter = "all"
 const text = await (await fetch("https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/source")).text()
 let m, i = 0
 const parseTable = t =>
   t ? [...t.matchAll(/"([^"]+)"/g)].map(x => x[1]) : []
 while ((m = REG.exec(text))) {
-  let [_, rawName, d, a, u] = m
+  let [_, rawName, d, aRaw, uRaw] = m
   const isClient = /^\[CLIENT\]/i.test(rawName)
   const n = rawName.replace(/^\[CLIENT\]\s*/i, "")
-  const aliases = parseTable(a)
-  const args = parseTable(u)
+  const aliases = aRaw !== "nil" ? parseTable(aRaw) : []
+  const args    = uRaw !== "nil" ? parseTable(uRaw) : []
   const badge = isClient ? `<span class="cl">client</span>` : ""
   const aliasesHTML = aliases.length
     ? `<div class="tags">${aliases.map(x=>`<span class="tag ta">${esc(x)}</span>`).join("")}</div>`
