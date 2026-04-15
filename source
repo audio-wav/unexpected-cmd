@@ -2515,8 +2515,7 @@ unexpected:addcmd("walkto", "Walk to a player", function(name)
 	local myRoot = HRP
 	if not myRoot then return end
 	local pos = root.Position
-	local hum = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
-	if hum then hum:MoveTo(pos + Vector3.new(0, 0, 3)) else myRoot.CFrame = CFrame.new(pos + Vector3.new(0, 0, 3)) end
+	if HUM then HUM:MoveTo(pos + Vector3.new(0, 0, 3)) else myRoot.CFrame = CFrame.new(pos + Vector3.new(0, 0, 3)) end
 end, nil, {"player"})
 
 local tweenSpeed = 1
@@ -2591,11 +2590,19 @@ unexpected:addcmd("tweentp", "Tween to coordinates", function(x, y, z)
 	unexpected:notify("tweentp", "Tweening to position")
 end, {"tween"}, {"x", "y", "z"})
 
-unexpected:addcmd("tp", "Teleport to coordinates", function(x, y, z)
+unexpected:addcmd("teleport", "Teleport to coordinates", function(x, y, z)
 	x, y, z = coordsfix(x, y, z)
-	if not x or not y or not z then return unexpected:notify("tp", "Usage: tp [x] [y] [z]") end
+	if not x or not y or not z then return unexpected:notify("teleport", "Usage: teleport [x] [y] [z]") end
 	HRP.CFrame = CFrame.new(x, y, z)
-end, nil, {"x", "y", "z"})
+end, {"tp"}, {"x", "y", "z"})
+
+unexpected:addcmd("walkto", "Walk to coordinates", function(x, y, z)
+	x, y, z = coordsfix(x, y, z)
+	if not x or not y or not z then return unexpected:notify("walkto", "Usage: walkto [x] [y] [z]") end
+	if not HUM then return end
+
+	HUM:MoveTo(Vector3.new(x, y, z))
+end, {"wt"}, {"x", "y", "z"})
 
 unexpected:addcmd("copypos", "Copy position to clipboard", function()
 	local p = HRP.Position
@@ -2832,9 +2839,8 @@ unexpected:addcmd("getpos", "Get a player's position", function(name)
 	if not name then return unexpected:notify("getpos", "Usage: getpos [player]") end
 	for _, p in ipairs(PLRS:GetPlayers()) do
 		if p.Name:lower() == name:lower() or p.DisplayName:lower() == name:lower() then
-			local hrp = p.Character and p.Character:FindFirstChild("HumanoidRootPart")
-			if hrp then
-				local pos = hrp.Position
+			if HRP then
+				local pos = HRP.Position
 				local str = string.format("%.2f %.2f %.2f", pos.X, pos.Y, pos.Z)
 				setclipboard(str)
 				unexpected:notify("getpos", p.Name .. ": " .. str)
@@ -2923,15 +2929,13 @@ unexpected:addcmd("spectate", "Spectate a player", function(name)
 	if not name then return unexpected:notify("spectate", "Usage: spectate [player]") end
 	for _, p in ipairs(PLRS:GetPlayers()) do
 		if p.Name:lower() == name:lower() or p.DisplayName:lower() == name:lower() then
-			local hrp = p.Character and p.Character:FindFirstChild("HumanoidRootPart")
-			if not hrp then return unexpected:notify("spectate", p.Name .. " has no character.") end
+			if not HRP then return unexpected:notify("spectate", p.Name .. " has no character.") end
 			spectating = true
 			if spectateConn then spectateConn:Disconnect() end
 			CAM.CameraType = Enum.CameraType.Scriptable
 			spectateConn = RS.Heartbeat:Connect(function()
 				if not spectating then return end
-				local char = p.Character
-				local root = char and char:FindFirstChild("HumanoidRootPart")
+				local root = HRP
 				if root then
 					CAM.CFrame = CFrame.new(root.Position + Vector3.new(0, 5, 10), root.Position)
 				end
