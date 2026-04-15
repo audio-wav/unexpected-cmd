@@ -7,7 +7,7 @@ loadstring(game:HttpGet('https://raw.githubusercontent.com/audio-wav/unexpected-
 ```
 ---
 ## bootstrapper
-`unexpected cmd` now offers a fast, caching bootstrapper that will make loading times faster.
+`unexpected cmd` offers a fast, caching bootstrapper that will make loading times faster.
 ```lua
 local HTTP = (cloneref and cloneref(game:GetService("HttpService"))) or game:GetService("HttpService")
 local VURL, SURL = "https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/version", "https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/source"
@@ -20,6 +20,10 @@ if DEPENDENCIES and (not CACHE or CACHE.version ~= REMOTE.version) then
 end
 
 loadstring(DEPENDENCIES and isfile("ux_source.lua") and readfile("ux_source.lua") or game:HttpGet(SURL))()
+```
+you can also use the one liner, much more compact but bad readability.
+```lua
+if not (isfile("ux_cache.json") and game:GetService("HttpService"):JSONDecode(readfile("ux_cache.json")) and game:GetService("HttpService"):JSONDecode(readfile("ux_cache.json")).version==game:GetService("HttpService"):JSONDecode(game:HttpGet("https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/version")).version) then writefile("ux_source.lua",game:HttpGet("https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/source"));writefile("ux_cache.json",game:GetService("HttpService"):JSONEncode(game:GetService("HttpService"):JSONDecode(game:HttpGet("https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/version")))) end;loadstring((isfile("ux_source.lua")and readfile("ux_source.lua"))or game:HttpGet("https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/source"))()
 ```
 ---
 ## it's just perfect.*
