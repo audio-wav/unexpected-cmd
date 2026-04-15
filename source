@@ -108,7 +108,7 @@ local function CREATE_ASPECT(PARENT, RATIO)
 end
 
 local unexpected_UI = {}
-local currentVersion = "v1.3.0"
+local currentVersion = "v1.3.1"
 
 local function randomString(length, charset)
 	length = length or math.random(10, 20)
@@ -3213,7 +3213,7 @@ unexpected:addcmd("unantifling", "Disables fling protection", function()
 	if afConn then afConn:Disconnect() afConn = nil end
 end)
 
-unexpected:addcmd("antiafk", "Never get kicked", function()
+unexpected:addcmd("antiafk", "Never get kicked for being AFK", function()
 	LP.Idled:Connect(function()
 		VU:ClickButton2(Vector2.new())
 	end)
@@ -3263,7 +3263,7 @@ end, nil, {"true/false"})
 
 local r6 = {"27789359","30196114","248263260","45834924","33796059","28488254","52155728"}
 local r15 = {"3333432454","4555808220","4049037604","4555782893","10214311282","10714010337","10713981723","10714372526","10714076981","10714392151","11444443576"}
-unexpected:addcmd("dance", "No description", function()
+unexpected:addcmd("dance", "Start dancing", function()
 	pcall(execmd, "undance")
 	local list = isR15(LP) and r15 or r6
 	local anim = Instance.new("Animation")
@@ -3274,14 +3274,14 @@ unexpected:addcmd("dance", "No description", function()
 	danceTrack:Play()
 end)
 
-unexpected:addcmd("undance", "No description", function()
+unexpected:addcmd("undance", "Stop dancing", function()
 	if danceTrack then
 		danceTrack:Stop()
 		danceTrack:Destroy()
 	end
 end)
 
-unexpected:addcmd("sitwalk", "No description", function()
+unexpected:addcmd("sitwalk", "Set animations to sit", function()
 	local sitID = LP.Character.Animate.sit:FindFirstChildWhichIsA("Animation").AnimationId
 	for _, v in ipairs({"idle","walk","run","jump"}) do
 		for _, a in ipairs(LP.Character.Animate[v]:GetDescendants()) do
@@ -3394,12 +3394,56 @@ unexpected:addcmd("stopanimations", "Stop all playing animations", function()
 	for i,v in next, HUM:GetPlayingAnimationTracks() do v:Stop() end
 end, {"stopanims"}, nil)
 
-unexpected:addcmd("refreshanimations", "No description", function()
+unexpected:addcmd("refreshanimations", "Refresh animations", function()
 	if not HUM or not CHAR or not CHAR:FindFirstChild("Animate") then return notify('Refresh Animations', 'Failed to get Animate/Humanoid') end
 	CHAR.Animate.Disabled = true
 	for _, v in ipairs(HUM:GetPlayingAnimationTracks()) do v:Stop() end
 	CHAR.Animate.Disabled = false
 end, {"refreshanimation", "refreshanims", "refreshanim"})
+
+unexpected:addcmd("trip", "Slip", function()
+	if HUM and HRP then
+		HUM:ChangeState(Enum.HumanoidStateType.FallingDown)
+		HRP.Velocity = HRP.CFrame.LookVector * 30
+	end
+end)
+
+unexpected:addcmd("fling", "Enable/disable flinging", function(state)
+	if state ~= "true" and state ~= "false" then return unexpected:notify("fling", "Usage: fling true/false") end
+	if state == "true" then
+        for _, child in pairs(CHAR:GetDescendants()) do
+            if child:IsA("BasePart") then
+                child.CustomPhysicalProperties = PhysicalProperties.new(100, 0.3, 0.5)
+                child.CanCollide = false
+                child.Massless = true
+            end
+        end
+        execmd('noclip')
+        local flingV = Instance.new("BodyAngularVelocity", HRP)
+        flingV.Name = randomString()
+        flingV.AngularVelocity = Vector3.new(0, 99999, 0)
+        flingV.MaxTorque = Vector3.new(0, math.huge, 0)
+        flingV.P = math.huge
+        flinging = true
+        flingDied = HUM.Died:Connect(function()
+            execmd('fling false')
+			execmd('clip')
+        end)
+        repeat
+            flingV.AngularVelocity = Vector3.new(0, 99999, 0)
+			task.wait(.267)
+			flingV.AngularVelocity = Vector3.new(0, 0, 0)
+			task.wait()
+		until not flinging
+    else
+        execmd('clip')
+        if flingDied then flingDied:Disconnect() end
+        flinging = false
+        if not HRP then return end
+        for _, v in pairs(HRP:GetChildren()) do if v.ClassName == 'BodyAngularVelocity' then v:Destroy() end end
+        for _, child in pairs(CHAR:GetDescendants()) do if child:IsA("BasePart") then child.CustomPhysicalProperties = PhysicalProperties.new(0.7, 0.3, 0.5) end end
+    end
+end, nil, {"true/false"})
 
 hookEvents()
 hookBinds()
