@@ -260,8 +260,9 @@ unexpected_UI.AUTORUNS_BUTTON = mkMENUBTN("autorunsButton", "autoruns", 2)
 unexpected_UI.EVENTS_BUTTON= mkMENUBTN("eventsButton", "events", 3)
 unexpected_UI.BINDS_BUTTON = mkMENUBTN("bindsButton","binds",4)
 unexpected_UI.PLUGINS_BUTTON = mkMENUBTN("pluginsButton", "plugins", 5)
-unexpected_UI.DISCORD = mkMENUBTN("discordButton", "discord", 6)
-unexpected_UI.SETTINGS_BUTTON = mkMENUBTN("settingsButton", "settings", 7)
+unexpected_UI.WAYPOINTS_BUTTON = mkMENUBTN("waypointsButton", "waypoints", 6)
+unexpected_UI.DISCORD = mkMENUBTN("discordButton", "discord", 7)
+unexpected_UI.SETTINGS_BUTTON = mkMENUBTN("settingsButton", "settings", 8)
 
 unexpected_UI.DISCORD.MouseButton1Click:Connect(function()
 	setclipboard("https://discord.gg/J73SnGB2y2")
@@ -383,6 +384,11 @@ unexpected_UI.PLBTNLIST = mkTABSCROLL(unexpected_UI.PLFRAME, "pluginList")
 unexpected_UI.PLSEARCHBAR = mkTABSEARCH(unexpected_UI.PLFRAME, "pluginSearch", "search plugins")
 unexpected_UI.PLBACK = mkTABBACK(unexpected_UI.PLFRAME, "pluginBack")
 
+unexpected_UI.WPFRAME = mkTAB("waypointFrame")
+unexpected_UI.WPBTNLIST = mkTABSCROLL(unexpected_UI.WPFRAME, "waypointList")
+unexpected_UI.WPSEARCHBAR = mkTABSEARCH(unexpected_UI.WPFRAME, "waypointSearch", "search waypoints")
+unexpected_UI.WPBACK = mkTABBACK(unexpected_UI.WPFRAME, "waypointBack")
+
 unexpected_UI.STFRAME = mkTAB("settingsFrame")
 unexpected_UI.STSCROLL = mk("ScrollingFrame", unexpected_UI.STFRAME, {
 	Name = "settingsScroll",
@@ -416,17 +422,6 @@ local _sharedTooltipConn = nil
 local _btnPool = {}
 local _btnMeta = setmetatable({}, { __mode = "k" })
 
-local trieRoot = { children = {}, entries = {} }
-local function trieInsert(key, entry)
-	local node = trieRoot
-	for i = 1, #key do
-		local c = key:sub(i, i)
-		if not node.children[c] then node.children[c] = { children = {}, entries = {} } end
-		node = node.children[c]
-		table.insert(node.entries, { key = key, entry = entry })
-	end
-end
-
 function unexpected:addcmd(name, desc, func, aliases, usageArgs)
 	aliases = aliases or {}
 	usageArgs = usageArgs or {}
@@ -445,8 +440,6 @@ function unexpected:addcmd(name, desc, func, aliases, usageArgs)
 	for _, alias in ipairs(aliases) do table.insert(entry._lowerAliases, string.lower(alias)) end
 	commandListData[entry._lowerOriginal] = entry
 	for _, l in ipairs(entry._lowerAliases) do commandListData[l] = entry end
-	trieInsert(entry._lowerOriginal, entry)
-	for _, l in ipairs(entry._lowerAliases) do trieInsert(l, entry) end
 	table.insert(commandListArray, entry)
 end
 
@@ -637,6 +630,7 @@ function unexpected:notify(title, ...)
 		notifQueue()
 	end
 end
+
 unexpected_UI["CLI"]:GetPropertyChangedSignal("Text"):Connect(function()
 	local input = unexpected_UI["CLI"].Text
 	local cmdName, argText = string.match(input, "^(%S+)%s(.*)$")
@@ -645,41 +639,46 @@ unexpected_UI["CLI"]:GetPropertyChangedSignal("Text"):Connect(function()
 
 	if bareCmd ~= "" then
 		local lowerCmd = string.lower(bareCmd)
-		local node = trieRoot
-		for i = 1, #lowerCmd do
-			if not node then break end
-			local c = lowerCmd:sub(i, i)
-			node = node.children and node.children[c]
+		local matches = {}
+		for key, _ in pairs(commandListData) do
+			local k = string.lower(key)
+			if k:sub(1, #lowerCmd) == lowerCmd then
+				table.insert(matches, key)
+			end
 		end
-		if node and node.entries and #node.entries > 0 then
-			local bestKey = nil
-			for _, rec in ipairs(node.entries) do
-				if not bestKey or rec.key < bestKey then bestKey = rec.key end
-			end
-			if bestKey then
-				suggestion = input .. string.sub(bestKey, #bareCmd + 1)
-			end
+		table.sort(matches)
+		if #matches > 0 then
+			local bestKey = matches[1]
+			suggestion = input .. string.sub(bestKey, #bareCmd + 1)
 		end
 	elseif cmdName then
 		local cmd = commandListData[string.lower(cmdName)]
 		if cmd and cmd.UsageArgs and cmd.UsageArgs[1] == "player" then
-			local lastArg = string.match(argText, "%S+$") or ""
+			local lastArg = string.match(argText or "", "%S+$") or ""
 			local lowerArg = string.lower(lastArg)
 			local bestMatch = nil
 			for _, p in ipairs(PLRS:GetPlayers()) do
 				if p ~= LP then
 					local n = string.lower(p.Name)
 					local dn = string.lower(p.DisplayName)
+					local candidate
 					if lowerArg == "" or n:sub(1, #lowerArg) == lowerArg then
-						if not bestMatch or n < string.lower(bestMatch) then bestMatch = p.Name end
+						candidate = p.Name
 					elseif dn:sub(1, #lowerArg) == lowerArg then
-						if not bestMatch or dn < string.lower(bestMatch) then bestMatch = p.DisplayName end
+						candidate = p.DisplayName
+					end
+					if candidate then
+						if not bestMatch or string.lower(candidate) < string.lower(bestMatch) then
+							bestMatch = candidate
+						end
 					end
 				end
 			end
 			if bestMatch then
-				local beforeLast = string.match(argText, "^(.-%s)%S*$") or ""
-				suggestion = cmdName .. " " .. beforeLast .. lastArg .. string.sub(bestMatch, #lastArg + 1) -- gg
+				local prefixArgs = string.match(argText or "", "^(.-)%S+$") or ""
+				suggestion = cmdName .. " " .. prefixArgs .. bestMatch
+			else
+				suggestion = ""
 			end
 		end
 	end
@@ -732,22 +731,46 @@ local function updateList(filter)
 		end
 		return
 	end
-	local node = trieRoot
-	for i = 1, #filter do
-		node = node.children and node.children[filter:sub(i, i)] or nil
-		if not node then break end
-	end
-	if node and node.entries then
-		for _, rec in ipairs(node.entries) do
-			for _, btn in ipairs(all) do
-				if _btnMeta[btn] and _btnMeta[btn].data == rec.entry then
-					table.insert(filtered, btn)
-					break
-				end
+
+	for _, btn in ipairs(all) do
+		if _btnMeta[btn] and _btnMeta[btn].data then
+			local cmd = _btnMeta[btn].data
+			if cmd._lowerOriginal:find(filter, 1, true) or 
+			   (cmd._lowerAliases and (function() 
+				   for _, alias in ipairs(cmd._lowerAliases) do
+					   if alias:find(filter, 1, true) then return true end
+				   end
+				   return false
+			   end)()) then
+				table.insert(filtered, btn)
 			end
 		end
 	end
-	table.sort(filtered, function(a, b) return a.Text < b.Text end)
+
+	table.sort(filtered, function(a, b)
+		local cmdA = _btnMeta[a] and _btnMeta[a].data
+		local cmdB = _btnMeta[b] and _btnMeta[b].data
+		if not cmdA or not cmdB then return a.Text < b.Text end
+		
+		local posA = cmdA._lowerOriginal:find(filter, 1, true) or (function()
+			for _, alias in ipairs(cmdA._lowerAliases) do
+				local p = alias:find(filter, 1, true)
+				if p then return p end
+			end
+			return math.huge
+		end)()
+		local posB = cmdB._lowerOriginal:find(filter, 1, true) or (function()
+			for _, alias in ipairs(cmdB._lowerAliases) do
+				local p = alias:find(filter, 1, true)
+				if p then return p end
+			end
+			return math.huge
+		end)()
+		
+		if posA ~= posB then return posA < posB end
+		return cmdA._lowerOriginal < cmdB._lowerOriginal
+	end)
+	
 	for i, btn in ipairs(filtered) do
 		btn.Position = UDim2.new(0, 0, 0, (i - 1) * 32)
 		btn.Visible = true
@@ -776,7 +799,8 @@ local defaultConfig = {
 	Autoruns = {},
 	Events = {},
 	Binds = {},
-	Colors = {}
+	Colors = {},
+	Waypoints = {}
 }
 
 CONFIG = CONFIG or {}
@@ -838,6 +862,7 @@ local MENUFRAMES = {
 	event = MENUFRAME:WaitForChild("eventFrame"),
 	bind = MENUFRAME:WaitForChild("bindFrame"),
 	plugin = MENUFRAME:WaitForChild("pluginFrame"),
+	waypoint = MENUFRAME:WaitForChild("waypointFrame"),
 	settings = MENUFRAME:WaitForChild("settingsFrame"),
 }
 local MENUS = {
@@ -847,6 +872,7 @@ local MENUS = {
 	unexpected_UI.MENU_SCROLL:WaitForChild("eventsButton"),
 	unexpected_UI.MENU_SCROLL:WaitForChild("bindsButton"),
 	unexpected_UI.MENU_SCROLL:WaitForChild("pluginsButton"),
+	unexpected_UI.MENU_SCROLL:WaitForChild("waypointsButton"),
 	unexpected_UI.MENU_SCROLL:WaitForChild("settingsButton"),
 }
 
@@ -1132,23 +1158,35 @@ local function showARList(filter)
 	filter = string.lower(filter or "")
 	CONFIG.Autoruns = CONFIG.Autoruns or {}
 	local index = 0
+	local matches = {}
 	for i, full in ipairs(CONFIG.Autoruns) do
-		local display = full
-		if filter == "" or display:lower():find(filter, 1, true) then
-			local btn = arBtnExample:Clone()
-			btn.Text = full
-			btn.Visible = true
-			btn.Position = UDim2.new(0,0,0,index * 32)
-			btn.Parent = unexpected_UI.ARBTNLIST
-			btn.MouseButton1Click:Connect(function()
-				table.remove(CONFIG.Autoruns, i)
-				UX_config()
-				unexpected:notify("autorun", "Removed: " .. full)
-				showARList(unexpected_UI.ARSEARCHBAR.Text)
-			end)
-			table.insert(arButtonCache, btn)
-			index = index + 1
+		if filter == "" or full:lower():find(filter, 1, true) then
+			table.insert(matches, {text = full, idx = i})
 		end
+	end
+	
+	table.sort(matches, function(a, b)
+		local posA = a.text:lower():find(filter, 1, true) or (filter == "" and 1 or math.huge)
+		local posB = b.text:lower():find(filter, 1, true) or (filter == "" and 1 or math.huge)
+		if posA ~= posB then return posA < posB end
+		return a.text < b.text
+	end)
+	
+	for _, match in ipairs(matches) do
+		local btn = arBtnExample:Clone()
+		btn.Text = match.text
+		btn.Visible = true
+		btn.Position = UDim2.new(0,0,0,index * 32)
+		btn.Parent = unexpected_UI.ARBTNLIST
+		local originalIdx = match.idx
+		btn.MouseButton1Click:Connect(function()
+			table.remove(CONFIG.Autoruns, originalIdx)
+			UX_config()
+			unexpected:notify("autorun", "Removed: " .. match.text)
+			showARList(unexpected_UI.ARSEARCHBAR.Text)
+		end)
+		table.insert(arButtonCache, btn)
+		index = index + 1
 	end
 	unexpected_UI.ARBTNLIST.CanvasSize = UDim2.new(0,0,0,index * 32)
 	applyColors()
@@ -1201,23 +1239,37 @@ local function showEVList(filter)
 	filter = string.lower(filter or "")
 	CONFIG.Events = CONFIG.Events or {}
 	local index = 0
+	
+	local matches = {}
 	for i, ev in ipairs(CONFIG.Events) do
 		local display = ev.event .. (ev.filter and (" [" .. ev.filter .. "]") or "") .. " → " .. ev.cmd
 		if filter == "" or display:lower():find(filter, 1, true) then
-			local btn = evBtnExample:Clone()
-			btn.Text = display
-			btn.Visible = true
-			btn.Position = UDim2.new(0,0,0,index * 32)
-			btn.Parent = unexpected_UI.EVBTNLIST
-			btn.MouseButton1Click:Connect(function()
-				table.remove(CONFIG.Events, i)
-				UX_config()
-				unexpected:notify("events", "Removed: " .. display)
-				showEVList(unexpected_UI.EVSEARCHBAR.Text)
-			end)
-			table.insert(evButtonCache, btn)
-			index = index + 1
+			table.insert(matches, {text = display, idx = i})
 		end
+	end
+	
+	table.sort(matches, function(a, b)
+		local posA = a.text:lower():find(filter, 1, true) or (filter == "" and 1 or math.huge)
+		local posB = b.text:lower():find(filter, 1, true) or (filter == "" and 1 or math.huge)
+		if posA ~= posB then return posA < posB end
+		return a.text < b.text
+	end)
+	
+	for _, match in ipairs(matches) do
+		local btn = evBtnExample:Clone()
+		btn.Text = match.text
+		btn.Visible = true
+		btn.Position = UDim2.new(0,0,0,index * 32)
+		btn.Parent = unexpected_UI.EVBTNLIST
+		local originalIdx = match.idx
+		btn.MouseButton1Click:Connect(function()
+			table.remove(CONFIG.Events, originalIdx)
+			UX_config()
+			unexpected:notify("events", "Removed: " .. match.text)
+			showEVList(unexpected_UI.EVSEARCHBAR.Text)
+		end)
+		table.insert(evButtonCache, btn)
+		index = index + 1
 	end
 	unexpected_UI.EVBTNLIST.CanvasSize = UDim2.new(0,0,0,index * 32)
 	applyColors()
@@ -1277,23 +1329,37 @@ local function showBDList(filter)
 	filter = string.lower(filter or "")
 	CONFIG.Binds = CONFIG.Binds or {}
 	local index = 0
+	
+	local matches = {}
 	for i, bd in ipairs(CONFIG.Binds) do
 		local display = "[".. bd.key .. "]" .. (bd.toggle and " (toggle)" or "") .. " → " .. bd.cmd
 		if filter == "" or display:lower():find(filter, 1, true) then
-			local btn = bdBtnExample:Clone()
-			btn.Text = display
-			btn.Visible = true
-			btn.Position = UDim2.new(0,0,0,index * 32)
-			btn.Parent = unexpected_UI.BDBTNLIST
-			btn.MouseButton1Click:Connect(function()
-				table.remove(CONFIG.Binds, i)
-				UX_config()
-				unexpected:notify("binds", "Removed: " .. display)
-				showBDList(unexpected_UI.BDSEARCHBAR.Text)
-			end)
-			table.insert(bdButtonCache, btn)
-			index = index + 1
+			table.insert(matches, {text = display, idx = i})
 		end
+	end
+	
+	table.sort(matches, function(a, b)
+		local posA = a.text:lower():find(filter, 1, true) or (filter == "" and 1 or math.huge)
+		local posB = b.text:lower():find(filter, 1, true) or (filter == "" and 1 or math.huge)
+		if posA ~= posB then return posA < posB end
+		return a.text < b.text
+	end)
+	
+	for _, match in ipairs(matches) do
+		local btn = bdBtnExample:Clone()
+		btn.Text = match.text
+		btn.Visible = true
+		btn.Position = UDim2.new(0,0,0,index * 32)
+		btn.Parent = unexpected_UI.BDBTNLIST
+		local originalIdx = match.idx
+		btn.MouseButton1Click:Connect(function()
+			table.remove(CONFIG.Binds, originalIdx)
+			UX_config()
+			unexpected:notify("binds", "Removed: " .. match.text)
+			showBDList(unexpected_UI.BDSEARCHBAR.Text)
+		end)
+		table.insert(bdButtonCache, btn)
+		index = index + 1
 	end
 	unexpected_UI.BDBTNLIST.CanvasSize = UDim2.new(0,0,0,index * 32)
 	applyColors()
@@ -1396,6 +1462,119 @@ do
 		local txt = unexpected_UI.PLSEARCHBAR.Text
 		task.delay(0.12, function()
 			if my == plToken then showPLList(txt) end
+		end)
+	end)
+end
+
+local wpButtonCache = {}
+local wpBtnExample = mk("TextButton", nil, {
+	BorderSizePixel = 0,
+	TextXAlignment = Enum.TextXAlignment.Left,
+	TextSize = 18,
+	TextColor3 = FQ.COLORS.TEXT_MAIN,
+	BackgroundColor3 = FQ.COLORS.BACKGROUND,
+	FontFace = FQ.FONTS.REGULAR,
+	Size = UDim2.new(0,278,0,33),
+	BorderColor3 = FQ.COLORS.BACKGROUND,
+	Text = "",
+	Name = "waypointEntry",
+	Visible = false,
+})
+
+local function clearWPList()
+	for _, btn in ipairs(wpButtonCache) do
+		btn.Visible = false
+		btn.Parent = nil
+	end
+	wpButtonCache = {}
+	unexpected_UI.WPBTNLIST.CanvasSize = UDim2.new(0,0,0,0)
+end
+
+local waypointVisuals = {}
+local function cWPVisual(name, pos)
+	local part = Instance.new("Part")
+	part.Name = "UXWP_" .. name
+	part.Size = Vector3.new(5, 5, 5)
+	part.CFrame = CFrame.new(pos)
+	part.Anchored = true
+	part.CanCollide = false
+	part.Transparency = 1
+	part.Parent = WS
+	
+	local adornment = Instance.new("BoxHandleAdornment")
+	adornment.Adornee = part
+	adornment.AlwaysOnTop = true
+	adornment.ZIndex = 10
+	adornment.Size = part.Size
+	adornment.Color3 = Color3.fromRGB(0, 255, 0)
+	adornment.Transparency = 0.3
+	adornment.Parent = part
+	
+	waypointVisuals[name] = part
+	return part
+end
+
+local function dWPVisual(name)
+	if waypointVisuals[name] then
+		pcall(function() waypointVisuals[name]:Destroy() end)
+		waypointVisuals[name] = nil
+	end
+end
+
+local function showWPList(filter)
+	clearWPList()
+	filter = string.lower(filter or "")
+	CONFIG.Waypoints = CONFIG.Waypoints or {}
+	local index = 0
+	for i, wp in ipairs(CONFIG.Waypoints) do
+		if wp.game == game.PlaceId and (filter == "" or wp.name:lower():find(filter, 1, true)) then
+			local btn = wpBtnExample:Clone()
+			btn.Text = wp.name .. " (" .. math.floor(wp.pos[1]) .. ", " .. math.floor(wp.pos[2]) .. ", " .. math.floor(wp.pos[3]) .. ")"
+			btn.Visible = true
+			btn.Position = UDim2.new(0,0,0,index * 32)
+			btn.Parent = unexpected_UI.WPBTNLIST
+			local capturedName = wp.name
+			btn.MouseButton1Click:Connect(function()
+				for j = #CONFIG.Waypoints, 1, -1 do
+					if CONFIG.Waypoints[j].game == game.PlaceId and CONFIG.Waypoints[j].name == capturedName then
+						dWPVisual(CONFIG.Waypoints[j].name)
+						table.remove(CONFIG.Waypoints, j)
+						UX_config()
+						unexpected:notify("waypoint", "Deleted: " .. capturedName)
+						showWPList(unexpected_UI.WPSEARCHBAR.Text)
+						break
+					end
+				end
+			end)
+			table.insert(wpButtonCache, btn)
+			index = index + 1
+		end
+	end
+	unexpected_UI.WPBTNLIST.CanvasSize = UDim2.new(0,0,0,index * 32)
+	applyColors()
+end
+
+unexpected_UI.WAYPOINTS_BUTTON.MouseButton1Click:Connect(function()
+	openMenuFrame(MENUFRAMES.waypoint, function()
+		unexpected_UI.WPSEARCHBAR.Text = ""
+		showWPList("")
+	end)
+end)
+
+unexpected_UI.WPBACK.MouseButton1Click:Connect(function()
+	fadeOut(MENUFRAMES.waypoint)
+	clearWPList()
+	task.delay(0.1, function() for _, b in ipairs(MENUS) do b.Visible = true end end)
+end)
+
+do
+	local wpToken = 0
+	unexpected_UI.WPSEARCHBAR:GetPropertyChangedSignal("Text"):Connect(function()
+		wpToken = wpToken + 1
+		local my = wpToken
+		local txt = unexpected_UI.WPSEARCHBAR.Text
+		task.delay(0.12, function()
+			if my == wpToken then showWPList(txt) end
 		end)
 	end)
 end
@@ -1659,13 +1838,13 @@ local function hookEvents()
 				if not filter or part.Name:lower() == filter:lower() then runCmd(cmd) end
 			end)
 		elseif event == "equipped" then
-			conn = LP.Character and LP.Character.ChildAdded:Connect(function(c)
+			conn = CHAR and CHAR.ChildAdded:Connect(function(c)
 				if c:IsA("Tool") then
 					if not filter or c.Name:lower() == filter:lower() then runCmd(cmd) end
 				end
 			end)
 		elseif event == "unequipped" then
-			conn = LP.Character and LP.Character.ChildRemoved:Connect(function(c)
+			conn = CHAR and CHAR.ChildRemoved:Connect(function(c)
 				if c:IsA("Tool") then
 					if not filter or c.Name:lower() == filter:lower() then runCmd(cmd) end
 				end
@@ -1935,6 +2114,43 @@ for NAME, ENABLED in pairs(CONFIG.Plugins) do
 	if ENABLED then LOAD_PLUGIN(NAME) end
 end
 
+
+task.delay(0.5, function()
+	CONFIG.Waypoints = CONFIG.Waypoints or {}
+	for _, wp in ipairs(CONFIG.Waypoints) do
+		if wp.game == game.PlaceId then
+			cWPVisual(wp.name, Vector3.new(wp.pos[1], wp.pos[2], wp.pos[3]))
+		end
+	end
+end)
+
+function addPlugin(args)
+	local NAME = args.name or args[1]
+	if not NAME or NAME == "" then
+		return unexpected:notify("unexpected", "Usage: plugin [name]")
+	end
+	if LOAD_PLUGIN(NAME) then
+		CONFIG.Plugins[NAME] = true
+		UX_config()
+		if MENUFRAMES.plugin.Visible then showPLList(unexpected_UI.PLSEARCHBAR.Text) end
+	end
+end
+
+function removePlugin(args)
+	local NAME = args.name or args[1]
+	if not NAME or NAME == "" then
+		return unexpected:notify("unexpected", "Usage: unplugin [name]")
+	end
+	if CONFIG.Plugins[NAME] then
+		CONFIG.Plugins[NAME] = nil
+		UX_config()
+		unexpected:notify("unexpected", "Plugin '" .. NAME .. "' removed.")
+		if MENUFRAMES.plugin.Visible then showPLList(unexpected_UI.PLSEARCHBAR.Text) end
+	else
+		unexpected:notify("unexpected", "Plugin '" .. NAME .. "' is not enabled.")
+	end
+end
+
 local function hookBinds()
 	for keyName, _ in pairs(keyBinds) do
 		if keyBinds[keyName] and keyBinds[keyName].conn then
@@ -2000,30 +2216,45 @@ unexpected:addcmd("autoruns", "List all autoruns", function()
 	end
 end)
 
-unexpected:addcmd("plugin", "Add a plugin", function(NAME)
-	if not NAME or NAME == "" then
-		return unexpected:notify("unexpected", "Usage: plugin [name]")
-	end
-	if LOAD_PLUGIN(NAME) then
-		CONFIG.Plugins[NAME] = true
-		UX_config()
-		if MENUFRAMES.plugin.Visible then showPLList(unexpected_UI.PLSEARCHBAR.Text) end
-	end
+unexpected:addcmd("plugin", "Add a plugin", function(NAME) 
+	addPlugin({name = NAME}) 
 end, nil, {"name"})
 
-unexpected:addcmd("unplugin", "Remove a plugin", function(NAME)
-	if not NAME or NAME == "" then
-		return unexpected:notify("unexpected", "Usage: unplugin [name]")
-	end
-	if CONFIG.Plugins[NAME] then
-		CONFIG.Plugins[NAME] = nil
-		UX_config()
-		unexpected:notify("unexpected", "Plugin '" .. NAME .. "' removed.")
-		if MENUFRAMES.plugin.Visible then showPLList(unexpected_UI.PLSEARCHBAR.Text) end
-	else
-		unexpected:notify("unexpected", "Plugin '" .. NAME .. "' is not enabled.")
-	end
+unexpected:addcmd("unplugin", "Remove a plugin", function(NAME) 
+	removePlugin({name = NAME}) 
 end, nil, {"name"})
+
+unexpected:addcmd("reloadplugin", "Reload a plugin", function(NAME) 
+	removePlugin({name = NAME}) 
+	task.wait(1)
+	addPlugin({name = NAME})
+end, nil, {"name"})
+
+unexpected:addcmd("clearplugins", "Remove all plugins", function()
+	CONFIG.Plugins = {}
+	UX_config()
+	if not MENUON then return end
+	if MENUFRAMES.plugin.Visible then showPLList(unexpected_UI.PLSEARCHBAR.Text) end
+	unexpected:notify("plugins", "All plugins cleared.")
+end)
+
+unexpected:addcmd("addallplugins", "Load all available plugins", function()
+	local files = listfiles(PLUGIN_DIR)
+	local loaded = 0
+	for _, file in ipairs(files) do
+		local filename = file:match("([^/\\]+)$")
+		if filename:match("%.ux$") or filename:match("%.iy$") then
+			local pluginName = filename:match("^(.+)%.[^.]+$")
+			if LOAD_PLUGIN(pluginName) then
+				CONFIG.Plugins[pluginName] = true
+				loaded = loaded + 1
+			end
+		end
+	end
+	UX_config()
+	unexpected:notify("plugins", "Loaded " .. loaded .. " plugin(s).")
+	if MENUFRAMES.plugin.Visible then showPLList(unexpected_UI.PLSEARCHBAR.Text) end
+end)
 
 unexpected:addcmd("bind", "Bind a key to run a command. Use [toggle=true] for toggle mode", function(key, ...)
 	if not key or key == "" then
@@ -2156,14 +2387,6 @@ unexpected:addcmd("clearevents", "Remove all event triggers", function()
 	unexpected:notify("events", "All events cleared.")
 end)
 
-unexpected:addcmd("clearplugins", "Remove all plugins", function()
-	CONFIG.Plugins = {}
-	UX_config()
-	if not MENUON then return end
-	if MENUFRAMES.plugin.Visible then showPLList(unexpected_UI.PLSEARCHBAR.Text) end
-	unexpected:notify("plugins", "All plugins cleared.")
-end)
-
 unexpected:addcmd("clearautoruns", "Remove all autoruns", function()
 	CONFIG.Autoruns = {}
 	UX_config()
@@ -2251,10 +2474,10 @@ unexpected:addcmd("discord", "Discord Server", function()
 			})
 		})
 	end
-end, nil, nil)
+end, {"support", "help"})
 
-unexpected:addcmd("goto", "Teleport to a player", function(targetName)
-	local name = targetName:lower()
+unexpected:addcmd("goto", "Teleport to a player", function(name)
+	local name = name:lower()
 	local target
 	if name == "random" then
 		local t = {} for _, p in ipairs(PLRS:GetPlayers()) do if p ~= LP then t[#t+1] = p end end
@@ -2267,6 +2490,39 @@ unexpected:addcmd("goto", "Teleport to a player", function(targetName)
 	local root = target and target.Character and target.Character:FindFirstChild("HumanoidRootPart")
 	if root then HRP.CFrame = root.CFrame + Vector3.new(0, 3, 0) end
 end, nil, {"player"})
+
+local tweenSpeed = 1
+unexpected:addcmd("tweengoto", "Smoothly tween to a player", function(name)
+	if not name or name == "" then return unexpected:notify("tweengoto", "Usage: tweengoto [player]") end
+	name = name:lower()
+	local target
+	if name == "random" then
+		local list = {}
+		for _, p in ipairs(PLRS:GetPlayers()) do
+			if p ~= LP then list[#list+1] = p end
+		end
+		target = #list > 0 and list[math.random(#list)] or nil
+	else
+		for _, p in ipairs(PLRS:GetPlayers()) do
+			if p.Name:lower() == name or p.DisplayName:lower() == name then
+				target = p
+				break
+			end
+		end
+	end
+	local root = target and target.Character and target.Character:FindFirstChild("HumanoidRootPart")
+	if not root then return unexpected:notify("tweengoto", "Player not found") end
+	local tween = TS:Create(HRP, TweenInfo.new(tweenSpeed, Enum.EasingStyle.Linear), {CFrame = root.CFrame + Vector3.new(0, 3, 0)})
+	tween:Play()
+	unexpected:notify("tweengoto", "Tweening to " .. target.Name)
+end, {"tgoto"}, {"player"})
+
+unexpected:addcmd("tweenspeed", "Set tween speed", function(speed)
+	speed = tonumber(speed)
+	if not speed or speed <= 0 then return unexpected:notify("tweenspeed", "Usage: tweenspeed [number]") end
+	tweenSpeed = speed
+	unexpected:notify("tweenspeed", "Tween speed set to " .. speed)
+end, {"tspeed"}, {"speed"})
 
 local noclip
 unexpected:addcmd("noclip", "Walk through walls", function()
@@ -2288,16 +2544,35 @@ unexpected:addcmd("unnoclip", "Disable noclip", function()
 	end
 end, {"clip"}, nil)
 
+local function coordsfix(a, b, c)
+	if a and not b and not c then
+		local nums = {}
+		for v in tostring(a):gmatch("[-%d%.]+") do
+			nums[#nums + 1] = tonumber(v)
+		end
+		return nums[1], nums[2], nums[3]
+	end
+	return tonumber(a), tonumber(b), tonumber(c)
+end
+
+unexpected:addcmd("tweentp", "Tween to coordinates", function(x, y, z)	
+	x, y, z = coordsfix(x, y, z)
+	if not x or not y or not z then	return unexpected:notify("tweentp", "Usage: tween [x] [y] [z]")	 end	
+	local tween = TS:Create(HRP, TweenInfo.new(tweenSpeed, Enum.EasingStyle.Linear), {CFrame = CFrame.new(x, y, z)})
+	tween:Play()
+	unexpected:notify("tweentp", "Tweening to position")
+end, {"tween"}, {"x", "y", "z"})
+
 unexpected:addcmd("tp", "Teleport to coordinates", function(x, y, z)
-	x, y, z = tonumber(x), tonumber(y), tonumber(z)
+	x, y, z = coordsfix(x, y, z)
 	if not x or not y or not z then return unexpected:notify("tp", "Usage: tp [x] [y] [z]") end
 	HRP.CFrame = CFrame.new(x, y, z)
 end, nil, {"x", "y", "z"})
 
 unexpected:addcmd("copypos", "Copy position to clipboard", function()
 	local p = HRP.Position
-	setclipboard(string.format("%.2f, %.2f, %.2f", p.X, p.Y, p.Z))
-	unexpected:notify("copypos", string.format("%.2f, %.2f, %.2f", p.X, p.Y, p.Z))
+	setclipboard(string.format("%.2f %.2f %.2f", p.X, p.Y, p.Z))
+	unexpected:notify("copypos", string.format("%.2f %.2f %.2f", p.X, p.Y, p.Z))
 end)
 
 oldFOV = nil
@@ -2313,16 +2588,212 @@ unexpected:addcmd("resetfov", "Reset FOV to default", function()
 	CAM.FieldOfView = oldFOV or 70
 end)
 
-unexpected:addcmd("serverid", "Copy server Job ID to clipboard", function()
-	setclipboard(game.JobId)
-	unexpected:notify("serverid", game.JobId)
+unexpected:addcmd("jobid", "Copy Job ID to clipboard", function()
+	setclipboard("roblox://placeId=" .. game.PlaceId .. "&gameInstanceId=" .. game.JobId)
+	unexpected:notify("jobid", "Job ID copied to clipboard.")
 end)
+
+unexpected:addcmd("rejoin", "Rejoins the current server", function()
+	if #PLRS:GetPlayers() <= 1 then 
+		LP:Kick()
+		task.wait()
+		TPS:Teleport(game.PlaceId, LP)
+	else
+		TPS:TeleportToPlaceInstance(game.PlaceId, game.JobId, LP)
+	end
+end)
+
+unexpected:addcmd("autorejoin", "Automatically rejoin when an error occurs", function()
+	GS.ErrorMessageChanged:Connect(function()
+		execmd("rejoin")
+	end)
+	unexpected:notify("autorejoin", "Auto-rejoin enabled.")
+end, {"autorj"})
+
+unexpected:addcmd("serverhop", "Hop to a random server", function()
+	local API = game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=true")
+	local JSDECODE = HS:JSONDecode(API)
+	local SERVERS = {}
+
+	if JSDECODE and JSDECODE.data then
+		for _, v in ipairs(JSDECODE.data) do
+			if v.playing < v.maxPlayers and v.id ~= game.JobId then
+				table.insert(SERVERS, v.id)
+			end
+		end
+	end
+
+	if #SERVERS > 0 then
+		TPS:TeleportToPlaceInstance(game.PlaceId, SERVERS[math.random(#SERVERS)], LP)
+	else
+		return unexpected:notify("Server Hop", "Server Hop failed.")
+	end
+end, {"shop"})
+
+unexpected:addcmd("exit", "Exit the game", function()
+	game:Shutdown()
+end)
+
+unexpected:addcmd("setwaypoint", "Save a waypoint at current position", function(name)
+	if not name or name == "" then return unexpected:notify("setwaypoint", "Usage: setwaypoint [name]") end
+	CONFIG.Waypoints = CONFIG.Waypoints or {}
+	local pos = HRP.Position
+	for i, wp in ipairs(CONFIG.Waypoints) do
+		if wp.game == game.PlaceId and wp.name:lower() == name:lower() then
+			dWPVisual(wp.name)
+			table.remove(CONFIG.Waypoints, i)
+			break
+		end
+	end
+	table.insert(CONFIG.Waypoints, {
+		name = name,
+		pos = {pos.X, pos.Y, pos.Z},
+		game = game.PlaceId
+	})
+	cWPVisual(name, pos)
+	UX_config()
+	unexpected:notify("setwaypoint", "Saved waypoint: " .. name)
+	if MENUFRAMES.waypoint.Visible then showWPList(unexpected_UI.WPSEARCHBAR.Text) end
+end, {"swp", "setwp"}, {"name"})
+
+unexpected:addcmd("teleportwaypoint", "Teleport to a waypoint", function(name)
+	if not name or name == "" then return unexpected:notify("teleportwaypoint", "Usage: teleportwaypoint [name]") end
+	CONFIG.Waypoints = CONFIG.Waypoints or {}
+	for _, wp in ipairs(CONFIG.Waypoints) do
+		if wp.game == game.PlaceId and wp.name:lower() == name:lower() then
+			HRP.CFrame = CFrame.new(wp.pos[1], wp.pos[2], wp.pos[3])
+			unexpected:notify("teleportwaypoint", "Teleported to " .. name)
+			return
+		end
+	end
+	unexpected:notify("teleportwaypoint", "Waypoint not found: " .. name)
+end, {"twp"}, {"name"})
+
+unexpected:addcmd("tweenwaypoint", "Smoothly tween to a waypoint", function(name)
+	if not name or name == "" then return unexpected:notify("tweenwaypoint", "Usage: tweenwaypoint [name]") end
+	CONFIG.Waypoints = CONFIG.Waypoints or {}
+	for _, wp in ipairs(CONFIG.Waypoints) do
+		if wp.game == game.PlaceId and wp.name:lower() == name:lower() then
+			local tween = TS:Create(HRP, TweenInfo.new(tweenSpeed, Enum.EasingStyle.Linear), 
+				{CFrame = CFrame.new(wp.pos[1], wp.pos[2], wp.pos[3])})
+			tween:Play()
+			unexpected:notify("tweenwaypoint", "Tweening to " .. name)
+			return
+		end
+	end
+	unexpected:notify("tweenwaypoint", "Waypoint not found: " .. name)
+end, {"twp"}, {"name"})
+
+unexpected:addcmd("walktowaypoint", "Walk to a waypoint", function(name)
+	if not name or name == "" then return unexpected:notify("walktowaypoint", "Usage: walktowaypoint [name]") end
+	CONFIG.Waypoints = CONFIG.Waypoints or {}
+	for _, wp in ipairs(CONFIG.Waypoints) do
+		if wp.game == game.PlaceId and wp.name:lower() == name:lower() then
+			if HUM and HUM.SeatPart then HUM.Sit = false task.wait(0.1) end
+			HUM.WalkToPoint = Vector3.new(wp.pos[1], wp.pos[2], wp.pos[3])
+			unexpected:notify("walktowaypoint", "Walking to " .. name)
+			return
+		end
+	end
+	unexpected:notify("walktowaypoint", "Waypoint not found: " .. name)
+end, {"wtwp", "walkto"}, {"name"})
+
+unexpected:addcmd("deletewaypoint", "Delete a saved waypoint", function(name)
+	if not name or name == "" then return unexpected:notify("deletewaypoint", "Usage: deletewaypoint [name]") end
+	CONFIG.Waypoints = CONFIG.Waypoints or {}
+	for i = #CONFIG.Waypoints, 1, -1 do
+		if CONFIG.Waypoints[i].game == game.PlaceId and CONFIG.Waypoints[i].name:lower() == name:lower() then
+			dWPVisual(CONFIG.Waypoints[i].name)
+			table.remove(CONFIG.Waypoints, i)
+			UX_config()
+			unexpected:notify("deletewaypoint", "Deleted waypoint: " .. name)
+			if MENUFRAMES.waypoint.Visible then showWPList(unexpected_UI.WPSEARCHBAR.Text) end
+			return
+		end
+	end
+	unexpected:notify("deletewaypoint", "Waypoint not found: " .. name)
+end, {"dwp", "delwp"}, {"name"})
+
+unexpected:addcmd("waypoints", "Show waypoints tab", function()
+	if not MENUON then
+		MENUON = true
+		MENUFRAME.Size, MENUFRAME.Visible = UDim2.new(0, 339, 0, 0), true
+		playTween(unexpected_UI["PILL"], { Size = UDim2.new(0, 339, 0, 71) }, 0.25, Enum.EasingStyle.Quint):Play()
+		local NS = UDim2.new(0, 230, 0, 54)
+		playTween(CLI, { Size = NS }, 0.25, Enum.EasingStyle.Quint):Play()
+		playTween(unexpected_UI["PREDICTOR"], { Size = NS }, 0.25, Enum.EasingStyle.Quint):Play()
+		playTween(MENUFRAME, { Size = UDim2.new(0, 339, 0, 348) }, 0.25, Enum.EasingStyle.Quint):Play()
+		buttonTP(MENU, 0)
+		task.delay(0.3, function()
+			openMenuFrame(MENUFRAMES.waypoint, function()
+				unexpected_UI.WPSEARCHBAR.Text = ""
+				showWPList("")
+			end)
+		end)
+	else
+		openMenuFrame(MENUFRAMES.waypoint, function()
+			unexpected_UI.WPSEARCHBAR.Text = ""
+			showWPList("")
+		end)
+	end
+end, {"listwp", "wps"})
+
+unexpected:addcmd("showwaypoints", "Show all waypoint visuals", function()
+	for name, visual in pairs(waypointVisuals) do
+		dWPVisual(name)
+	end
+	CONFIG.Waypoints = CONFIG.Waypoints or {}
+	local count = 0
+	for _, wp in ipairs(CONFIG.Waypoints) do
+		if wp.game == game.PlaceId then
+			cWPVisual(wp.name, Vector3.new(wp.pos[1], wp.pos[2], wp.pos[3]))
+			count = count + 1
+		end
+	end
+	unexpected:notify("waypoint", "Showing " .. count .. " waypoint(s)")
+end, {"showwp"})
+
+unexpected:addcmd("hidewaypoints", "Hide all waypoint visuals", function()
+	for name, visual in pairs(waypointVisuals) do
+		dWPVisual(name)
+	end
+	unexpected:notify("hidewaypoints", "Waypoints hidden")
+end, {"hidewp"})
+
+unexpected:addcmd("cleargamewaypoints", "Delete all waypoints for this game", function()
+	CONFIG.Waypoints = CONFIG.Waypoints or {}
+	for i = #CONFIG.Waypoints, 1, -1 do
+		if CONFIG.Waypoints[i].game == game.PlaceId then
+			dWPVisual(CONFIG.Waypoints[i].name)
+			table.remove(CONFIG.Waypoints, i)
+		end
+	end
+	UX_config()
+	unexpected:notify("cleargamewaypoints", "Cleared all waypoints for this game")
+	if MENUFRAMES.waypoint.Visible then showWPList(unexpected_UI.WPSEARCHBAR.Text) end
+end, {"cleargamewp", "cwp"})
+
+unexpected:addcmd("getwaypointpos", "Copy waypoint position", function(name)
+	if not name or name == "" then return unexpected:notify("getwaypointpos", "Usage: getwaypointpos [name]") end
+	CONFIG.Waypoints = CONFIG.Waypoints or {}
+	for _, wp in ipairs(CONFIG.Waypoints) do
+		if wp.game == game.PlaceId and wp.name:lower() == name:lower() then
+			local pos = wp.pos
+			local vec = Vector3.new(pos[1], pos[2], pos[3])
+			local str = string.format("%.3f, %.3f, %.3f", vec.X, vec.Y, vec.Z)
+			setclipboard(str)
+			unexpected:notify("getwaypointpos", "Copied: " .. str)
+			return
+		end
+	end
+	unexpected:notify("getwaypointpos", "Waypoint not found: " .. name)
+end, {"gwp", "getwp"}, {"name"})
 
 unexpected:addcmd("ping", "Show current ping", function()
-	unexpected:notify("ping", math.floor(PLRS.LocalPlayer:GetNetworkPing() * 1000) .. "ms")
+	unexpected:notify("ping", math.floor(LP:GetNetworkPing() * 1000) .. "ms")
 end)
 
-unexpected:addcmd("time", "Show server time", function()
+unexpected:addcmd("time", "Show game's clock time", function()
 	local t = game:GetService("Lighting").ClockTime
 	local h = math.floor(t)
 	local m = math.floor((t - h) * 60)
@@ -2336,7 +2807,7 @@ unexpected:addcmd("getpos", "Get a player's position", function(name)
 			local hrp = p.Character and p.Character:FindFirstChild("HumanoidRootPart")
 			if hrp then
 				local pos = hrp.Position
-				local str = string.format("%.2f, %.2f, %.2f", pos.X, pos.Y, pos.Z)
+				local str = string.format("%.2f %.2f %.2f", pos.X, pos.Y, pos.Z)
 				setclipboard(str)
 				unexpected:notify("getpos", p.Name .. ": " .. str)
 			else
@@ -2404,6 +2875,18 @@ unexpected:addcmd("copyname", "Copy a player's username to clipboard", function(
 		end
 	end
 	unexpected:notify("copyname", "Player not found: " .. name)
+end, nil, {"player"})
+
+unexpected:addcmd("copyid", "Copy a player's ID to clipboard", function(name)
+	if not name then return unexpected:notify("copyid", "Usage: copyid [player]") end
+	for _, p in ipairs(PLRS:GetPlayers()) do
+		if p.Name:lower() == name:lower() or p.DisplayName:lower() == name:lower() then
+			setclipboard(tostring(p.UserId))
+			unexpected:notify("copyid", "Copied: " .. tostring(p.UserId))
+			return
+		end
+	end
+	unexpected:notify("copyid", "Player not found: " .. name)
 end, nil, {"player"})
 
 local spectating = false
@@ -2593,9 +3076,6 @@ unexpected:addcmd("cmds", "Shows commands", function()
 	end
 end)
 
-unexpected:addcmd("rejoin", "Rejoins the current server", function()
-	TPS:Teleport(game.PlaceId, LP)
-end)
 
 unexpected:addcmd("keepUX", "Keep 'unexpected' running even on rejoin", function(state)
 	state = typeof(state) == "string" and state:lower() or ""
