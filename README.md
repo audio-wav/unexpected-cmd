@@ -3,7 +3,7 @@
 An open source Roblox admin commands script [Website](https://audio-wav.github.io/unexpected-cmd)
 [![](https://dcbadge.limes.pink/api/server/J73SnGB2y2?style=flat)](https://discord.gg/J73SnGB2y2)
 ```lua
-loadstring(game:HttpGet('https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/source'))()
+loadstring(game:HttpGet('https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/bootstrapper'))()
 ```
 ---
 ## it's just perfect.*
