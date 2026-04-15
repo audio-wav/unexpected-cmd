@@ -632,11 +632,10 @@ function unexpected:notify(title, ...)
 end
 
 unexpected_UI["CLI"]:GetPropertyChangedSignal("Text"):Connect(function()
-	local input = unexpected_UI["CLI"].Text
+	local input = unexpected_UI["CLI"].Text:gsub("%s+$", "")
 	local cmdName, argText = string.match(input, "^(%S+)%s(.*)$")
 	local bareCmd = string.match(input, "^(%S+)$") or ""
 	local suggestion = ""
-
 	if bareCmd ~= "" then
 		local lowerCmd = string.lower(bareCmd)
 		local matches = {}
@@ -649,12 +648,16 @@ unexpected_UI["CLI"]:GetPropertyChangedSignal("Text"):Connect(function()
 		table.sort(matches)
 		if #matches > 0 then
 			local bestKey = matches[1]
-			suggestion = input .. string.sub(bestKey, #bareCmd + 1)
+			if string.lower(bestKey) == lowerCmd then
+				suggestion = ""
+			else
+				suggestion = input .. string.sub(bestKey, #bareCmd + 1)
+			end
 		end
 	elseif cmdName then
 		local cmd = commandListData[string.lower(cmdName)]
 		if cmd and cmd.UsageArgs and cmd.UsageArgs[1] == "player" then
-			local lastArg = string.match(argText or "", "%S+$") or ""
+			local lastArg = (string.match(argText, "%S+$") or ""):gsub("%s+$", "")
 			local lowerArg = string.lower(lastArg)
 			local bestMatch = nil
 			for _, p in ipairs(PLRS:GetPlayers()) do
@@ -676,7 +679,11 @@ unexpected_UI["CLI"]:GetPropertyChangedSignal("Text"):Connect(function()
 			end
 			if bestMatch then
 				local prefixArgs = string.match(argText or "", "^(.-)%S+$") or ""
-				suggestion = cmdName .. " " .. prefixArgs .. bestMatch
+				if string.lower(lastArg) == string.lower(bestMatch) then
+					suggestion = ""
+				else
+					suggestion = cmdName .. " " .. prefixArgs .. bestMatch
+				end
 			else
 				suggestion = ""
 			end
