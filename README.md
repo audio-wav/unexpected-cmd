@@ -3,7 +3,23 @@
 An open source Roblox admin commands script [Website](https://audio-wav.github.io/unexpected-cmd)
 [![](https://dcbadge.limes.pink/api/server/J73SnGB2y2?style=flat)](https://discord.gg/J73SnGB2y2)
 ```lua
-loadstring(game:HttpGet('https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/bootstrapper'))()
+loadstring(game:HttpGet('https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/source'))()
+```
+---
+## bootstrapper
+`unexpected cmd` now offers a fast, caching bootstrapper that will make loading times faster.
+```lua
+local HTTP = (cloneref and cloneref(game:GetService("HttpService"))) or game:GetService("HttpService")
+local VURL, SURL = "https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/version", "https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/source"
+local DEPENDENCIES = typeof(writefile) == "function" and typeof(readfile) == "function" and typeof(isfile) == "function"
+local REMOTE = HTTP:JSONDecode(game:HttpGet(VURL))
+local CACHE = DEPENDENCIES and isfile("ux_cache.json") and HTTP:JSONDecode(readfile("ux_cache.json"))
+if DEPENDENCIES and (not CACHE or CACHE.version ~= REMOTE.version) then
+	writefile("ux_source.lua", game:HttpGet(SURL))
+	writefile("ux_cache.json", HTTP:JSONEncode(REMOTE))
+end
+
+loadstring(DEPENDENCIES and isfile("ux_source.lua") and readfile("ux_source.lua") or game:HttpGet(SURL))()
 ```
 ---
 ## it's just perfect.*
