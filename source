@@ -109,7 +109,7 @@ local function CREATE_ASPECT(PARENT, RATIO)
 end
 
 local unexpected_UI = {}
-local currentVersion = "v1.3.2"
+local currentVersion = "v1.3.3"
 
 local function randomString(length, charset)
 	length = length or math.random(10, 20)
@@ -673,46 +673,59 @@ unexpected_UI["CLI"]:GetPropertyChangedSignal("Text"):Connect(function()
 			end
 		end
 	elseif cmdName then
-		local function caseSens(pattern, word)
-			local out = {}
-			for i = 1, #word do
-				local c = word:sub(i,i)
-				local p = pattern:sub(i,i)
-				if p ~= "" and p:match("%u") then
-					out[i] = c:upper()
-				else
-					out[i] = c:lower()
+		local cmd = commandListData[string.lower(cmdName)]
+		if cmd and cmd.UsageArgs and #cmd.UsageArgs > 0 then
+			local hasPlayerArg = false
+			for _, arg in ipairs(cmd.UsageArgs) do
+				if arg:lower() == "player" then
+					hasPlayerArg = true
+					break
 				end
 			end
-			return table.concat(out)
-		end
-		local lastArg = (string.match(argText, "%S+$") or ""):gsub("%s+$", "")
-		local lowerArg = string.lower(lastArg)
-		local bestMatch = nil
-		for _, p in ipairs(PLRS:GetPlayers()) do
-			if p ~= LP then
-				local n, dn = p.Name, p.DisplayName
-				local ln, ldn = string.lower(n), string.lower(dn)
-				local candidate
-				if lowerArg == "" or ln:sub(1, #lowerArg) == lowerArg then
-					candidate = n
-				elseif ldn:sub(1, #lowerArg) == lowerArg then
-					candidate = dn
+			
+			if hasPlayerArg then
+				local function caseSens(pattern, word)
+					local out = {}
+					for i = 1, #word do
+						local c = word:sub(i,i)
+						local p = pattern:sub(i,i)
+						if p ~= "" and p:match("%u") then
+							out[i] = c:upper()
+						else
+							out[i] = c:lower()
+						end
+					end
+					return table.concat(out)
 				end
-				if candidate then
-					if not bestMatch or string.lower(candidate) < string.lower(bestMatch) then
-						bestMatch = candidate
+				local lastArg = (string.match(argText, "%S+$") or ""):gsub("%s+$", "")
+				local lowerArg = string.lower(lastArg)
+				local bestMatch = nil
+				for _, p in ipairs(PLRS:GetPlayers()) do
+					if p ~= LP then
+						local n, dn = p.Name, p.DisplayName
+						local ln, ldn = string.lower(n), string.lower(dn)
+						local candidate
+						if lowerArg == "" or ln:sub(1, #lowerArg) == lowerArg then
+							candidate = n
+						elseif ldn:sub(1, #lowerArg) == lowerArg then
+							candidate = dn
+						end
+						if candidate then
+							if not bestMatch or string.lower(candidate) < string.lower(bestMatch) then
+								bestMatch = candidate
+							end
+						end
 					end
 				end
-			end
-		end
-		if bestMatch then
-			local prefixArgs = string.match(argText or "", "^(.-)%S+$") or ""
-			local formatted = caseSens(lastArg, bestMatch)
-			if string.lower(lastArg) == string.lower(bestMatch) then
-				suggestion = ""
-			else
-				suggestion = cmdName .. " " .. prefixArgs .. formatted
+				if bestMatch then
+					local prefixArgs = string.match(argText or "", "^(.-)%S+$") or ""
+					local formatted = caseSens(lastArg, bestMatch)
+					if string.lower(lastArg) == string.lower(bestMatch) then
+						suggestion = ""
+					else
+						suggestion = cmdName .. " " .. prefixArgs .. formatted
+					end
+				end
 			end
 		end
 	end
@@ -763,6 +776,7 @@ local function updateList(filter)
 			btn.Visible = true
 			btn.Position = UDim2.new(0, 0, 0, (i - 1) * 32)
 		end
+		unexpected_UI.BTNLIST.CanvasSize = UDim2.new(0, 0, 0, #all * 32)
 		return
 	end
 
@@ -770,12 +784,12 @@ local function updateList(filter)
 		if _btnMeta[btn] and _btnMeta[btn].data then
 			local cmd = _btnMeta[btn].data
 			if cmd._lowerOriginal:find(filter, 1, true) or 
-			   (cmd._lowerAliases and (function() 
-				   for _, alias in ipairs(cmd._lowerAliases) do
-					   if alias:find(filter, 1, true) then return true end
-				   end
-				   return false
-			   end)()) then
+				(cmd._lowerAliases and (function() 
+					for _, alias in ipairs(cmd._lowerAliases) do
+						if alias:find(filter, 1, true) then return true end
+					end
+					return false
+				end)()) then
 				table.insert(filtered, btn)
 			end
 		end
@@ -812,6 +826,7 @@ local function updateList(filter)
 	for _, btn in ipairs(all) do
 		btn.Visible = table.find(filtered, btn) ~= nil
 	end
+	unexpected_UI.BTNLIST.CanvasSize = UDim2.new(0, 0, 0, #filtered * 32)
 end
 
 do
@@ -1366,9 +1381,10 @@ local function showBDList(filter)
 	
 	local matches = {}
 	for i, bd in ipairs(CONFIG.Binds) do
-		local display = "[".. bd.key .. "]" .. (bd.toggle and " (toggle)" or "") .. " → " .. bd.cmd
+		local bindType = bd.isPlugin and "[PLUGIN]" or ""
+		local display = "[".. bd.key .. "]" .. (bd.toggle and " (toggle)" or "") .. " → " .. (bd.cmd or "[fn]") .. " " .. bindType
 		if filter == "" or display:lower():find(filter, 1, true) then
-			table.insert(matches, {text = display, idx = i})
+			table.insert(matches, {text = display, idx = i, id = bd.id})
 		end
 	end
 	
@@ -1386,6 +1402,7 @@ local function showBDList(filter)
 		btn.Position = UDim2.new(0,0,0,index * 32)
 		btn.Parent = unexpected_UI.BDBTNLIST
 		local originalIdx = match.idx
+		local bindId = match.id
 		btn.MouseButton1Click:Connect(function()
 			table.remove(CONFIG.Binds, originalIdx)
 			UX_config()
@@ -1899,47 +1916,95 @@ if not isfolder(PLUGIN_DIR) then makefolder(PLUGIN_DIR) end
 if type(CONFIG.Plugins) ~= "table" then CONFIG.Plugins = {} end
 
 local keyBinds = {}
-local bindToggleState = {}
+local bindConnections = {}
+local bindToggleStates = {}
+local bindIdCounter = 0
+
+local function mkBINDID()
+	bindIdCounter = bindIdCounter + 1
+	return "bind_" .. bindIdCounter
+end
+
+local function mkKEYCONN(keyName)
+	if bindConnections[keyName] then return end
+	local conn = UIS.InputBegan:Connect(function(input, processed)
+		if not processed and input.KeyCode.Name:lower() == keyName then
+			local binds = keyBinds[keyName] or {}
+			for _, bind in ipairs(binds) do
+				if bind.fn then
+					pcall(bind.fn)
+				elseif bind.cmd then
+					if bind.toggle then
+						if bindToggleStates[bind.id] then
+							bindToggleStates[bind.id] = false
+							local cmdToRun = bind.cmd
+							if cmdToRun:match("%s(true)$") then
+								cmdToRun = cmdToRun:gsub("true$", "false")
+							elseif cmdToRun:match("%s(false)$") then
+								cmdToRun = cmdToRun:gsub("false$", "true")
+							else
+								local parts = {}
+								for w in bind.cmd:gmatch("%S+") do parts[#parts+1] = w end
+								local baseCmd = parts[1] or ""
+								cmdToRun = "un" .. baseCmd
+							end
+							runCmd(cmdToRun)
+						else
+							bindToggleStates[bind.id] = true
+							runCmd(bind.cmd)
+						end
+					else
+						runCmd(bind.cmd)
+					end
+				end
+			end
+		end
+	end)
+	bindConnections[keyName] = conn
+end
 
 local function UX_addbind(keyName, cmdString, toggle)
 	keyName = keyName:lower()
-	if keyBinds[keyName] then
-		keyBinds[keyName].conn:Disconnect()
-	end
-	local conn
-	if toggle then
-		bindToggleState[keyName] = false
-		local parts = {}
-		for w in cmdString:gmatch("%S+") do parts[#parts+1] = w end
-		local baseCmd = parts[1] or ""
-		local unCmd = "un" .. baseCmd
-		conn = UIS.InputBegan:Connect(function(input, processed)
-			if not processed and input.KeyCode.Name:lower() == keyName then
-				if bindToggleState[keyName] then
-					bindToggleState[keyName] = false
-					runCmd(unCmd)
-				else
-					bindToggleState[keyName] = true
-					runCmd(cmdString)
-				end
-			end
-		end)
-	else
-		conn = UIS.InputBegan:Connect(function(input, processed)
-			if not processed and input.KeyCode.Name:lower() == keyName then
-				runCmd(cmdString)
-			end
-		end)
-	end
-	keyBinds[keyName] = { conn = conn, cmd = cmdString, toggle = toggle or false }
+	if not keyBinds[keyName] then keyBinds[keyName] = {} end
+	
+	local bindId = mkBINDID()
+	if toggle then bindToggleStates[bindId] = false end
+	
+	table.insert(keyBinds[keyName], { id = bindId, cmd = cmdString, toggle = toggle or false, fn = nil })
+	mkKEYCONN(keyName)
 end
 
-local function UX_unbind(keyName)
+local function UX_addPluginBind(keyName, fn)
 	keyName = keyName:lower()
-	if keyBinds[keyName] then
-		keyBinds[keyName].conn:Disconnect()
+	if not keyBinds[keyName] then keyBinds[keyName] = {} end
+	
+	local bindId = mkBINDID()
+	table.insert(keyBinds[keyName], { id = bindId, cmd = nil, toggle = false, fn = fn, isPlugin = true })
+	mkKEYCONN(keyName)
+end
+
+local function UX_unbind(keyName, bindId)
+	keyName = keyName:lower()
+	if not keyBinds[keyName] then return end
+	
+	if bindId then
+		for i, bind in ipairs(keyBinds[keyName]) do
+			if bind.id == bindId then
+				table.remove(keyBinds[keyName], i)
+				bindToggleStates[bindId] = nil
+				break
+			end
+		end
+	else
+		keyBinds[keyName] = {}
+	end
+	
+	if #(keyBinds[keyName] or {}) == 0 then
+		if bindConnections[keyName] then
+			bindConnections[keyName]:Disconnect()
+			bindConnections[keyName] = nil
+		end
 		keyBinds[keyName] = nil
-		bindToggleState[keyName] = nil
 	end
 end
 
@@ -2015,13 +2080,7 @@ local function mkPLUGINENV()
 		execCmd = execmd,
 		addbind = function(key, fn)
 			local keyName = (typeof(key) == "EnumItem" and key.Name or tostring(key)):lower()
-			if keyBinds[keyName] then keyBinds[keyName].conn:Disconnect() end
-			local conn = UIS.InputBegan:Connect(function(input, processed)
-				if not processed and input.KeyCode.Name:lower() == keyName then
-					pcall(fn)
-				end
-			end)
-			keyBinds[keyName] = { conn = conn, cmd = "[plugin-fn]", toggle = false }
+			UX_addPluginBind(keyName, fn)
 		end,
 		unkeybind = function(key)
 			local keyName = (typeof(key) == "EnumItem" and key.Name or tostring(key)):lower()
@@ -2098,7 +2157,7 @@ local function loadPlugin(name, source, isIY)
 		unexpected:notify("unexpected", ("%s loaded (%d cmd%s)"):format(pluginName, count, count==1 and "" or "s"))
 		return true
 	else
-		local ENV = setmetatable({ unexpected = unexpected }, { __index = getfenv() })
+		local ENV = setmetatable(mkPLUGINENV(), { __index = getfenv() })
 		local OK, RESULT = pcall(function()
 			return setfenv(loadstring(source), ENV)()
 		end)
@@ -2148,7 +2207,6 @@ for NAME, ENABLED in pairs(CONFIG.Plugins) do
 	if ENABLED then LOAD_PLUGIN(NAME) end
 end
 
-
 task.delay(0.5, function()
 	CONFIG.Waypoints = CONFIG.Waypoints or {}
 	for _, wp in ipairs(CONFIG.Waypoints) do
@@ -2186,16 +2244,19 @@ function removePlugin(args)
 end
 
 local function hookBinds()
-	for keyName, _ in pairs(keyBinds) do
-		if keyBinds[keyName] and keyBinds[keyName].conn then
-			keyBinds[keyName].conn:Disconnect()
-		end
+	for keyName, conn in pairs(bindConnections) do
+		if conn then conn:Disconnect() end
 	end
+	bindConnections = {}
+	bindToggleStates = {}
 	keyBinds = {}
-	bindToggleState = {}
 	CONFIG.Binds = CONFIG.Binds or {}
 	for _, bd in ipairs(CONFIG.Binds) do
-		UX_addbind(bd.key, bd.cmd, bd.toggle)
+		if bd.isPlugin then
+			unexpected:notify("unexpected", "Note: Plugin binds require plugins to be reloaded to restore.")
+		else
+			UX_addbind(bd.key, bd.cmd, bd.toggle)
+		end
 	end
 end
 
@@ -2311,32 +2372,26 @@ unexpected:addcmd("bind", "Bind a key to run a command. Use [toggle=true] for to
 	local cmdString = table.concat(args, " ")
 	UX_addbind(key, cmdString, toggle)
 	CONFIG.Binds = CONFIG.Binds or {}
-	for i, bd in ipairs(CONFIG.Binds) do
-		if bd.key == key:lower() then
-			table.remove(CONFIG.Binds, i)
-			break
-		end
-	end
-	table.insert(CONFIG.Binds, { key = key:lower(), cmd = cmdString, toggle = toggle })
+	local bindId = mkBINDID()
+	table.insert(CONFIG.Binds, { id = bindId, key = key:lower(), cmd = cmdString, toggle = toggle, isPlugin = false })
 	UX_config()
 	unexpected:notify("bind", "[" .. key .. "] → " .. cmdString .. (toggle and " (toggle)" or ""))
 	if MENUFRAMES.bind.Visible then showBDList(unexpected_UI.BDSEARCHBAR.Text) end
 end, nil, {"key", "command", "...", "toggle=true/false"})
 
-unexpected:addcmd("unbind", "Remove a key binding", function(key)
+unexpected:addcmd("unbind", "Remove all key bindings for a key", function(key)
 	if not key or key == "" then
 		return unexpected:notify("unbind", "Usage: unbind [key]")
 	end
 	UX_unbind(key)
 	CONFIG.Binds = CONFIG.Binds or {}
-	for i, bd in ipairs(CONFIG.Binds) do
-		if bd.key == key:lower() then
+	for i = #CONFIG.Binds, 1, -1 do
+		if CONFIG.Binds[i].key == key:lower() then
 			table.remove(CONFIG.Binds, i)
-			break
 		end
 	end
 	UX_config()
-	unexpected:notify("unbind", "Unbound: " .. key)
+	unexpected:notify("unbind", "Unbound all: " .. key)
 	if MENUFRAMES.bind.Visible then showBDList(unexpected_UI.BDSEARCHBAR.Text) end
 end, nil, {"key"})
 
@@ -2432,11 +2487,12 @@ end)
 unexpected:addcmd("clearbinds", "Remove all binds", function()
 	CONFIG.Binds = {}
 	UX_config()
-	for keyName, bd in pairs(keyBinds) do
-		if bd.conn then bd.conn:Disconnect() end
+	for keyName, conn in pairs(bindConnections) do
+		if conn then conn:Disconnect() end
 	end
+	bindConnections = {}
+	bindToggleStates = {}
 	keyBinds = {}
-	bindToggleState = {}
 	if not MENUON then return end
 	if MENUFRAMES.bind.Visible then showBDList(unexpected_UI.BDSEARCHBAR.Text) end
 	unexpected:notify("binds", "All binds cleared.")
@@ -2579,24 +2635,40 @@ unexpected:addcmd("tweenspeed", "Set tween speed", function(speed)
 end, {"tspeed"}, {"speed"})
 
 local noclip
-unexpected:addcmd("noclip", "Walk through walls", function()
-	if noclip then return unexpected:notify("noclip", "Already noclipping.") end
-	noclip = RS.Stepped:Connect(function()
-		for _, p in ipairs(CHAR:GetDescendants()) do
-			if typeof(p) == "Instance" and p:IsA("BasePart") then p.CanCollide = false end
+unexpected:addcmd("noclip", "Toggle walk through walls (true/false)", function(state)
+	local enable
+	if state then
+		state = string.lower(tostring(state))
+		if state == "true" or state == "1" then
+			enable = true
+		elseif state == "false" or state == "0" then
+			enable = false
+		else
+			enable = not noclip
 		end
-	end)
-end)
-
-unexpected:addcmd("unnoclip", "Disable noclip", function()
-	if noclip then
-		noclip:Disconnect()
-		noclip = nil
+	else
+		enable = not noclip
 	end
-	for _, p in ipairs(CHAR:GetDescendants()) do
-		if typeof(p) == "Instance" and p:IsA("BasePart") then p.CanCollide = true end
+	
+	if enable then
+		if noclip then return unexpected:notify("noclip", "Already noclipping.") end
+		noclip = RS.Stepped:Connect(function()
+			for _, p in ipairs(CHAR:GetDescendants()) do
+				if typeof(p) == "Instance" and p:IsA("BasePart") then p.CanCollide = false end
+			end
+		end)
+		unexpected:notify("noclip", "Noclip enabled")
+	else
+		if noclip then
+			noclip:Disconnect()
+			noclip = nil
+		end
+		for _, p in ipairs(CHAR:GetDescendants()) do
+			if typeof(p) == "Instance" and p:IsA("BasePart") then p.CanCollide = true end
+		end
+		unexpected:notify("noclip", "Noclip disabled")
 	end
-end, {"clip"}, nil)
+end, nil, {"true/false"})
 
 local function coordsfix(a, b, c)
 	if a and not b and not c then
@@ -3531,6 +3603,19 @@ end, nil, {"player"})
 
 hookEvents()
 hookBinds()
+
+local function migrateBinds()
+	CONFIG.Binds = CONFIG.Binds or {}
+	for i, bd in ipairs(CONFIG.Binds) do
+		if not bd.id then
+			bd.id = mkBINDID()
+			bd.isPlugin = bd.isPlugin or false
+		end
+	end
+	UX_config()
+end
+
+migrateBinds()
 UX_rconfig()
 
 task.delay(1, function()
