@@ -9,18 +9,19 @@ const parseTable = t =>
   t ? [...t.matchAll(/"([^"]+)"/g)].map(x => x[1]) : []
 while ((m = REG.exec(text))) {
   let [_, rawName, d, aRaw, uRaw] = m
-  const isClient = /^\[CLIENT\]/i.test(rawName)
-  const isRemote = /^\[REMOTE\]/i.test(rawName)
-  const n = rawName
-  .replace(/^\[CLIENT\]\s*/i, "")
-  .replace(/^\[REMOTE\]\s*/i, "")
+  const tagMatch = rawName.match(/^\s*\[(CLIENT|REMOTE)\]\s*/i)
+  const tag = tagMatch ? tagMatch[1].toLowerCase() : null
+  const isClient = tag === "client"
+  const isRemote = tag === "remote"
+  const n = rawName.replace(/^\s*\[(CLIENT|REMOTE)\]\s*/i, "")
   const aliases = (!aRaw || aRaw === "nil") ? [] : parseTable(aRaw)
   const args = (!uRaw || uRaw === "nil") ? [] : parseTable(uRaw)
-  const badge = isClient
-  ? `<span class="cl">client</span>`
-  : isRemote
-    ? `<span class="rm">remote</span>`
-    : ""
+  const badge =
+    tag === "client"
+	  ? `<span class="cl">client</span>`
+	  : tag === "remote"
+		? `<span class="rm">remote</span>`
+		: ""
   const aliasesHTML = aliases.length
     ? `<div class="tags">${aliases.map(x=>`<span class="tag ta">${esc(x)}</span>`).join("")}</div>`
     : `<span class="tn">—</span>`
