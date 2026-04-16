@@ -673,37 +673,46 @@ unexpected_UI["CLI"]:GetPropertyChangedSignal("Text"):Connect(function()
 			end
 		end
 	elseif cmdName then
-		local cmd = commandListData[string.lower(cmdName)]
-		if cmd and cmd.UsageArgs and cmd.UsageArgs[1] == "player" then
-			local lastArg = (string.match(argText, "%S+$") or ""):gsub("%s+$", "")
-			local lowerArg = string.lower(lastArg)
-			local bestMatch = nil
-			for _, p in ipairs(PLRS:GetPlayers()) do
-				if p ~= LP then
-					local n = string.lower(p.Name)
-					local dn = string.lower(p.DisplayName)
-					local candidate
-					if lowerArg == "" or n:sub(1, #lowerArg) == lowerArg then
-						candidate = p.Name
-					elseif dn:sub(1, #lowerArg) == lowerArg then
-						candidate = p.DisplayName
-					end
-					if candidate then
-						if not bestMatch or string.lower(candidate) < string.lower(bestMatch) then
-							bestMatch = candidate
-						end
+		local function caseSens(pattern, word)
+			local out = {}
+			for i = 1, #word do
+				local c = word:sub(i,i)
+				local p = pattern:sub(i,i)
+				if p ~= "" and p:match("%u") then
+					out[i] = c:upper()
+				else
+					out[i] = c:lower()
+				end
+			end
+			return table.concat(out)
+		end
+		local lastArg = (string.match(argText, "%S+$") or ""):gsub("%s+$", "")
+		local lowerArg = string.lower(lastArg)
+		local bestMatch = nil
+		for _, p in ipairs(PLRS:GetPlayers()) do
+			if p ~= LP then
+				local n, dn = p.Name, p.DisplayName
+				local ln, ldn = string.lower(n), string.lower(dn)
+				local candidate
+				if lowerArg == "" or ln:sub(1, #lowerArg) == lowerArg then
+					candidate = n
+				elseif ldn:sub(1, #lowerArg) == lowerArg then
+					candidate = dn
+				end
+				if candidate then
+					if not bestMatch or string.lower(candidate) < string.lower(bestMatch) then
+						bestMatch = candidate
 					end
 				end
 			end
-			if bestMatch then
-				local prefixArgs = string.match(argText or "", "^(.-)%S+$") or ""
-				if string.lower(lastArg) == string.lower(bestMatch) then
-					suggestion = ""
-				else
-					suggestion = cmdName .. " " .. prefixArgs .. bestMatch
-				end
-			else
+		end
+		if bestMatch then
+			local prefixArgs = string.match(argText or "", "^(.-)%S+$") or ""
+			local formatted = caseSens(lastArg, bestMatch)
+			if string.lower(lastArg) == string.lower(bestMatch) then
 				suggestion = ""
+			else
+				suggestion = cmdName .. " " .. prefixArgs .. formatted
 			end
 		end
 	end
