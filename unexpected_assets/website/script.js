@@ -1,3 +1,5 @@
+add the [REMOTE]
+
 document.addEventListener("DOMContentLoaded", async () => {
 const tb = document.getElementById("tb"),
 esc = s => s.replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])),
@@ -9,19 +11,12 @@ const parseTable = t =>
   t ? [...t.matchAll(/"([^"]+)"/g)].map(x => x[1]) : []
 while ((m = REG.exec(text))) {
   let [_, rawName, d, aRaw, uRaw] = m
-  const tagMatch = rawName.match(/^\s*\[(CLIENT|REMOTE)\]\s*/i)
-  const tag = tagMatch ? tagMatch[1].toLowerCase() : null
-  const isClient = tag === "client"
-  const isRemote = tag === "remote"
-  const n = rawName.replace(/^\s*\[(CLIENT|REMOTE)\]\s*/i, "")
+  const isClient = /^\[CLIENT\]/i.test(rawName)
+  const n = rawName.replace(/^\[CLIENT\]\s*/i, "")
+  const r = rawName.replace(/^\[REMOTE\]\s*/i, "")
   const aliases = (!aRaw || aRaw === "nil") ? [] : parseTable(aRaw)
   const args = (!uRaw || uRaw === "nil") ? [] : parseTable(uRaw)
-  const badge =
-    tag === "client"
-	  ? `<span class="cl">client</span>`
-	  : tag === "remote"
-		? `<span class="rm">remote</span>`
-		: ""
+  const badge = isClient ? `<span class="cl">client</span>` : ""
   const aliasesHTML = aliases.length
     ? `<div class="tags">${aliases.map(x=>`<span class="tag ta">${esc(x)}</span>`).join("")}</div>`
     : `<span class="tn">—</span>`
@@ -34,7 +29,6 @@ while ((m = REG.exec(text))) {
   tr.dataset.a = aliases.join(" ").toLowerCase()
   tr.dataset.g = args.join(" ").toLowerCase()
   tr.dataset.c = isClient ? "1" : "0"
-  tr.dataset.r = isRemote ? "1" : "0"
   tr.innerHTML = `
     <td><div class="cc"><span class="cn">${esc(n)}</span>${badge}</div></td>
     <td><span class="desc">${esc(d)}</span></td>
@@ -59,9 +53,7 @@ const upd = a => {
     const show =
       filter === "client"
         ? tr.dataset.c === "1" && ok
-        : filter === "remote"
-          ? tr.dataset.r === "1" && ok
-          : ok
+        : ok
 
     tr.classList.toggle("h", !show)
     if (show) {
