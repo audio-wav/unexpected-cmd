@@ -14,6 +14,7 @@ STARTERGUI = cloneref(game:GetService("StarterGui"))
 PLRS = cloneref(game:GetService("Players"))
 UIS = cloneref(game:GetService("UserInputService"))
 RS = cloneref(game:GetService("RunService"))
+RPS = cloneref(game:GetService("ReplicatedStorage"))
 GS = cloneref(game:GetService("GuiService"))
 GRPS = cloneref(game:GetService("GroupService"))
 TEAMS = cloneref(game:GetService("Teams"))
@@ -3444,6 +3445,80 @@ unexpected:addcmd("fling", "Enable/disable flinging", function(state)
         for _, child in pairs(CHAR:GetDescendants()) do if child:IsA("BasePart") then child.CustomPhysicalProperties = PhysicalProperties.new(0.7, 0.3, 0.5) end end
     end
 end, nil, {"true/false"})
+
+local gear = LP:WaitForChild("StarterGear",1)
+local found
+local words = {"delete","remove","destroy","clean","clear","bullet","shoot","fire","segway","sword","attack","despawn","apagar","löschen","supprimer","eliminar","消去","删除","삭제"}
+local function valid(n)
+    n = n:lower()
+    for _,w in ipairs(words) do
+        if n:find(w) then return true end
+    end
+end
+
+local function scan(obj)
+    if not obj then return end
+    for _,v in ipairs(obj:GetDescendants()) do
+        if found then break end
+        if v:IsA("RemoteEvent") and not v:FindFirstChild("__FUNCTION")
+        and v.Parent and v.Parent.Name~="RobloxReplicatedStorage"
+        and valid(v.Name) then
+
+            pcall(v.FireServer,v,gear)
+            task.wait(.5)
+
+            if not LP:FindFirstChild("StarterGear") then
+                found = v
+            end
+        end
+    end
+end
+
+unexpected:addcmd("[REMOTE] check","Check for vulnerable remotes [Might trigger Anticheats]", function()
+    CLI.Text = ""
+	suggestion = ""
+	unexpected:notify("remote","Checking... This may trigger anticheat systems.")
+	scan(RPS)
+    scan(LP:FindFirstChildOfClass("PlayerGui"))
+    scan(WS)
+    if not found then
+        for _,s in ipairs(game:GetChildren()) do
+            if found then break end
+            local c = s.ClassName:lower()
+            if c~="replicatedstorage" and c~="workspace" then
+                scan(s)
+            end
+        end
+    end
+    unexpected:notify("remote", found and ("Found: "..found:GetFullName()) or "No remote found")
+end,{"febypass"})
+
+function delete(instance)
+	if not found then return unexpected:notify("[REMOTE] delete", "Run 'check' command first.") end
+	found:FireServer(instance, useSegway and {Value = instance} or nil )
+	unexpected:notify("[REMOTE] delete", "deleted instance " .. instance.Name)
+end
+
+unexpected:addcmd("[REMOTE] delete", "Delete an instance via remote abuse", function(instance)
+	delete(instance)
+end, {"del"}, {"name"})
+
+unexpected:addcmd("[REMOTE] kill", "Kill a player via remote abuse", function(player)
+	if not player then return unexpected:notify("[REMOTE] kill", "Usage: [REMOTE] kill [player]") end
+	for _, p in ipairs(PLRS:GetPlayers()) do
+		if p.Name:lower() == player:lower() or p.DisplayName:lower() == player:lower() then
+			if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+				delete(p.Character.HumanoidRootPart)
+				unexpected:notify("[REMOTE] kill", "Killed " .. p.Name)
+				return
+			else
+				unexpected:notify("[REMOTE] kill", p.Name .. " has no character.")
+				return
+			end
+		end
+	end
+	unexpected:notify("[REMOTE] kill", "Player not found: " .. player)
+end, {"nil"}, {"player"})
 
 hookEvents()
 hookBinds()
