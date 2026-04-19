@@ -32,11 +32,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     tb.appendChild(tr)
     i++
   }
-  const hasUn = new Set(
-    [...text.matchAll(/"([^"]+)"/g)]
-      .map(m => m[1])
-      .filter(n => /^un/i.test(n))
-      .map(n => n.toLowerCase())
+  const existingCommands = new Set(
+    [...text.matchAll(/unexpected:addcmd\(\s*"([^"]+)"/g)]
+      .map(m => m[1].replace(/^\[CLIENT\]\s*/i, "").toLowerCase())
   )
   const blocks = text.split("unexpected:addcmd(")
   for (let j = 1; j < blocks.length; j++) {
@@ -66,7 +64,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (hasBool && !key.startsWith("un")) {
       const unName = "un" + n
       const unKey = unName.toLowerCase()
-      if (!seen.has(unKey) && !hasUn.has(unKey)) {
+      if (!seen.has(unKey) && !existingCommands.has(unKey)) {
         seen.add(unKey)
         makeRow(unName, "[uncmds] Disable " + n, isClient, [], [])
       }
