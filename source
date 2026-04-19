@@ -112,7 +112,7 @@ local function CREATE_ASPECT(PARENT, RATIO)
 end
 
 local unexpected_UI = {}
-local currentVersion = "v1.4.2" --menu label indicator update
+local currentVersion = "v1.4.3" --commands alphabetical
 
 local function randomString(length, charset)
 	length = length or math.random(10, 20)
@@ -1230,7 +1230,24 @@ local function showcmdList()
 			end
 		end)
 	end
-	for _, entry in ipairs(commandListArray) do
+	local sortedCmds = {}
+	for _, entry in ipairs(commandListArray) do table.insert(sortedCmds, entry) end
+	table.sort(sortedCmds, function(a, b)
+		local function groupcmd(name)
+			name = name:gsub("^%[.-%]%s*", "")
+			local stripped = name:gsub("^un", "")
+			return stripped, name
+		end
+		local na = a._lowerOriginal
+		local nb = b._lowerOriginal
+		if na == "discord" then return true end
+		if nb == "discord" then return false end
+		local ga, sa = groupcmd(na)
+		local gb, sb = groupcmd(nb)
+		if ga ~= gb then return ga < gb end
+		return sa < sb
+	end)
+	for _, entry in ipairs(sortedCmds) do
 		if not used[entry] then
 			used[entry] = true
 			local btn = table.remove(_btnPool)
@@ -2699,7 +2716,7 @@ unexpected:addcmd("goto", "Teleport to a player", function(name)
 	if root then HRP.CFrame = root.CFrame + Vector3.new(0, 3, 0) end
 end, nil, {"player"})
 
-unexpected:addcmd("walkto", "Walk to a player", function(name)
+unexpected:addcmd("walktoplayer", "Walk to a player", function(name)
 	local name = name:lower()
 	local target
 	if name == "random" then
@@ -2813,9 +2830,9 @@ unexpected:addcmd("teleport", "Teleport to coordinates", function(x, y, z)
 	HRP.CFrame = CFrame.new(x, y, z)
 end, {"tp"}, {"x", "y", "z"})
 
-unexpected:addcmd("walkto", "Walk to coordinates", function(x, y, z)
+unexpected:addcmd("walktopos", "Walk to position", function(x, y, z)
 	x, y, z = coordsfix(x, y, z)
-	if not x or not y or not z then return unexpected:notify("walkto", "Usage: walkto [x] [y] [z]") end
+	if not x or not y or not z then return unexpected:notify("walktopos", "Usage: walktopos [x] [y] [z]") end
 	if not HUM then return end
 
 	HUM:MoveTo(Vector3.new(x, y, z))
@@ -3666,7 +3683,7 @@ unexpected:addcmd("quirkycmd", "A script that abuses vulnerabilities", function(
 	loadstring(game:HttpGet("https://gist.github.com/someunknowndude/38cecea5be9d75cb743eac8b1eaf6758/raw"))()
 end, {"febypass"})
 
-unexpected:addcmd("simplespy", "Spies on remotes.", function()
+unexpected:addcmd("simplespy", "Spies on remotes", function()
 	loadstring(game:HttpGet("https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/unexpected_assets/scripts/simplespy"))()
 end, {"remotespy"})
 
