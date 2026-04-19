@@ -441,6 +441,7 @@ local _sharedTooltipToken = 0
 local _sharedTooltipConn = nil
 local _btnPool = {}
 local _btnMeta = setmetatable({}, { __mode = "k" })
+local _pendinguncmds = {}
 
 function unexpected:addcmd(name, desc, func, aliases, usageArgs)
 	aliases = aliases or {}
@@ -470,6 +471,41 @@ function unexpected:addcmd(name, desc, func, aliases, usageArgs)
 		commandListData[l] = entry
 	end
 	table.insert(commandListArray, entry)
+	local hasBool = false
+	for _, arg in ipairs(usageArgs) do
+		if arg:lower():find("true") or arg:lower():find("false") then
+			hasBool = true
+			break
+		end
+	end
+	if hasBool and not actualName:match("^un") then
+		table.insert(_pendinguncmds, { name = actualName, func = func })
+	end
+end
+
+local function resolveuncmds()
+	for _, p in ipairs(_pendinguncmds) do
+		local unName = "un" .. p.name
+		if not commandListData[unName] then
+			local unEntry = {
+				Original = unName,
+				Description = "Disable " .. p.name,
+				Aliases = {},
+				UsageArgs = {},
+				DisplayName = unName,
+			}
+			unEntry._lowerOriginal = unName
+			unEntry._lowerAliases = {}
+			unEntry.Execute = function()
+				local ok, err = pcall(p.func, "false")
+				if not ok then
+					warn("[CMD ERROR] " .. unName .. ": " .. tostring(err))
+				end
+			end
+			commandListData[unName] = unEntry
+			table.insert(commandListArray, unEntry)
+		end
+	end
 end
 function execmd(cmdName, ...)
 	local cmd = commandListData[string.lower(cmdName)]
@@ -3688,34 +3724,7 @@ unexpected:addcmd("simplespy", "Spies on remotes", function()
 	loadstring(game:HttpGet("https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/unexpected_assets/scripts/simplespy"))()
 end, {"remotespy"})
 
-unexpected:addcmd("unnoclip", "Disable noclip", function()
-	execmd("noclip", "false")
-end, {"clip"})
-
-unexpected:addcmd("unfling", "Disable fling", function()
-	execmd("fling", "false")
-end)
-
-unexpected:addcmd("uninfinitejump", "Disable infinite jump", function()
-	execmd("infinitejump", "false")
-end, {"uninfjump"})
-
-unexpected:addcmd("unspasm", "Disable spasm", function()
-	execmd("spasm", "false")
-end)
-
-unexpected:addcmd("unnosit", "Re-enable sitting", function()
-	execmd("nosit", "false")
-end)
-
-unexpected:addcmd("rerender", "Re-enable 3D rendering", function()
-	execmd("render", "true")
-end)
-
-unexpected:addcmd("unenableanim", "Re-enable animations", function()
-	execmd("enableanim", "false")
-end)
-
+resolveuncmds()
 hookEvents()
 hookBinds()
 migrateBinds()

@@ -5,14 +5,16 @@ REG = /unexpected:addcmd\(\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*function[\s\S]*?end
 let filter = "all"
 const text = await (await fetch("https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/source")).text()
 let m, i = 0
+const seen = new Set()
 const parseTable = t =>
   t ? [...t.matchAll(/"([^"]+)"/g)].map(x => x[1]) : []
-while ((m = REG.exec(text))) {
-  let [_, rawName, d, aRaw, uRaw] = m
+const normalize = n => n.replace(/^\[CLIENT\]\s*/i, "")
+const addRow = (rawName, d, aliases, args) => {
   const isClient = /^\[CLIENT\]/i.test(rawName)
-  const n = rawName.replace(/^\[CLIENT\]\s*/i, "")
-  const aliases = (!aRaw || aRaw === "nil") ? [] : parseTable(aRaw)
-  const args = (!uRaw || uRaw === "nil") ? [] : parseTable(uRaw)
+  const n = normalize(rawName)
+  const key = n.toLowerCase()
+  if (seen.has(key)) return
+  seen.add(key)
   const badge = isClient ? `<span class="cl">client</span>` : ""
   const aliasesHTML = aliases.length
     ? `<div class="tags">${aliases.map(x=>`<span class="tag ta">${esc(x)}</span>`).join("")}</div>`
@@ -21,7 +23,7 @@ while ((m = REG.exec(text))) {
     ? `<div class="tags">${args.map(x=>`<span class="tag tg">[${esc(x)}]</span>`).join("")}</div>`
     : `<span class="tn">—</span>`
   const tr = document.createElement("tr")
-  tr.dataset.n = n.toLowerCase()
+  tr.dataset.n = key
   tr.dataset.d = d.toLowerCase()
   tr.dataset.a = aliases.join(" ").toLowerCase()
   tr.dataset.g = args.join(" ").toLowerCase()
@@ -35,11 +37,28 @@ while ((m = REG.exec(text))) {
   tb.appendChild(tr)
   i++
 }
+const pendingUn = []
+while ((m = REG.exec(text))) {
+  let [_, rawName, d, aRaw, uRaw] = m
+  const aliases = (!aRaw || aRaw === "nil") ? [] : parseTable(aRaw)
+  const args = (!uRaw || uRaw === "nil") ? [] : parseTable(uRaw)
+  addRow(rawName, d, aliases, args)
+  const clean = normalize(rawName)
+  const hasBool = args.some(a => /true|false/i.test(a))
+  if (hasBool && !clean.toLowerCase().startsWith("un")) {
+    pendingUn.push({ rawName, clean })
+  }
+}
+pendingUn.forEach(p => {
+  const isClient = /^\[CLIENT\]/i.test(p.rawName)
+  const prefix = isClient ? "[CLIENT] " : ""
+  const unName = "un" + p.clean
+  addRow(prefix + unName, "Disable " + p.clean, [], [])
+})
 document.getElementById("ct").textContent = i
 const upd = a => {
   const q = document.getElementById("q").value.toLowerCase()
   let shown = 0
-
   ;[...tb.children].forEach((tr, i) => {
     const ok =
       !q ||
@@ -51,7 +70,6 @@ const upd = a => {
       filter === "client"
         ? tr.dataset.c === "1" && ok
         : ok
-
     tr.classList.toggle("h", !show)
     if (show) {
       shown++
