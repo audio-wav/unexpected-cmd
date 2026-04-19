@@ -1197,6 +1197,7 @@ end
 
 local function mkListSystem(listKey, btnList, btnExample, getItems)
 	List.renderers[listKey] = function()
+		_fadeTargets[btnList.Parent] = nil
 		local filter = (List.filters[listKey] or ""):lower()
 		for _, c in ipairs(btnList:GetChildren()) do if c:IsA("GuiButton") then c:Destroy() end end
 		local y = 0
