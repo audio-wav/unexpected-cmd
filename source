@@ -3697,7 +3697,7 @@ unexpected:addcmd("fling", "Enable/disable flinging", function(state)
         flinging = true
         flingDied = HUM.Died:Connect(function()
             execmd('fling false')
-			execmd('clip')
+			execmd('noclip false')
         end)
         repeat
             flingV.AngularVelocity = Vector3.new(0, 99999, 0)
@@ -3706,7 +3706,7 @@ unexpected:addcmd("fling", "Enable/disable flinging", function(state)
 			task.wait(.3)
 		until not flinging
     else
-        execmd('clip')
+        execmd('noclip false')
         if flingDied then flingDied:Disconnect() end
         flinging = false
         if not HRP then return end
