@@ -116,7 +116,7 @@ local function CREATE_ASPECT(PARENT, RATIO)
 end
 
 local unexpected_UI = {}
-local currentVersion = "v1.4.7"
+local currentVersion = "v1.4.8" --importiy
 
 local function randomString(length, charset)
 	length = length or math.random(10, 20)
@@ -2911,14 +2911,18 @@ unexpected:addcmd("importiy", "Import plugins, binds, and events from Infinite Y
             end
         end
     end
-    for _, bd in ipairs(parsed.binds or {}) do
-        local key, cmd, toggle = bd[1] or bd.key, bd[2] or bd.cmd, bd[3] or bd.toggle or false
-        if key and cmd then
-            table.insert(CONFIG.Binds, { id = mkBINDID(), key = tostring(key):lower(), cmd = tostring(cmd), toggle = toggle == true, isPlugin = false })
-            UX_addbind(tostring(key), tostring(cmd), toggle == true)
-            imported.binds += 1
-        end
-    end
+	for _, bd in ipairs(parsed.binds or {}) do
+		local key = tostring(bd.KEY or ""):match("Enum%.KeyCode%.(.+)$") or bd.KEY
+		local cmd = bd.COMMAND
+		local toggleCmd = bd.TOGGLE
+		if key and cmd then
+			local isToggle = toggleCmd ~= nil and toggleCmd ~= ""
+			local bindId = mkBINDID()
+			table.insert(CONFIG.Binds, { id = bindId, key = key:lower(), cmd = cmd, toggle = isToggle, isPlugin = false })
+			UX_addbind(key, cmd, isToggle)
+			imported.binds += 1
+		end
+	end
     local IY_TO_UX = {OnSpawn="respawned", OnDied="died", OnKilled="died", OnJoin="playerjoined", OnLeave="playerleft", OnDamage="healthchanged", OnChatted="chatted"}
     local evOk, evData = pcall(function() return HS:JSONDecode(parsed.eventBinds or "{}") end)
     if evOk and type(evData) == "table" then
