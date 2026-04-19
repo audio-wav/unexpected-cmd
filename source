@@ -112,7 +112,7 @@ local function CREATE_ASPECT(PARENT, RATIO)
 end
 
 local unexpected_UI = {}
-local currentVersion = "v1.4.1" --uicorner setting
+local currentVersion = "v1.4.2" --menu label indicator update
 
 local function randomString(length, charset)
 	length = length or math.random(10, 20)
@@ -987,14 +987,25 @@ local function fadeOut(frame)
 end
 
 local function openMenuFrame(frame, onOpen)
-	for name, f in pairs(MENUFRAMES) do
-		if f.Visible and f ~= frame then fadeOut(f) end
-	end
-	for _, b in ipairs(MENUS) do b.Visible = false end
-	task.delay(0.2, function()
-		onOpen()
-		fadeIn(frame)
-	end)
+    for name, f in pairs(MENUFRAMES) do
+        if f.Visible and f ~= frame then fadeOut(f) end
+    end
+    for _, b in ipairs(MENUS) do b.Visible = false end
+    for tabName, f in pairs(MENUFRAMES) do
+        if f == frame then
+            unexpected_UI.LABEL.Text = tabName
+            break
+        end
+    end
+    task.delay(0.2, function()
+        onOpen()
+        fadeIn(frame)
+    end)
+end
+
+local function returnToMenu()
+    unexpected_UI.LABEL.Text = "menu"
+    for _, b in ipairs(MENUS) do b.Visible = true end
 end
 
 UIS.InputChanged:Connect(function(input)
@@ -1167,7 +1178,7 @@ unexpected_UI.STBACK.MouseButton1Click:Connect(function()
 	for _, c in ipairs(unexpected_UI.STSCROLL:GetChildren()) do
 		if not c:IsA("UIListLayout") and not c:IsA("UIPadding") then c:Destroy() end
 	end
-	task.delay(0.1, function() for _, b in ipairs(MENUS) do b.Visible = true end end)
+	task.delay(0.1, function() returnToMenu() end)
 end)
 
 local arButtonCache = {}
@@ -1319,7 +1330,7 @@ end
 unexpected_UI.ARBACK.MouseButton1Click:Connect(function()
 	fadeOut(MENUFRAMES.autorun)
 	clearARList()
-	task.delay(0.1, function() for _, b in ipairs(MENUS) do b.Visible = true end end)
+	task.delay(0.1, function() returnToMenu() end)
 end)
 
 do
@@ -1409,7 +1420,7 @@ end)
 unexpected_UI.EVBACK.MouseButton1Click:Connect(function()
 	fadeOut(MENUFRAMES.event)
 	clearEVList()
-	task.delay(0.1, function() for _, b in ipairs(MENUS) do b.Visible = true end end)
+	task.delay(0.1, function() returnToMenu() end)
 end)
 
 do
@@ -1501,7 +1512,7 @@ end)
 unexpected_UI.BDBACK.MouseButton1Click:Connect(function()
 	fadeOut(MENUFRAMES.bind)
 	clearBDList()
-	task.delay(0.1, function() for _, b in ipairs(MENUS) do b.Visible = true end end)
+	task.delay(0.1, function() returnToMenu() end)
 end)
 
 do
@@ -1577,7 +1588,7 @@ end)
 unexpected_UI.PLBACK.MouseButton1Click:Connect(function()
 	fadeOut(MENUFRAMES.plugin)
 	clearPLList()
-	task.delay(0.1, function() for _, b in ipairs(MENUS) do b.Visible = true end end)
+	task.delay(0.1, function() returnToMenu() end)
 end)
 
 do
@@ -1690,7 +1701,7 @@ end)
 unexpected_UI.WPBACK.MouseButton1Click:Connect(function()
 	fadeOut(MENUFRAMES.waypoint)
 	clearWPList()
-	task.delay(0.1, function() for _, b in ipairs(MENUS) do b.Visible = true end end)
+	task.delay(0.1, function() returnToMenu() end)
 end)
 
 do
@@ -1727,7 +1738,7 @@ MENU.MouseButton1Click:Connect(function()
 	MENUON = not MENUON
 	if MENUON then
 		for name, f in pairs(MENUFRAMES) do f.Visible = false end
-		for _, b in ipairs(MENUS) do b.Visible = true end
+		returnToMenu()
 		MENUFRAME.Size, MENUFRAME.Visible = UDim2.new(0, 339, 0, 0), true
 		playTween(unexpected_UI["PILL"], { Size = UDim2.new(0, 339, 0, 71) }, 0.25, Enum.EasingStyle.Quint):Play()
 		local NS = UDim2.new(0, 230, 0, 54)
@@ -1759,7 +1770,7 @@ end)
 MENUFRAMES.command:WaitForChild("commandBack").MouseButton1Click:Connect(function()
 	fadeOut(MENUFRAMES.command)
 	clearcmdList()
-	task.delay(0.1, function() for _, b in ipairs(MENUS) do b.Visible = true end end)
+	task.delay(0.1, function() returnToMenu() end)
 end)
 
 local shrinkTween = nil
@@ -1823,7 +1834,7 @@ indicator.MouseButton1Click:Connect(function()
 	end
 	showPILL()
 	for name, f in pairs(MENUFRAMES) do f.Visible = false end
-	for _, b in ipairs(MENUS) do b.Visible = true end
+	returnToMenu()
 	playTween(unexpected_UI["PILL"], { Size = UDim2.new(0, 339, 0, 71) }, 0.25, Enum.EasingStyle.Quint):Play()
 	local NS = UDim2.new(0, 230, 0, 54)
 	playTween(CLI, { Size = NS }, 0.25, Enum.EasingStyle.Quint):Play()
@@ -3649,7 +3660,6 @@ unexpected:addcmd("fling", "Enable/disable flinging", function(state)
         for _, child in pairs(CHAR:GetDescendants()) do if child:IsA("BasePart") then child.CustomPhysicalProperties = PhysicalProperties.new(0.7, 0.3, 0.5) end end
     end
 end, nil, {"true/false"})
-
 
 unexpected:addcmd("quirkycmd", "A script that abuses vulnerabilities", function()
 	setclipboard("https://discord.gg/xR5njqMU")
