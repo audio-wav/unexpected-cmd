@@ -43,13 +43,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     const aliases = (!aRaw || aRaw === "nil") ? [] : parseTable(aRaw)
     const args = (!uRaw || uRaw === "nil") ? [] : parseTable(uRaw)
     makeRow(n, d, isClient, aliases, args)
-    const hasBool = /["']?(true|false)["']?/i.test(uRaw || "")
+    const hasBool =
+      args.some(a =>
+        a.toLowerCase().includes("true") ||
+        a.toLowerCase().includes("false")
+      )
     if (hasBool && !key.startsWith("un")) {
       const unName = "un" + n
       const unKey = unName.toLowerCase()
       if (!seen.has(unKey)) {
         seen.add(unKey)
-        makeRow(unName, "Disable " + n, isClient, [], [])
+        makeRow(unName, "[unshit] Disable " + n, isClient, [], [])
       }
     }
   }
