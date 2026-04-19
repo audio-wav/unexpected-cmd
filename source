@@ -2584,7 +2584,7 @@ unexpected:addcmd("notify", "Notify all arguments", function(...)
 end, nil, {"..."})
 
 unexpected:addcmd("cmds", "Shows commands", function()
-	stACTIVETAB("command", function() showcmdList() end)
+	stACTIVETAB("command", showcmdList)
 end)
 
 unexpected:addcmd("keepUX", "Keep 'unexpected' running even on rejoin", function(state)
