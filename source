@@ -1461,89 +1461,98 @@ end
 local function hookEvents()
 	disconnectEvents()
 	CONFIG.Events = CONFIG.Events or {}
-	for _, ev in ipairs(CONFIG.Events) do
-		local event, filter, cmd = ev.event, ev.filter, ev.cmd
-		local conn
-		if event == "died" then
-			conn = HUM.Died:Connect(function() runCmd(cmd) end)
-		elseif event == "respawned" then
-			conn = LP.CharacterAdded:Connect(function() task.wait(0.5) runCmd(cmd) end)
-		elseif event == "jumped" then
-			conn = HUM.Jumping:Connect(function(active) if active then runCmd(cmd) end end)
-		elseif event == "seated" then
-			conn = HUM.Seated:Connect(function(active) if active then runCmd(cmd) end end)
-		elseif event == "statechanged" then
-			conn = HUM.StateChanged:Connect(function(_, new)
-				if not filter or new.Name:lower() == filter:lower() then runCmd(cmd) end
+	if LP.Character then
+		HUM = LP.Character:FindFirstChildOfClass("Humanoid") or HUM
+		HRP = LP.Character:FindFirstChild("HumanoidRootPart") or HRP
+	end
+	local function matches(filter, val)
+		return not filter or filter == "any" or tostring(val):lower():find(filter:lower(), 1, true)
+	end
+	local EVENT_MAP = {
+		died = function(ev) return HUM.Died:Connect(function() runCmd(ev.cmd) end) end,
+		respawned = function(ev) return LP.CharacterAdded:Connect(function() task.wait(0.5) runCmd(ev.cmd) end) end,
+		jumped = function(ev) return HUM.Jumping:Connect(function(a) if a then runCmd(ev.cmd) end end) end,
+		seated = function(ev) return HUM.Seated:Connect(function(a) if a then runCmd(ev.cmd) end end) end,
+		healthchanged = function(ev) return HUM.HealthChanged:Connect(function() runCmd(ev.cmd) end) end,
+		statechanged = function(ev)
+			return HUM.StateChanged:Connect(function(_, new)
+				if matches(ev.filter, new.Name) then runCmd(ev.cmd) end
 			end)
-		elseif event == "healthchanged" then
-			conn = HUM.HealthChanged:Connect(function() runCmd(cmd) end)
-		elseif event == "fallendamage" then
+		end,
+		fallendamage = function(ev)
 			local last = HUM.Health
-			conn = HUM.HealthChanged:Connect(function(hp)
-				if hp < last and HUM:GetState() == Enum.HumanoidStateType.Freefall then runCmd(cmd) end
+			return HUM.HealthChanged:Connect(function(hp)
+				if hp < last and HUM:GetState() == Enum.HumanoidStateType.Freefall then runCmd(ev.cmd) end
 				last = hp
 			end)
-		elseif event == "playerjoined" then
-			conn = PLRS.PlayerAdded:Connect(function(p)
-				if not filter or filter == "any" or p.Name:lower() == filter:lower() or p.DisplayName:lower() == filter:lower() then runCmd(cmd) end
+		end,
+		playerjoined = function(ev)
+			return PLRS.PlayerAdded:Connect(function(p)
+				if matches(ev.filter, p.Name) or matches(ev.filter, p.DisplayName) then runCmd(ev.cmd) end
 			end)
-		elseif event == "playerleft" then
-			conn = PLRS.PlayerRemoving:Connect(function(p)
-				if not filter or filter == "any" or p.Name:lower() == filter:lower() or p.DisplayName:lower() == filter:lower() then runCmd(cmd) end
+		end,
+		playerleft = function(ev)
+			return PLRS.PlayerRemoving:Connect(function(p)
+				if matches(ev.filter, p.Name) or matches(ev.filter, p.DisplayName) then runCmd(ev.cmd) end
 			end)
-		elseif event == "chatted" then
-			conn = PLRS.PlayerAdded:Connect(function() end)
-			for _, p in ipairs(PLRS:GetPlayers()) do
+		end,
+		chatted = function(ev)
+			local function hookPlayer(p)
 				local c = p.Chatted:Connect(function(msg)
-					if not filter or filter == "any" or msg:lower():find(filter:lower(), 1, true) then runCmd(cmd) end
+					if matches(ev.filter, msg) then runCmd(ev.cmd) end
 				end)
 				table.insert(activeEventConns, c)
 			end
-			PLRS.PlayerAdded:Connect(function(p)
-				local c = p.Chatted:Connect(function(msg)
-					if not filter or filter == "any" or msg:lower():find(filter:lower(), 1, true) then runCmd(cmd) end
-				end)
-				table.insert(activeEventConns, c)
+			for _, p in ipairs(PLRS:GetPlayers()) do hookPlayer(p) end
+			return PLRS.PlayerAdded:Connect(hookPlayer)
+		end,
+		keypressed = function(ev)
+			return UIS.InputBegan:Connect(function(input, processed)
+				if not processed and matches(ev.filter, input.KeyCode.Name) then runCmd(ev.cmd) end
 			end)
-		elseif event == "keypressed" then
-			conn = UIS.InputBegan:Connect(function(input, processed)
-				if processed then return end
-				if filter and input.KeyCode.Name:lower() == filter:lower() then runCmd(cmd) end
+		end,
+		keyreleased = function(ev)
+			return UIS.InputEnded:Connect(function(input)
+				if matches(ev.filter, input.KeyCode.Name) then runCmd(ev.cmd) end
 			end)
-		elseif event == "keyreleased" then
-			conn = UIS.InputEnded:Connect(function(input)
-				if filter and input.KeyCode.Name:lower() == filter:lower() then runCmd(cmd) end
+		end,
+		clicked = function(ev)
+			return UIS.InputBegan:Connect(function(input, processed)
+				if not processed and input.UserInputType == Enum.UserInputType.MouseButton1 then runCmd(ev.cmd) end
 			end)
-		elseif event == "clicked" then
-			conn = UIS.InputBegan:Connect(function(input, processed)
-				if processed then return end
-				if input.UserInputType == Enum.UserInputType.MouseButton1 then runCmd(cmd) end
+		end,
+		touched = function(ev)
+			return HRP.Touched:Connect(function(part)
+				if matches(ev.filter, part.Name) then runCmd(ev.cmd) end
 			end)
-		elseif event == "touched" then
-			conn = HRP.Touched:Connect(function(part)
-				if not filter or part.Name:lower() == filter:lower() then runCmd(cmd) end
+		end,
+		equipped = function(ev)
+			return CHAR and CHAR.ChildAdded:Connect(function(c)
+				if c:IsA("Tool") and matches(ev.filter, c.Name) then runCmd(ev.cmd) end
 			end)
-		elseif event == "equipped" then
-			conn = CHAR and CHAR.ChildAdded:Connect(function(c)
-				if c:IsA("Tool") then
-					if not filter or c.Name:lower() == filter:lower() then runCmd(cmd) end
-				end
+		end,
+		unequipped = function(ev)
+			return CHAR and CHAR.ChildRemoved:Connect(function(c)
+				if c:IsA("Tool") and matches(ev.filter, c.Name) then runCmd(ev.cmd) end
 			end)
-		elseif event == "unequipped" then
-			conn = CHAR and CHAR.ChildRemoved:Connect(function(c)
-				if c:IsA("Tool") then
-					if not filter or c.Name:lower() == filter:lower() then runCmd(cmd) end
-				end
+		end,
+		teleported = function(ev)
+			return LP.OnTeleport:Connect(function(state)
+				if state == Enum.TeleportState.Started then runCmd(ev.cmd) end
 			end)
-		elseif event == "teleported" then
-			conn = LP.OnTeleport:Connect(function(state)
-				if state == Enum.TeleportState.Started then runCmd(cmd) end
-			end)
-		elseif event == "zoomchanged" then
-			conn = CAM:GetPropertyChangedSignal("CameraDistance"):Connect(function() runCmd(cmd) end)
+		end,
+		zoomchanged = function(ev)
+			return CAM:GetPropertyChangedSignal("CameraDistance"):Connect(function() runCmd(ev.cmd) end)
+		end,
+	}
+	for _, ev in ipairs(CONFIG.Events) do
+		local handler = EVENT_MAP[ev.event]
+		if handler then
+			local ok, conn = pcall(handler, ev)
+			if ok and conn then table.insert(activeEventConns, conn) end
+		else
+			unexpected:notify("events", "unknown event: " .. tostring(ev.event))
 		end
-		if conn then table.insert(activeEventConns, conn) end
 	end
 end
 
@@ -1979,25 +1988,25 @@ unexpected:addcmd("binds", "Show binds tab", function()
 end)
 
 unexpected:addcmd("onevent", "Add event trigger", function(event, ...)
-	if not event then return unexpected:notify("events", "Usage: onevent [event] ...") end
-
+	if not event then return unexpected:notify("events", "Usage: onevent [event] [filter/*] [command]") end
 	local args = {...}
 	if #args == 0 then return unexpected:notify("events", "Missing command.") end
-
-	local cmd = table.concat(args, " ")
+	local FILTER_EVENTS = {playerjoined=true, playerleft=true, chatted=true, statechanged=true, keypressed=true, keyreleased=true, touched=true, equipped=true, unequipped=true}
+	local filter, cmd
+	if FILTER_EVENTS[event:lower()] and #args >= 2 then
+		filter = args[1] ~= "*" and args[1] or nil
+		cmd = table.concat(args, " ", 2)
+	else
+		filter = nil
+		cmd = table.concat(args, " ")
+	end
 	CONFIG.Events = CONFIG.Events or {}
-
-	table.insert(CONFIG.Events, {
-		event = event:lower(),
-		filter = nil,
-		cmd = cmd
-	})
-
+	table.insert(CONFIG.Events, { event = event:lower(), filter = filter, cmd = cmd })
 	UX_config()
 	hookEvents()
 	if MENUFRAMES.event.Visible then renderList("event") end
-    unexpected:notify("events", "Removed: " .. event)
-end, nil, {"event", "..."})
+	unexpected:notify("events", "Added: " .. event .. (filter and (" [" .. filter .. "]") or "") .. " → " .. cmd)
+end, nil, {"event", "filter/*", "..."})
 
 unexpected:addcmd("unevent", "Remove event trigger", function(event)
 	if not event then return unexpected:notify("events", "Usage: unevent [event]") end
