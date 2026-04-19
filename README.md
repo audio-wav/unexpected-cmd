@@ -1,5 +1,5 @@
 ![](https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/unexpected_assets/unexpected-mockup.png)
-# unexpected cmd
+# unexpected `cmd`
 An open source Roblox admin commands script [Website](https://audio-wav.github.io/unexpected-cmd)
 [![](https://dcbadge.limes.pink/api/server/J73SnGB2y2?style=flat)](https://discord.gg/J73SnGB2y2)
 ```lua
@@ -21,7 +21,7 @@ end
 
 loadstring(DEPENDENCIES and isfile("ux_source.lua") and readfile("ux_source.lua") or game:HttpGet(SURL))()
 ```
-you can also use the one liner, much more compact but bad readability.
+you can also use the one liner, much more compact but bad readability and possible compatibility issue on weaker executors.
 ```lua
 if not (isfile("ux_cache.json") and game:GetService("HttpService"):JSONDecode(readfile("ux_cache.json")) and game:GetService("HttpService"):JSONDecode(readfile("ux_cache.json")).version==game:GetService("HttpService"):JSONDecode(game:HttpGet("https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/version")).version) then writefile("ux_source.lua",game:HttpGet("https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/source"));writefile("ux_cache.json",game:GetService("HttpService"):JSONEncode(game:GetService("HttpService"):JSONDecode(game:HttpGet("https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/version")))) end;loadstring((isfile("ux_source.lua")and readfile("ux_source.lua"))or game:HttpGet("https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/source"))()
 ```
