@@ -1785,18 +1785,20 @@ local function loadPlugin(name, source, isIY)
 end
 
 local function LOAD_PLUGIN(NAME)
-	local UX_PATH = ("%s/%s.ux"):format(PLUGIN_DIR, NAME)
-	local IY_PATH = ("%s/%s.iy"):format(PLUGIN_DIR, NAME)
-	local source, isIY
-	if isfile(UX_PATH) then source, isIY = readfile(UX_PATH), false
-	elseif isfile(IY_PATH) then source, isIY = readfile(IY_PATH), true
-	else
-		unexpected:notify("unexpected", ("Plugin '%s' not found (.ux/.iy), removed."):format(NAME))
-		CONFIG.Plugins[NAME] = nil
-		UX_config()
-		return false
-	end
-	return loadPlugin(NAME, source, isIY)
+    local UX_PATH = ("%s/%s.ux"):format(PLUGIN_DIR, NAME)
+    local IY_PATH = ("%s/%s.iy"):format(PLUGIN_DIR, NAME)
+    local IY_BARE = ("%s.iy"):format(NAME)
+    local source, isIY
+    if isfile(UX_PATH) then source, isIY = readfile(UX_PATH), false
+    elseif isfile(IY_PATH) then source, isIY = readfile(IY_PATH), true
+    elseif isfile(IY_BARE) then source, isIY = readfile(IY_BARE), true
+    else
+        unexpected:notify("unexpected", ("Plugin '%s' not found (.ux/.iy), removed."):format(NAME))
+        CONFIG.Plugins[NAME] = nil
+        UX_config()
+        return false
+    end
+    return loadPlugin(NAME, source, isIY)
 end
 
 for NAME, ENABLED in pairs(CONFIG.Plugins) do
@@ -1818,7 +1820,7 @@ function addPlugin(args)
 	if LOAD_PLUGIN(NAME) then
 		CONFIG.Plugins[NAME] = true
 		UX_config()
-		if MENUFRAMES.plugin.Visible then plShow(unexpected_UI.PLSEARCHBAR.Text) end
+		if MENUFRAMES.plugin.Visible then renderList("plugin") end
 	end
 end
 
@@ -1829,7 +1831,7 @@ function removePlugin(args)
 		CONFIG.Plugins[NAME] = nil
 		UX_config()
 		unexpected:notify("unexpected", "Plugin '" .. NAME .. "' removed.")
-		if MENUFRAMES.plugin.Visible then plShow(unexpected_UI.PLSEARCHBAR.Text) end
+		if MENUFRAMES.plugin.Visible then renderList("plugin") end
 	else
 		unexpected:notify("unexpected", "Plugin '" .. NAME .. "' is not enabled.")
 	end
@@ -1884,12 +1886,21 @@ unexpected:addcmd("autoruns", "List all autoruns", function()
 	end)
 end)
 
-unexpected:addcmd("plugin", "Add a plugin", function(NAME) addPlugin({name = NAME}) end, nil, {"name"})
-unexpected:addcmd("unplugin", "Remove a plugin", function(NAME) removePlugin({name = NAME}) end, nil, {"name"})
+unexpected:addcmd("plugin", "Add a plugin", function(NAME) 
+	addPlugin({name = NAME})
+	if MENUFRAMES.plugin.Visible then renderList("plugin") end
+end, nil, {"name"})
+
+unexpected:addcmd("unplugin", "Remove a plugin", function(NAME) 
+	removePlugin({name = NAME}) 
+	if MENUFRAMES.plugin.Visible then renderList("plugin") end
+end, nil, {"name"})
+
 unexpected:addcmd("reloadplugin", "Reload a plugin", function(NAME)
 	removePlugin({name = NAME})
 	task.wait(1)
 	addPlugin({name = NAME})
+	if MENUFRAMES.plugin.Visible then renderList("plugin") end
 end, nil, {"name"})
 
 unexpected:addcmd("clearplugins", "Remove all plugins", function()
@@ -1918,9 +1929,7 @@ unexpected:addcmd("addallplugins", "Load all available plugins", function()
 	UX_config()
 	unexpected:notify("plugins", "Loaded " .. loaded .. " plugin(s).")
 
-	if MENUFRAMES.plugin.Visible then
-		renderList("plugin")
-	end
+	if MENUFRAMES.plugin.Visible then renderList("plugin") end
 end)
 
 unexpected:addcmd("bind", "Bind a key to run a command", function(key, ...)
@@ -2237,7 +2246,7 @@ unexpected:addcmd("setwaypoint", "Save a waypoint at current position", function
 	cWPVisual(name, pos)
 	UX_config()
 	unexpected:notify("setwaypoint", "Saved waypoint: " .. name)
-	if MENUFRAMES.waypoint.Visible then wpShow(unexpected_UI.WPSEARCHBAR.Text) end
+	if MENUFRAMES.waypoint.Visible then renderList("waypoint") end
 end, {"swp", "setwp"}, {"name"})
 
 unexpected:addcmd("teleportwaypoint", "Teleport to a waypoint", function(name)
@@ -2289,7 +2298,7 @@ unexpected:addcmd("deletewaypoint", "Delete a saved waypoint", function(name)
 			table.remove(CONFIG.Waypoints, i)
 			UX_config()
 			unexpected:notify("deletewaypoint", "Deleted waypoint: " .. name)
-			if MENUFRAMES.waypoint.Visible then wpShow(unexpected_UI.WPSEARCHBAR.Text) end
+			if MENUFRAMES.waypoint.Visible then renderList("waypoint") end
 			return
 		end
 	end
@@ -2297,7 +2306,7 @@ unexpected:addcmd("deletewaypoint", "Delete a saved waypoint", function(name)
 end, {"dwp", "delwp"}, {"name"})
 
 unexpected:addcmd("waypoints", "Show waypoints tab", function()
-	stACTIVETAB("waypoint", function() unexpected_UI.WPSEARCHBAR.Text="" wpShow("") end)
+	stACTIVETAB("waypoint", function() unexpected_UI.WPSEARCHBAR.Text="" renderList("waypoint") end)
 end, {"listwp", "wps"})
 
 unexpected:addcmd("showwaypoints", "Show all waypoint visuals", function()
@@ -2328,7 +2337,7 @@ unexpected:addcmd("cleargamewaypoints", "Delete all waypoints for this game", fu
 	end
 	UX_config()
 	unexpected:notify("cleargamewaypoints", "Cleared all waypoints for this game")
-	if MENUFRAMES.waypoint.Visible then wpShow(unexpected_UI.WPSEARCHBAR.Text) end
+	if MENUFRAMES.waypoint.Visible then renderList("waypoint") end
 end, {"cleargamewp", "cwp"})
 
 unexpected:addcmd("getwaypointpos", "Copy waypoint position", function(name)
@@ -2885,6 +2894,56 @@ end, {"febypass"})
 unexpected:addcmd("simplespy", "Spies on remotes", function()
 	loadstring(game:HttpGet("https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/unexpected_assets/scripts/simplespy"))()
 end, {"remotespy"})
+
+unexpected:addcmd("importiy", "Import plugins, binds, and events from Infinite Yield", function()
+    if not isfile("IY_FE.iy") then return unexpected:notify("importiy", "IY_FE.iy not found.") end
+    local ok, parsed = pcall(function() return HS:JSONDecode(readfile("IY_FE.iy")) end)
+    if not ok or type(parsed) ~= "table" then return unexpected:notify("importiy", "Failed to parse IY_FE.iy") end
+    local imported = { plugins = 0, binds = 0, events = 0 }
+    CONFIG.Plugins, CONFIG.Binds, CONFIG.Events, CONFIG.Autoruns =
+        CONFIG.Plugins or {}, CONFIG.Binds or {}, CONFIG.Events or {}, CONFIG.Autoruns or {}
+    for _, pluginFile in ipairs(parsed.PluginsTable or {}) do
+        local name = tostring(pluginFile):match("^(.+)%.[^.]+$") or tostring(pluginFile)
+        if not CONFIG.Plugins[name] then
+            if LOAD_PLUGIN(name) then
+                CONFIG.Plugins[name] = true
+                imported.plugins += 1
+            end
+        end
+    end
+    for _, bd in ipairs(parsed.binds or {}) do
+        local key, cmd, toggle = bd[1] or bd.key, bd[2] or bd.cmd, bd[3] or bd.toggle or false
+        if key and cmd then
+            table.insert(CONFIG.Binds, { id = mkBINDID(), key = tostring(key):lower(), cmd = tostring(cmd), toggle = toggle == true, isPlugin = false })
+            UX_addbind(tostring(key), tostring(cmd), toggle == true)
+            imported.binds += 1
+        end
+    end
+    local IY_TO_UX = {OnSpawn="respawned", OnDied="died", OnKilled="died", OnJoin="playerjoined", OnLeave="playerleft", OnDamage="healthchanged", OnChatted="chatted"}
+    local evOk, evData = pcall(function() return HS:JSONDecode(parsed.eventBinds or "{}") end)
+    if evOk and type(evData) == "table" then
+        for iyEvent, entries in pairs(evData) do
+            for _, entry in ipairs(type(entries) == "table" and entries or {}) do
+                local cmd = entry[1]
+                if cmd and tostring(cmd) ~= "" then
+                    if iyEvent == "OnExecute" then
+                        if not table.find(CONFIG.Autoruns, tostring(cmd)) then
+                            table.insert(CONFIG.Autoruns, tostring(cmd))
+                            imported.events += 1
+                        end
+                    elseif IY_TO_UX[iyEvent] then
+                        table.insert(CONFIG.Events, { event = IY_TO_UX[iyEvent], filter = nil, cmd = tostring(cmd) })
+                        imported.events += 1
+                    end
+                end
+            end
+        end
+        hookEvents()
+    end
+    UX_config()
+    for _, pair in ipairs({{"autorun","autorun"},{"plugin","plugin"},{"bind","bind"},{"event","event"}}) do if MENUFRAMES[pair[1]].Visible then renderList(pair[2]) end end
+    unexpected:notify("importiy", ("Imported: %d plugin(s), %d bind(s), %d event(s)."):format(imported.plugins, imported.binds, imported.events))
+end)
 
 local function autorunItems_init()
 	local t = {}
