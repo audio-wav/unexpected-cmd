@@ -178,7 +178,7 @@ unexpected_UI.MENU = mk("ImageButton", unexpected_UI.PILL, {
 	Image = getcustomasset("unexpected_assets/menu.png"),
 	Size = UDim2.new(0, 30, 0, 30),
 	BorderColor3 = FQ.COLORS.BACKGROUND, Name = "Menu",
-	Position = UDim2.new(0.83776, 0, 0.28169, 0),
+	Position = UDim2.new(1, -43, 0.5, -15),
 })
 CREATE_ASPECT(unexpected_UI.MENU)
 
@@ -188,6 +188,7 @@ unexpected_UI.MENUFRAME = mk("Frame", unexpected_UI.PILL, {
 	Position = UDim2.new(0.5, -169, 1, -428),
 	BorderColor3 = FQ.COLORS.BACKGROUND, Name = "MenuFrame", Visible = false,
 })
+mk("UISizeConstraint", unexpected_UI.MENUFRAME, { MaxSize = Vector2.new(math.huge, 348) })
 CREATE_CORNER(unexpected_UI.MENUFRAME, 0.1, 0)
 CREATE_STROKE(unexpected_UI.MENUFRAME, FQ.COLORS.STROKE)
 
@@ -765,20 +766,46 @@ indicator.InputBegan:Connect(function(input)
 		indicatorSTART, indicatorWDRAG, indicatorMD = UIS:GetMouseLocation(), false, true
 	end
 end)
-UIS.InputChanged:Connect(function(input)
-	if indicatorMD and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-		local mousePos = UIS:GetMouseLocation()
-		if not indicatorDRAG and (mousePos - indicatorSTART).Magnitude > DRAG_THRESHOLD then
-			indicatorDRAG, indicatorWDRAG = true, true
-		end
-		if indicatorDRAG then
-			indicator.Position = UDim2.new(0, mousePos.X - indicator.AbsoluteSize.X / 2, 0, mousePos.Y - indicator.AbsoluteSize.Y - 45)
+local pillDrag, pillWDrag, pillStartPos, pillMouseStart = false, false, nil, nil
+UIS.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		local mp = Vector2.new(input.Position.X, input.Position.Y)
+		local ap = unexpected_UI["PILL"].AbsolutePosition
+		local as = unexpected_UI["PILL"].AbsoluteSize
+		if unexpected_UI["PILL"].Visible and mp.X >= ap.X and mp.X <= ap.X + as.X and mp.Y >= ap.Y and mp.Y <= ap.Y + as.Y then
+			pillDrag, pillWDrag = true, false
+			pillMouseStart = UIS:GetMouseLocation()
+			pillStartPos = unexpected_UI["PILL"].Position
 		end
 	end
 end)
+
+UIS.InputChanged:Connect(function(input)
+	if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+		local mousePos = UIS:GetMouseLocation()
+		if indicatorMD then
+			if not indicatorDRAG and (mousePos - indicatorSTART).Magnitude > DRAG_THRESHOLD then
+				indicatorDRAG, indicatorWDRAG = true, true
+			end
+			if indicatorDRAG then
+				indicator.Position = UDim2.new(0, mousePos.X - indicator.AbsoluteSize.X / 2, 0, mousePos.Y - indicator.AbsoluteSize.Y - 45)
+			end
+		end
+		if pillDrag then
+			local delta = mousePos - pillMouseStart
+			if delta.Magnitude > DRAG_THRESHOLD then pillWDrag = true end
+			if pillWDrag then
+				local sf = MOBILE and 0.75 or 1
+				unexpected_UI["PILL"].Position = UDim2.new(pillStartPos.X.Scale, pillStartPos.X.Offset + (delta.X / sf), pillStartPos.Y.Scale, pillStartPos.Y.Offset + (delta.Y / sf))
+			end
+		end
+	end
+end)
+
 UIS.InputEnded:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 		indicatorDRAG, indicatorMD, indicatorSTART = false, false, nil
+		pillDrag = false
 	end
 end)
 
@@ -788,6 +815,16 @@ unexpected_UI["PILL"].Visible = false
 MENUFRAME.AnchorPoint = Vector2.new(0.5, 1)
 MENUFRAME.Position = UDim2.new(0.5, 0, 1, -80)
 MENUFRAME.Size = UDim2.new(0, 339, 0, 0)
+if MOBILE then
+	unexpected_UI["CLI"].Size = UDim2.new(0, 130, 0, 54)
+	unexpected_UI["PREDICTOR"].Size = UDim2.new(0, 130, 0, 54)
+	unexpected_UI["MENU"].Size = UDim2.new(0, 45, 0, 45)
+	unexpected_UI["MENU"].Position = UDim2.new(1, -55, 0.5, -22)
+	unexpected_UI["MENU"].ImageTransparency = 0
+	unexpected_UI.MENUFRAME:FindFirstChild("UISizeConstraint").MaxSize = Vector2.new(math.huge, math.max(100, CAM.ViewportSize.Y - 120))
+	mk("UIScale", unexpected_UI["PILL"], { Scale = 0.75 })
+	mk("UIScale", notifUI, { Scale = 0.75 })
+end
 
 local MENUON, HOVERED, shithover = false, false, false
 local MENUFRAMES = {
@@ -885,11 +922,10 @@ UIS.InputChanged:Connect(function(input)
 end)
 
 local function SHS(hovered)
-	if MOBILE then
-		HOVERED = true
-		unexpected_UI["PILL"].Size, unexpected_UI["CLI"].Size = UDim2.new(0, 339, 0, 71), UDim2.new(0, 230, 0, 54)
-		unexpected_UI["MENU"].ImageTransparency = 0
-		buttonTP(MENU, 0)
+	if MOBILE and not MENUON then
+		playTween(unexpected_UI["PILL"], { Size = UDim2.new(0, 218, 0, 71) }, 0.25, Enum.EasingStyle.Quint):Play()
+		playTween(CLI, { Size = UDim2.new(0, 130, 0, 54) }, 0.25, Enum.EasingStyle.Quint):Play()
+		playTween(unexpected_UI["PREDICTOR"], { Size = UDim2.new(0, 130, 0, 54) }, 0.25, Enum.EasingStyle.Quint):Play()
 		return
 	end
 	if MENUON and hovered then
@@ -903,7 +939,7 @@ local function SHS(hovered)
 	end
 	HOVERED = hovered
 	local gSize = hovered and 339 or 218
-	local cSize = hovered and 230 or 167
+	local cSize = hovered and 230 or (MOBILE and 130 or 167)
 	playTween(unexpected_UI["PILL"], { Size = UDim2.new(0, gSize, 0, 71) }, 0.25, Enum.EasingStyle.Quint):Play()
 	playTween(CLI, { Size = UDim2.new(0, cSize, 0, 54) }, 0.25, Enum.EasingStyle.Quint):Play()
 	playTween(unexpected_UI["PREDICTOR"], { Size = UDim2.new(0, cSize, 0, 54) }, 0.25, Enum.EasingStyle.Quint):Play()
@@ -1359,7 +1395,9 @@ local function showPILL(yn)
 		if c:IsA("TextLabel") or c:IsA("TextButton") or c:IsA("TextBox") then
 			playTween(c, { TextTransparency = 0 }, 0.2, Enum.EasingStyle.Sine):Play()
 		elseif c:IsA("ImageLabel") or c:IsA("ImageButton") then
-			if not oneMenu then
+			if MOBILE and c == unexpected_UI.MENU then
+				c.ImageTransparency = 0
+			elseif not oneMenu then
 				c.ImageTransparency = 1
 				oneMenu = true
 			elseif yn == 1 then
@@ -1376,16 +1414,30 @@ indicator.MouseButton1Click:Connect(function()
 	showPILL()
 	for name, f in pairs(MENUFRAMES) do f.Visible = false end
 	returnToMenu()
-	playTween(unexpected_UI["PILL"], { Size = UDim2.new(0, 339, 0, 71) }, 0.25, Enum.EasingStyle.Quint):Play()
-	local NS = UDim2.new(0, 230, 0, 54)
-	playTween(CLI, { Size = NS }, 0.25, Enum.EasingStyle.Quint):Play()
-	playTween(unexpected_UI["PREDICTOR"], { Size = NS }, 0.25, Enum.EasingStyle.Quint):Play()
+	if not MOBILE then
+		playTween(unexpected_UI["PILL"], { Size = UDim2.new(0, 339, 0, 71) }, 0.25, Enum.EasingStyle.Quint):Play()
+		local NS = UDim2.new(0, 230, 0, 54)
+		playTween(CLI, { Size = NS }, 0.25, Enum.EasingStyle.Quint):Play()
+		playTween(unexpected_UI["PREDICTOR"], { Size = NS }, 0.25, Enum.EasingStyle.Quint):Play()
+	end
 	buttonTP(MENU, 0)
+	task.delay(0.05, function() CLI:CaptureFocus() end)
 end)
 
-CLI.Focused:Connect(function() LASTFOCUSED = os.clock() end)
+local preFocusPos = nil
+CLI.Focused:Connect(function() 
+	LASTFOCUSED = os.clock() 
+	if MOBILE then
+		preFocusPos = unexpected_UI["PILL"].Position
+		playTween(unexpected_UI["PILL"], { Position = UDim2.new(preFocusPos.X.Scale, preFocusPos.X.Offset, 0.45, 0) }, 0.25, Enum.EasingStyle.Quint):Play()
+	end
+end)
 CLI.FocusLost:Connect(function()
 	LASTFOCUSED = os.clock()
+	if MOBILE and preFocusPos then
+		playTween(unexpected_UI["PILL"], { Position = preFocusPos }, 0.25, Enum.EasingStyle.Quint):Play()
+		preFocusPos = nil
+	end
 	task.delay(0.05, function()
 		if not shithover and not MENUON then SHS(false) end
 	end)
@@ -2654,8 +2706,16 @@ unexpected:addcmd("fly", "Enable flying", function(spd)
 	task.spawn(function()
 		while flying and HRP and CAM do
 			task.wait()
-			local move = MOBILE and HUM.MoveDirection + Vector3.new(0, input.up, 0)
-				or Vector3.new(input.a + input.d, input.up + input.down, -(input.w + input.s))
+			local move
+			if MOBILE then
+				local camFlat = CAM.CFrame.LookVector * Vector3.new(1,0,1)
+				if camFlat.Magnitude < 0.001 then camFlat = Vector3.new(0,0,-1) end
+				local cf = CFrame.new(Vector3.zero, camFlat)
+				local objMove = cf:VectorToObjectSpace(HUM.MoveDirection)
+				move = Vector3.new(objMove.X, input.up + input.down, objMove.Z)
+			else
+				move = Vector3.new(input.a + input.d, input.up + input.down, -(input.w + input.s))
+			end
 			bv.Velocity = move.Magnitude > 0 and CAM.CFrame:VectorToWorldSpace(move.Unit) * spd * 10 or Vector3.zero
 			bg.CFrame = CAM.CFrame
 			HUM:ChangeState(Enum.HumanoidStateType.FallingDown)
@@ -3140,9 +3200,6 @@ end)
 showPILL()
 
 if MOBILE then
-	SHS(true)
-	unexpected_UI["PILL"].Size = UDim2.fromOffset(339, 71)
-	unexpected_UI["CLI"].Size = UDim2.fromOffset(230, 54)
 	unexpected_UI["MENU"].ImageTransparency = 0
 end
 
