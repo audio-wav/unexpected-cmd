@@ -622,7 +622,7 @@ unexpected_UI["CLI"]:GetPropertyChangedSignal("Text"):Connect(function()
 		if cmd and cmd.UsageArgs and #cmd.UsageArgs > 0 then
 			local hasPlayerArg = false
 			for _, arg in ipairs(cmd.UsageArgs) do
-				if arg:lower() == "player" then hasPlayerArg = true break end
+				if arg:lower() == "player" or arg:lower() == "plr" then hasPlayerArg = true break end
 			end
 			if hasPlayerArg then
 				local function caseSens(pattern, word)
@@ -1810,13 +1810,14 @@ local function migrateBinds()
 end
 
 local function mkPLUGINENV()
-	local function getString(idx, args)
-		if not args or #args < idx then return "" end
+	local _args = {}
+	local function getString(idx)
+		if #_args < idx then return "" end
 		local t = {}
-		for i = idx, #args do t[#t+1] = args[i] end
+		for i = idx, #_args do t[#t+1] = _args[i] end
 		return table.concat(t, " ")
 	end
-	local function getPlayer(arg)
+	local function getPlayer(arg, spk)
 		if not arg or arg == "" then return {} end
 		arg = arg:lower()
 		local results = {}
@@ -1842,24 +1843,15 @@ local function mkPLUGINENV()
 		end
 		return results
 	end
+	local function getRoot(char)
+		return char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char.PrimaryPart)
+	end
 	return {
+		_args = _args,
+		args = _args,
 		getstring = getString,
-		splitString = function(sep, str)
-			local t = {}
-			for s in str:gmatch("[^"..sep.."]+") do t[#t+1] = s end
-			return t
-		end,
-		FindInTable = function(t, val)
-			for i,v in ipairs(t) do if v == val then return i end end
-			return false
-		end,
-		GetInTable = function(t, key) return t[key] end,
-		Match = function(str, pat) return str:match(pat) end,
-		isNumber = function(str) return tonumber(str) ~= nil end,
-		round = function(num, places)
-			local m = 10^(places or 0)
-			return math.floor(num*m+0.5)/m
-		end,
+		getPlayer = getPlayer,
+		getRoot = getRoot,
 		parseBoolean = function(str)
 			if not str then return nil end
 			str = str:lower()
@@ -1867,32 +1859,65 @@ local function mkPLUGINENV()
 			if str=="false" or str=="no" or str=="off" or str=="0" then return false end
 			return nil
 		end,
-		randomString = randomString,
-		getPlayer = getPlayer,
 		notify = function(title, text) unexpected:notify(tostring(title), tostring(text or "")) end,
+		randomString = randomString,
+		splitString = function(sep, str)
+			local t = {}
+			for s in str:gmatch("[^"..sep.."]+") do t[#t+1] = s end
+			return t
+		end,
 		toClipboard = function(str) setclipboard(tostring(str)) end,
-		execCmd = execmd,
-		addbind = function(key, fn)
-			UX_addPluginBind((typeof(key) == "EnumItem" and key.Name or tostring(key)):lower(), fn)
+		Time = function() return os.time() end,
+		FindInTable = function(t, val)
+			for i,v in ipairs(t) do if v == val then return i end end
+			return false
 		end,
-		unkeybind = function(key)
-			UX_unbind((typeof(key) == "EnumItem" and key.Name or tostring(key)):lower())
-		end,
-		respawn = function() LP:LoadCharacter() end,
-		refresh = function() LP:LoadCharacter() end,
-		r15 = function() return CHAR and CHAR:FindFirstChild("UpperTorso") ~= nil end,
+		GetInTable = function(t, key) return t[key] end,
+		writefileExploit = function(path, content) if writefile then pcall(writefile, path, content) end end,
+		isNumber = function(str) return tonumber(str) ~= nil end,
 		tools = function()
 			local t = {}
 			for _, v in ipairs(LP.Backpack:GetChildren()) do if v:IsA("Tool") then t[#t+1] = v end end
 			for _, v in ipairs(CHAR:GetChildren()) do if v:IsA("Tool") then t[#t+1] = v end end
 			return t
 		end,
+		r15 = function() return CHAR and CHAR:FindFirstChild("UpperTorso") ~= nil end,
+		Match = function(str, pat) return str:match(pat) end,
+		respawn = function() LP:LoadCharacter() end,
+		refresh = function() LP:LoadCharacter() end,
+		execCmd = execmd,
+		addbind = function(key, fn)
+			UX_addPluginBind((typeof(key) == "EnumItem" and key.Name or tostring(key)):lower(), fn)
+		end,
 		addspawn = function(fn) LP.CharacterAdded:Connect(fn) end,
-		Time = function() return os.time() end,
-		writefileExploit = function(path, content) if writefile then pcall(writefile, path, content) end end,
+		round = function(num, places)
+			local m = 10^(places or 0)
+			return math.floor(num*m+0.5)/m
+		end,
+		ESP = function() end,
+		CHMS = function() end,
+		unkeybind = function(key)
+			UX_unbind((typeof(key) == "EnumItem" and key.Name or tostring(key)):lower())
+		end,
+		speaker = LP,
+		Players = PLRS,
+		Player = LP,
+		Character = CHAR,
+		Humanoid = HUM,
+		RootPart = HRP,
+		Camera = CAM,
+		workspace = WS,
+		Workspace = WS,
+		game = game,
+		wait = task.wait,
+		spawn = task.spawn,
+		delay = task.delay,
+		cloneref = cloneref,
+		sethiddenproperty = typeof(sethiddenproperty) == "function" and sethiddenproperty or nil,
+		setfflag = typeof(setfflag) == "function" and setfflag or nil,
 		Players = PLRS, Player = LP, Character = CHAR, Humanoid = HUM,
 		RootPart = HRP, Camera = CAM, unexpected = unexpected,
-	}
+	}, _args
 end
 
 local function loadPlugin(name, source, isIY)
@@ -1922,10 +1947,19 @@ local function loadPlugin(name, source, isIY)
 				local displayBase = (listName:gsub("%s*%[.-%]", ""):match("^%s*([^/]+)%s*") or listName):match("^%s*(.-)%s*$")
 				local aliases = {}
 				if type(cmdDef.Aliases) == "table" then
-					for _, a in ipairs(cmdDef.Aliases) do aliases[#aliases+1] = a end
+					for _, a in ipairs(cmdDef.Aliases) do
+						if a ~= cmdKey then aliases[#aliases+1] = a end
+					end
 				end
 				local fn = cmdDef.Function
-				unexpected:addcmd(displayBase, cmdDef.Description or "No description.", function(...) pcall(fn, {...}, LP) end, aliases, usageArgs, name)
+				local pluginENV, argRef = mkPLUGINENV()
+				setfenv(fn, setmetatable(pluginENV, { __index = getfenv() }))
+				unexpected:addcmd(displayBase, cmdDef.Description or "No description.", function(...)
+					local args = {...}
+					table.clear(argRef)
+					for i, v in ipairs(args) do argRef[i] = v end
+					pcall(fn, args, LP)
+				end, aliases, usageArgs, name)
 				count = count + 1
 			end
 		end
@@ -1941,8 +1975,8 @@ local function loadPlugin(name, source, isIY)
 		if type(RESULT) == "table" and RESULT.Commands then
 			for CMD_NAME, CMD in pairs(RESULT.Commands) do
 				if type(CMD.Function) == "function" then
-						unexpected:addcmd(CMD.ListName or CMD_NAME, CMD.Description or "No description.", CMD.Function, CMD.Aliases or {}, CMD.Args or {}, name)
-					end
+					unexpected:addcmd(CMD.ListName or CMD_NAME, CMD.Description or "No description.", CMD.Function, CMD.Aliases or {}, CMD.Args or {}, name)
+				end
 			end
 		end
 		unexpected:notify("unexpected", "Loaded plugin: " .. (RESULT and RESULT.PluginName or name))
