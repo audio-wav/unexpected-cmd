@@ -1,4 +1,6 @@
-if unexpected_LOAD then return end
+if getgenv() and getgenv().unexpected_LOAD then
+	if getgenv().unexpected_QUIT then pcall(getgenv().unexpected_QUIT) else return end
+end
 pcall(function() getgenv().unexpected_LOAD = true end)
 
 local function missing(t, f, fallback)
@@ -118,6 +120,11 @@ end
 
 local unexpected_UI = {}
 local currentVersion = "v1.4.9" --importiy
+local MENUON, HOVERED, shithover = false, false, false
+local LASTFOCUSED = os.clock()
+local HIDDEN, HIDING = false, false
+local currentRecoIndex = 0
+local currentRecoButtons = {}
 
 local function randomString(length, charset)
 	length = length or math.random(10, 20)
@@ -134,8 +141,8 @@ unexpected_UI.UI = mk("ScreenGui", gethui() or COREGUI, { Name = randomString() 
 unexpected_UI.PILL = mk("Frame", unexpected_UI.UI, {
 	ZIndex = 0, BorderSizePixel = 0,
 	BackgroundColor3 = FQ.COLORS.BACKGROUND,
-	Size = UDim2.new(0, 240, 0, 55),
-	Position = UDim2.new(0.5, -120, 1, -150),
+	Size = UDim2.new(0, 278, 0, 55),
+	Position = UDim2.new(0.5, -139, 1, -150),
 	BorderColor3 = FQ.COLORS.BACKGROUND, Name = "Pill",
 })
 CREATE_CORNER(unexpected_UI.PILL, 1, 0)
@@ -150,8 +157,9 @@ unexpected_UI.CLI = mk("TextBox", unexpected_UI.PILL, {
 	BackgroundColor3 = Color3.fromRGB(255,255,255),
 	FontFace = FQ.FONTS.REGULAR,
 	PlaceholderText = "unexpected " .. currentVersion,
-	Size = UDim2.new(0, 175, 0, 38),
-	Position = UDim2.new(0, 25, 0.5, -19),
+	Size = UDim2.new(0, 210, 0, 38),
+	AnchorPoint = Vector2.new(0, 0.5),
+	Position = UDim2.new(0, 25, 0.5, 0),
 	BorderColor3 = FQ.COLORS.BACKGROUND, Text = "",
 	ClearTextOnFocus = false, ZIndex = 2, BackgroundTransparency = 1,
 })
@@ -165,8 +173,9 @@ unexpected_UI.PREDICTOR = mk("TextLabel", unexpected_UI.PILL, {
 	TextColor3 = FQ.COLORS.STROKE,
 	BackgroundColor3 = Color3.fromRGB(255,255,255),
 	FontFace = FQ.FONTS.REGULAR,
-	Size = UDim2.new(0, 175, 0, 38),
-	Position = UDim2.new(0, 25, 0.5, -19),
+	Size = UDim2.new(0, 210, 0, 38),
+	AnchorPoint = Vector2.new(0, 0.5),
+	Position = UDim2.new(0, 25, 0.5, 0),
 	BorderColor3 = FQ.COLORS.BACKGROUND, Text = "",
 	ZIndex = 1, BackgroundTransparency = 1, ClipsDescendants = true
 })
@@ -627,6 +636,11 @@ function unexpected:notify(title, ...)
 end
 
 unexpected_UI["CLI"]:GetPropertyChangedSignal("Text"):Connect(function()
+	if MENUON then 
+		unexpected_UI.RECOFRAME.Visible = false
+		return 
+	end
+	
 	local input = unexpected_UI["CLI"].Text:gsub("%s+$", "")
 	local cmdName, argText = string.match(input, "^(%S+)%s(.*)$")
 	local bareCmd = string.match(input, "^(%S+)$") or ""
@@ -867,9 +881,6 @@ end
 local MENU = unexpected_UI["PILL"]:FindFirstChild("Menu")
 local CLI = unexpected_UI["PILL"]:FindFirstChild("CLI")
 local MENUFRAME = unexpected_UI["PILL"]:WaitForChild("MenuFrame")
-local LASTFOCUSED = os.clock()
-local HIDDEN = false
-local HIDING = false
 local indicatorDRAG, indicatorWDRAG, indicatorSTART, DRAG_THRESHOLD, indicatorMD, indicatorS = false, false, nil, 15, false, 30
 local indicator = mk("TextButton", unexpected_UI.PILL.Parent, {
 	Size = UDim2.new(0,indicatorS,0,indicatorS), Position = UDim2.new(0,20,1,-70),
@@ -946,8 +957,6 @@ if MOBILE then
 	mk("UIScale", unexpected_UI["PILL"], { Scale = 0.75 })
 	mk("UIScale", notifUI, { Scale = 0.75 })
 end
-
-local MENUON, HOVERED, shithover = false, false, false
 local MENUFRAMES = {
 	command = MENUFRAME:WaitForChild("commandFrame"),
 	autorun = MENUFRAME:WaitForChild("autorunFrame"),
@@ -1061,11 +1070,11 @@ local function SHS(hovered)
 		return
 	end
 	HOVERED = hovered
-	local gSize = hovered and 339 or 218
-	local cSize = hovered and 230 or (MOBILE and 130 or 167)
-	playTween(unexpected_UI["PILL"], { Size = UDim2.new(0, gSize, 0, 71) }, 0.25, Enum.EasingStyle.Quint):Play()
-	playTween(CLI, { Size = UDim2.new(0, cSize, 0, 54) }, 0.25, Enum.EasingStyle.Quint):Play()
-	playTween(unexpected_UI["PREDICTOR"], { Size = UDim2.new(0, cSize, 0, 54) }, 0.25, Enum.EasingStyle.Quint):Play()
+	local gSize = hovered and 339 or 278
+	local cSize = hovered and 230 or (MOBILE and 130 or 210)
+	playTween(unexpected_UI["PILL"], { Size = UDim2.new(0, gSize, 0, 55) }, 0.25, Enum.EasingStyle.Quint):Play()
+	playTween(CLI, { Size = UDim2.new(0, cSize, 0, 38) }, 0.25, Enum.EasingStyle.Quint):Play()
+	playTween(unexpected_UI["PREDICTOR"], { Size = UDim2.new(0, cSize, 0, 38) }, 0.25, Enum.EasingStyle.Quint):Play()
 	buttonTP(MENU, hovered and 0 or 1)
 end
 
@@ -1327,9 +1336,10 @@ local function stACTIVETAB(tabKey, onOpen)
 	if MENUON then open() return end
 	MENUON = true
 	MENUFRAME.Visible = true
-	playTween(unexpected_UI.PILL, {Size = UDim2.new(0,339,0,71)}, 0.25, Enum.EasingStyle.Quint):Play()
-	playTween(CLI, {Size = UDim2.new(0,230,0,54)}, 0.25, Enum.EasingStyle.Quint):Play()
-	playTween(unexpected_UI.PREDICTOR, {Size = UDim2.new(0,230,0,54)}, 0.25, Enum.EasingStyle.Quint):Play()
+	unexpected_UI.RECOFRAME.Visible = false
+	playTween(unexpected_UI.PILL, {Size = UDim2.new(0,339,0,55)}, 0.25, Enum.EasingStyle.Quint):Play()
+	playTween(CLI, {Size = UDim2.new(0,230,0,38)}, 0.25, Enum.EasingStyle.Quint):Play()
+	playTween(unexpected_UI.PREDICTOR, {Size = UDim2.new(0,230,0,38)}, 0.25, Enum.EasingStyle.Quint):Play()
 	playTween(MENUFRAME, {Size = UDim2.new(0,339,0,348)}, 0.25, Enum.EasingStyle.Quint):Play()
 	buttonTP(MENU, 0)
 	task.delay(0.25, open)
@@ -1466,6 +1476,7 @@ MENU.MouseButton1Click:Connect(function()
 	LASTFOCUSED = os.clock()
 	MENUON = not MENUON
 	if MENUON then
+		unexpected_UI.RECOFRAME.Visible = false
 		for name, f in pairs(MENUFRAMES) do f.Visible = false end
 		returnToMenu()
 		MENUFRAME.Size, MENUFRAME.Visible = UDim2.new(0, 339, 0, 0), true
@@ -1521,7 +1532,7 @@ local function showPILL(yn)
 	HIDING = false
 	if shrinkTween then shrinkTween:Cancel() shrinkTween = nil end
 	unexpected_UI["PILL"].Visible = true
-	unexpected_UI["PILL"].Size = UDim2.new(0, 240, 0, 55)
+	unexpected_UI["PILL"].Size = UDim2.new(0, 278, 0, 55)
 	HIDDEN = false
 	LASTFOCUSED = os.clock()
 	indicator.Visible = false
@@ -2984,7 +2995,7 @@ unexpected:addcmd("nosit", "No sit", function(state)
 	HUM:SetStateEnabled(Enum.HumanoidStateType.Seated, parseBool(state, true))
 end, nil, {"true/false"})
 
-unexpected:addcmd("exit", "Exit unexpected script", function()
+local function _doQuit()
 	if spectateConn then spectateConn:Disconnect() spectateConn = nil end
 	if flyConnA then flyConnA:Disconnect() flyConnA = nil end
 	if flyConnB then flyConnB:Disconnect() flyConnB = nil end
@@ -2993,10 +3004,13 @@ unexpected:addcmd("exit", "Exit unexpected script", function()
 	if spinConnection then spinConnection:Disconnect() spinConnection = nil end
 	disconnectEvents()
 	for key, conns in pairs(bindConnections) do if conns then conns:Disconnect() end end
-	unexpected_UI.UI:Destroy()
+	if unexpected_UI and unexpected_UI.UI then unexpected_UI.UI:Destroy() end
 	task.wait()
-	getgenv().unexpected_LOAD = false
-end, {"quit", "unload"})
+	if getgenv() then getgenv().unexpected_LOAD = false end
+end
+if getgenv() then getgenv().unexpected_QUIT = _doQuit end
+
+unexpected:addcmd("exit", "Exit unexpected script", _doQuit, {"quit", "unload"})
 
 unexpected:addcmd("infinitejump", "Toggle infinite jump (true/false)", function(state)
 	local enable = parseBool(state, true)
@@ -3299,10 +3313,17 @@ mkListSystem("waypoint", unexpected_UI.WPBTNLIST, mkBTNEXAMPLE("waypointEntry"),
 local _storeCache
 local function storeItems_init()
 	if not _storeCache then
-		pcall(function()
-			local raw = game:HttpGet("https://iyplugins.pages.dev/data/plugins.json")
-			local dat = HS:JSONDecode(raw)
-			_storeCache = dat.plugins or {}
+		local hasCache = false
+		if isfile and readfile and pcall(isfile, "unexpected_store_cache.json") and isfile("unexpected_store_cache.json") then
+			local cacheRaw = pcall(readfile, "unexpected_store_cache.json") and readfile("unexpected_store_cache.json") or "{}"
+			local decodeOk, res = pcall(HS.JSONDecode, HS, cacheRaw)
+			if decodeOk and res.plugins then
+				_storeCache = res.plugins
+				hasCache = true
+			end
+		end
+		
+		local function sortStore()
 			local function sortTime(iso)
 				if not iso then return 0 end
 				local y, m, d, h, mi, s = iso:match("(%d+)-(%d+)-(%d+)T(%d+):(%d+):(%d+)")
@@ -3311,7 +3332,43 @@ local function storeItems_init()
 			end
 			for _, p in ipairs(_storeCache) do p._ts = sortTime(p.date) end
 			table.sort(_storeCache, function(x, y) return x._ts > y._ts end)
-		end)
+		end
+		
+		local function fetchNetworkStore()
+			local ok, raw = pcall(function()
+				if type(request) == "function" then
+					return request({Url = "https://iyplugins.pages.dev/data/plugins.json", Method = "GET"}).Body
+				elseif type(http_request) == "function" then
+					return http_request({Url = "https://iyplugins.pages.dev/data/plugins.json", Method = "GET"}).Body
+				elseif type(httprequest) == "function" then
+					return httprequest({Url = "https://iyplugins.pages.dev/data/plugins.json", Method = "GET"}).Body
+				end
+				return game:HttpGet("https://iyplugins.pages.dev/data/plugins.json")
+			end)
+			
+			if ok and raw and raw ~= "" then
+				if isfile and writefile then pcall(function() writefile("unexpected_store_cache.json", raw) end) end
+				local decodeOk, res = pcall(HS.JSONDecode, HS, raw)
+				if decodeOk and res.plugins then
+					_storeCache = res.plugins
+					sortStore()
+					if unexpected_UI.STRBTNLIST and ACTIVETAB == "store" and List.renderers.store then 
+						pcall(List.renderers.store)
+					end
+				end
+			end
+		end
+
+		if hasCache then
+			task.spawn(fetchNetworkStore)
+		else
+			fetchNetworkStore()
+			if not _storeCache then
+				unexpected:notify("Store Load Error: Network failed & no cache found.", Color3.fromRGB(255, 50, 50))
+				_storeCache = {}
+			end
+		end
+		sortStore()
 	end
 	local items = {}
 	for _, p in ipairs(_storeCache or {}) do
