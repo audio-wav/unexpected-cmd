@@ -5,28 +5,28 @@ local function missing(t, f, fallback)
 	return type(f) == t and f or fallback
 end
 
-cloneref = missing("function", cloneref, function(...) return ... end)
-queueteleport = missing("function", queue_on_teleport or (syn and syn.queue_on_teleport) or (fluxus and fluxus.queue_on_teleport))
-uxgetcustomasset = missing("function", getcustomasset or getsynasset)
+local cloneref = missing("function", cloneref, function(...) return ... end)
+local queueteleport = missing("function", queue_on_teleport or (syn and syn.queue_on_teleport) or (fluxus and fluxus.queue_on_teleport))
+local uxgetcustomasset = missing("function", getcustomasset or getsynasset)
 
-COREGUI = cloneref(game:GetService("CoreGui"))
-STARTERGUI = cloneref(game:GetService("StarterGui"))
-PLRS = cloneref(game:GetService("Players"))
-UIS = cloneref(game:GetService("UserInputService"))
-RS = cloneref(game:GetService("RunService"))
-RPS = cloneref(game:GetService("ReplicatedStorage"))
-GS = cloneref(game:GetService("GuiService"))
-GRPS = cloneref(game:GetService("GroupService"))
-SC = cloneref(game:GetService("ScriptContext"))
-TEAMS = cloneref(game:GetService("Teams"))
-LP = cloneref(PLRS.LocalPlayer)
-TS = cloneref(game:GetService("TweenService"))
-HS = cloneref(game:GetService("HttpService"))
-TPS = cloneref(game:GetService("TeleportService"))
-WS = cloneref(game:GetService("Workspace"))
-VU = cloneref(game:GetService("VirtualUser"))
-CAM = cloneref(WS.CurrentCamera)
-MOBILE = UIS.TouchEnabled
+local COREGUI = cloneref(game:GetService("CoreGui"))
+local STARTERGUI = cloneref(game:GetService("StarterGui"))
+local PLRS = cloneref(game:GetService("Players"))
+local UIS = cloneref(game:GetService("UserInputService"))
+local RS = cloneref(game:GetService("RunService"))
+local RPS = cloneref(game:GetService("ReplicatedStorage"))
+local GS = cloneref(game:GetService("GuiService"))
+local GRPS = cloneref(game:GetService("GroupService"))
+local SC = cloneref(game:GetService("ScriptContext"))
+local TEAMS = cloneref(game:GetService("Teams"))
+local LP = cloneref(PLRS.LocalPlayer)
+local TS = cloneref(game:GetService("TweenService"))
+local HS = cloneref(game:GetService("HttpService"))
+local TPS = cloneref(game:GetService("TeleportService"))
+local WS = cloneref(game:GetService("Workspace"))
+local VU = cloneref(game:GetService("VirtualUser"))
+local CAM = cloneref(WS.CurrentCamera)
+local MOBILE = UIS.TouchEnabled
 
 local function SETUPCHAR(c)
 	CHAR, HUM, HRP = c, cloneref(c:WaitForChild("Humanoid")), cloneref(c:WaitForChild("HumanoidRootPart"))
@@ -34,7 +34,7 @@ end
 SETUPCHAR(LP.Character or LP.CharacterAdded:Wait())
 LP.CharacterAdded:Connect(SETUPCHAR)
 
-function isR15(plr)
+local function isR15(plr)
 	return HUM.RigType == Enum.HumanoidRigType.R15
 end
 
