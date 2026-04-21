@@ -395,7 +395,7 @@ unexpected_UI.SEARCHBAR = MakeTabSearch(unexpected_UI.CMDFRAME, "searchBar", "se
 unexpected_UI.CMDEXAMPLE = make("TextButton", nil, {
 	BorderSizePixel = 0, TextXAlignment = Enum.TextXAlignment.Left, TextSize = 18,
 	TextColor3 = UiQuery.COLORS.TEXT_MAIN, BackgroundColor3 = UiQuery.COLORS.BACKGROUND,
-	FontFace = UiQuery.FONTS.REGULAR, Size = UDim2.fromScale(278,33),
+	FontFace = UiQuery.FONTS.REGULAR, Size = UDim2.fromOffset(278, 33),
 	BorderColor3 = UiQuery.COLORS.BACKGROUND, Text = "command / command",
 	Name = "commandExample", Visible = false,
 })
@@ -534,7 +534,7 @@ local function resolveuncmds()
 	end
 end
 
-function execmd(cmdName, ...)
+local function execmd(cmdName, ...)
 	local cmd = CommandListData[string.lower(cmdName)]
 	if cmd then cmd.Execute(...) end
 end
@@ -870,12 +870,12 @@ local function lc()
 	return config
 end
 
-function UX_rconfig()
+local function UX_rconfig()
 	CONFIG = lc()
 	pcall(writefile, configFile, HttpService:JSONEncode(CONFIG))
 end
 
-function UX_config()
+local function UX_config()
 	if not CONFIG then CONFIG = lc() end
 	pcall(writefile, configFile, HttpService:JSONEncode(CONFIG))
 end
@@ -1100,7 +1100,7 @@ local function updateIndicatorS(newSize)
 	UX_config()
 end
 
-function updateUICorners(newSize)
+local function updateUICorners(newSize)
 	UICornersS = math.clamp(tonumber(newSize) or 1, 0, 1) -- idk why the old code had 2
 	for _, data in ipairs(UiCornerTable) do
 		data.corner.CornerRadius = UDim.new(data.scale * UICornersS, data.offset)
@@ -2059,20 +2059,20 @@ local function LOAD_PLUGIN(NAME)
     return loadPlugin(NAME, source, isIY)
 end
 
-for NAME, ENABLED in pairs(CONFIG.Plugins) do
-	if ENABLED then LOAD_PLUGIN(NAME) end
+for Name, Enabled in pairs(CONFIG.Plugins) do
+    if not Enabled then continue end
+	task.defer(LOAD_PLUGIN, Name)
 end
 
 task.delay(0.5, function()
 	CONFIG.Waypoints = CONFIG.Waypoints or {}
-	for _, wp in ipairs(CONFIG.Waypoints) do
-		if wp.game == game.PlaceId then
-			cWPVisual(wp.name, Vector3.new(wp.pos[1], wp.pos[2], wp.pos[3]))
-		end
+	for _, Waypoint in next, CONFIG.Waypoints do
+		if Waypoint.game ~= game.PlaceId then continue end
+        cWPVisual(Waypoint.name, Vector3.new(Waypoint.pos[1], Waypoint.pos[2], Waypoint.pos[3]))
 	end
 end)
 
-function addPlugin(args)
+local function addPlugin(args)
 	local NAME = args.name or args[1]
 	if not NAME or NAME == "" then return unexpected:notify("unexpected", "Usage: plugin [name]") end
 	if LOAD_PLUGIN(NAME) then
@@ -2101,7 +2101,7 @@ local function stripPluginCmds(pluginName)
 	CommandListArray = newArray
 end
 
-function removePlugin(args)
+local function removePlugin(args)
 	local NAME = args.name or args[1]
 	if not NAME or NAME == "" then return unexpected:notify("unexpected", "Usage: unplugin [name]") end
 	if CONFIG.Plugins[NAME] then
