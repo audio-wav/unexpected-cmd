@@ -15,6 +15,14 @@ local queueteleport: typeof(queue_on_teleport)? = missing("function", queue_on_t
 local uxgetcustomasset: typeof(getcustomasset)? = missing("function", getcustomasset or getsynasset)
 local request: typeof(request)? = missing("function", httprequest or request or http_request or syn and syn.request or fluxus and fluxus.request)
     
+task.spawn(pcall, function()
+	local u = "https://unexpected-stats.renern.workers.dev/track"
+	if request then
+		request({ Url = u, Method = "POST" })
+	else
+		game:HttpGet(u)
+	end
+end)
 local UserInputService = cloneref(game:GetService("UserInputService"))
 local TeleportService = cloneref(game:GetService("TeleportService"))
 local ScriptContext = cloneref(game:GetService("ScriptContext"))

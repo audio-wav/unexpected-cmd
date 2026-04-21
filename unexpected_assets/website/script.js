@@ -1,6 +1,18 @@
 document.addEventListener("DOMContentLoaded", async () => {
+  const WORKER_URL = "https://unexpected-stats.renern.workers.dev";
   const tb = document.getElementById("tb"),
     esc = s => s.replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))
+
+  fetch(`${WORKER_URL}/stats`)
+    .then(r => r.json())
+    .then(data => {
+      const el = document.getElementById("ex");
+      if (el) el.textContent = data.count.toLocaleString();
+    })
+    .catch(() => {
+      const el = document.getElementById("ex");
+      if (el) el.textContent = "—";
+    });
   let filter = "all"
   const text = await (await fetch("https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/source")).text()
   let i = 0
