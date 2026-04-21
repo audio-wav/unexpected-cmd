@@ -99,6 +99,13 @@ local UiQuery = {
 	},
 }
 
+local MENUON, HOVERED, shithover = false, false, false
+local currentRecoIndex = 0
+local currentRecoButtons = {}
+local LASTFOCUSED = os.clock()
+local HIDDEN = false
+local HIDING = false
+
 local WHITE = Color3.fromRGB(255, 255, 255)
 
 local BASE_SCALE = {notifUI = 1, PILL = 1}
@@ -268,7 +275,9 @@ unexpected_UI.INFOFRAME = make("Frame", unexpected_UI.PILL, {
 })
 CreateCorner(unexpected_UI.INFOFRAME, 0.1, 0)
 CreateStroke(unexpected_UI.INFOFRAME, UiQuery.COLORS.STROKE)
-
+make("UISizeConstraint", unexpected_UI.INFOFRAME, {
+    MaxSize = Vector2.new(math.huge, math.max(100, Camera.ViewportSize.Y - 120))
+})
 unexpected_UI.INFOTITLE = make("TextLabel", unexpected_UI.INFOFRAME, {
     Size = UDim2.new(0, 260, 0, 24), Position = UDim2.fromOffset(20, 20),
     BackgroundTransparency = 1, TextColor3 = UiQuery.COLORS.TEXT_MAIN,
@@ -338,7 +347,7 @@ unexpected_UI.AUTORUNS_BUTTON = CreateMenuButton("autorunsButton", "autoruns", 2
 unexpected_UI.EVENTS_BUTTON = CreateMenuButton("eventsButton", "events", 3)
 unexpected_UI.BINDS_BUTTON = CreateMenuButton("bindsButton", "binds", 4)
 unexpected_UI.PLUGINS_BUTTON = CreateMenuButton("pluginsButton", "plugins", 5)
-unexpected_UI.STORE_BUTTON = CreateMenuButton("storeButton", "store", 6)
+unexpected_UI.STORE_BUTTON = CreateMenuButton("storeButton", "Plugin Store", 6)
 unexpected_UI.WAYPOINTS_BUTTON = CreateMenuButton("waypointsButton", "waypoints", 7)
 unexpected_UI.DISCORD = CreateMenuButton("discordButton", "discord", 8)
 unexpected_UI.SETTINGS_BUTTON = CreateMenuButton("settingsButton", "settings", 9)
@@ -436,7 +445,7 @@ unexpected_UI.PLBACK = MakeTabBack(unexpected_UI.PLFRAME, "pluginBack")
 
 unexpected_UI.STRFRAME = MakeTab("storeFrame")
 unexpected_UI.STRBTNLIST = MakeTabScroll(unexpected_UI.STRFRAME, "storeList")
-unexpected_UI.STRSEARCHBAR = MakeTabSearch(unexpected_UI.STRFRAME, "storeSearch", "search store")
+unexpected_UI.STRSEARCHBAR = MakeTabSearch(unexpected_UI.STRFRAME, "storeSearch", "search plugin store")
 unexpected_UI.STRBACK = MakeTabBack(unexpected_UI.STRFRAME, "storeBack")
 
 unexpected_UI.WPFRAME = MakeTab("waypointFrame")
@@ -710,6 +719,11 @@ function unexpected:notify(title, ...)
 end
 
 unexpected_UI["CLI"]:GetPropertyChangedSignal("Text"):Connect(function()
+	if MENUON then
+		unexpected_UI["PREDICTOR"].Text = ""
+		if IsMobile and unexpected_UI.RECOFRAME then unexpected_UI.RECOFRAME.Visible = false end
+		return
+	end
 	local input = unexpected_UI["CLI"].Text:gsub("%s+$", "")
 	local cmdName, argText = string.match(input, "^(%S+)%s(.*)$")
 	local bareCmd = string.match(input, "^(%S+)$") or ""
@@ -783,17 +797,24 @@ unexpected_UI["CLI"]:GetPropertyChangedSignal("Text"):Connect(function()
         if bareCmd ~= "" then
             local lowerCmd = string.lower(bareCmd)
             for key, _ in pairs(CommandListData) do
-                if string.find(string.lower(key), lowerCmd, 1, true) then 
-                    table.insert(allMatches, key) 
+                local lk = string.lower(key)
+                if lk:sub(1, #lowerCmd) == lowerCmd then
+                    table.insert(allMatches, {key = key, prio = 1})
+                elseif string.find(lk, lowerCmd, 1, true) then 
+                    table.insert(allMatches, {key = key, prio = 2})
                 end
             end
-            table.sort(allMatches)
+            table.sort(allMatches, function(a, b)
+                if a.prio ~= b.prio then return a.prio < b.prio end
+                return a.key < b.key
+            end)
         end
         
         if #allMatches > 0 then
             local y = 0
-            for i, match in ipairs(allMatches) do
+            for i, data in ipairs(allMatches) do
                 if i > 8 then break end
+                local match = data.key
                 local btn = make("TextButton", unexpected_UI.RECOFRAME, {
                     Size = UDim2.new(1, 0, 0, 30), Position = UDim2.new(0,0,0,y),
                     BackgroundTransparency = 1, Text = match, TextColor3 = UiQuery.COLORS.TEXT_MAIN,
@@ -958,11 +979,7 @@ end
 local MENU = unexpected_UI["PILL"]:FindFirstChild("Menu")
 local CLI = unexpected_UI["PILL"]:FindFirstChild("CLI")
 local MENUFRAME = unexpected_UI["PILL"]:WaitForChild("MenuFrame")
-local LASTFOCUSED = os.clock()
-local HIDDEN = false
-local HIDING = false
-local currentRecoIndex = 0
-local currentRecoButtons = {}
+local LASTFOCUSED_init = os.clock() -- removed redundant locals that are now at the top
 local indicatorDRAG, indicatorWDRAG, indicatorSTART, DRAG_THRESHOLD, indicatorMD, indicatorS = false, false, nil, 15, false, 30
 local indicator = make("TextButton", unexpected_UI.PILL.Parent, {
 	Size = UDim2.new(0,indicatorS,0,indicatorS), Position = UDim2.new(0,20,1,-70),
@@ -1039,7 +1056,7 @@ MENUFRAME.AnchorPoint = Vector2.new(0.5, 1)
 MENUFRAME.Position = UDim2.new(0.5, 0, 1, -80)
 MENUFRAME.Size = UDim2.new(0, 339, 0, 0)
 
-local MENUON, HOVERED, shithover = false, false, false
+local HOVERED_init, shithover_init = false, false -- removed redundant locals that are now at the top
 local MENUFRAMES = {
 	command = MENUFRAME:WaitForChild("commandFrame"),
 	autorun = MENUFRAME:WaitForChild("autorunFrame"),
@@ -1590,6 +1607,7 @@ MENU.MouseButton1Click:Connect(function()
 	LASTFOCUSED = os.clock()
 	MENUON = not MENUON
 	if MENUON then
+		if IsMobile and unexpected_UI.RECOFRAME then unexpected_UI.RECOFRAME.Visible = false end
 		for name, f in pairs(MENUFRAMES) do f.Visible = false end
 		returnToMenu()
 		MENUFRAME.Size, MENUFRAME.Visible = UDim2.new(0, 339, 0, 0), true
@@ -3926,8 +3944,7 @@ List.register("store", function(item)
 	currentStoreItem = item
 	info.AnchorPoint = Vector2.new(0, 1)
 	info.Position = UDim2.new(mf.Position.X.Scale, mf.Position.X.Offset + 175, 1, -80)
-	local targetH = 348
-	if IsMobile then targetH = math.max(100, Camera.ViewportSize.Y - 120) end
+	local targetH = mf.AbsoluteSize.Y
 	info.Size = UDim2.new(0, 0, 0, targetH)
 	info.Visible = true
 	playTween(info, { Size = UDim2.new(0, 300, 0, targetH) }, 0.25, Enum.EasingStyle.Quint):Play()
@@ -3948,7 +3965,6 @@ List.register("store", function(item)
 		:gsub("`(.-)`", "<font family=\"rbxasset://fonts/families/RobotoMono.json\">%1</font>")
 		:gsub("```%w*[\n\r]?(.-)[\n\r]?```", "<font color=\"#808080\">%1</font>")
 		:gsub("[\n\r]-#%s?(.-)[\n\r]", "\n<font size=\"12\"><font color=\"#808080\">%1</font></font>\n")
-		:gsub("[\n\r]-%s?(.-)[\n\r]", "\n<font color=\"#808080\">•</font> %1\n")
 		:gsub("[\n\r]>%s?(.-)[\n\r]", "\n<font color=\"#808080\"><i> %1</i></font>\n")
 	unexpected_UI.INFOTITLE.Text = item.name
 	unexpected_UI.INFODESC.Text = desc
