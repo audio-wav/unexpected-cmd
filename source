@@ -767,7 +767,7 @@ do
     local CommandLine, Predictor = UnexpectedUi.CommandLine, UnexpectedUi.Predictor
     -- LOG H3
     CommandLine:GetPropertyChangedSignal("Text"):Connect(function()
-        local _showReco = not MENUON
+       	local _showReco = IsMobile and not MENUON
         local Input = CommandLine.Text:gsub("%s+$", "")
         local CommandName, ArgText = Input:match("^(%S+)%s(.*)$")
         local BareCommand = Input:match("^(%S+)$") or ""
