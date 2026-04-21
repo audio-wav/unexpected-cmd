@@ -609,7 +609,8 @@ local IsNotifActive = false
 local NotifSequence = 0
 local NotifUi: Frame = make("Frame", UnexpectedUi.UI, {
 	Name = "Notification", BackgroundColor3 = UiQuery.COLORS.BACKGROUND,
-	Position = UDim2.new(1, -378, 0.962686539, -189),
+	AnchorPoint = Vector2.new(1, 1),
+	Position = UDim2.new(1, -12, 1, -12),
 	Size = UDim2.new(0, 328, 0, 169), Visible = false,
 })
 CreateCorner(NotifUi, 0.2, 0)
@@ -774,11 +775,7 @@ do
     local CommandLine, Predictor = UnexpectedUi.CommandLine, UnexpectedUi.Predictor
     -- LOG H3
     CommandLine:GetPropertyChangedSignal("Text"):Connect(function()
-        if MENUON then
-            Predictor.Text = ""
-            UnexpectedUi.RecoFrame.Visible = false
-            return
-        end
+       	local _showReco = IsMobile and not MENUON
         local Input = CommandLine.Text:gsub("%s+$", "")
         local CommandName, ArgText = Input:match("^(%S+)%s(.*)$")
         local BareCommand = Input:match("^(%S+)$") or ""
@@ -835,7 +832,7 @@ do
                 local MaxH = 120
                 UnexpectedUi.RecoFrame.Size = UDim2.new(0, 210, 0, math.min(YOffset, MaxH))
                 UnexpectedUi.RecoFrame.CanvasSize = UDim2.new(0, 0, 0, YOffset)
-                UnexpectedUi.RecoFrame.Visible = true
+                UnexpectedUi.RecoFrame.Visible = _showReco
             else
                 UnexpectedUi.RecoFrame.Visible = false
             end
@@ -1258,10 +1255,42 @@ local function updateUICorners(newSize: number?)
 	UX_config()
 end
 
+local function applyScale()
+	local function set(obj, key)
+		if not obj then return end
+		local scale = BASE_SCALE[key]
+		if IsMobile then
+			scale = scale * (MOBILE_MULT[key] or 1)
+		end
+		scale = math.clamp(scale, 0.1, 3)
+		local existing = obj:FindFirstChildWhichIsA("UIScale")
+		if existing then
+			existing.Scale = scale
+		else
+			make("UIScale", obj, { Scale = scale })
+		end
+	end
+
+	set(NotifUi, "notifUI")
+	set(UnexpectedUi["PILL"], "PILL")
+end
+
 local function rgbRows()
 	for _, c in next, UnexpectedUi.STSCROLL:GetChildren() do
 		if not c:IsA("UIListLayout") and not c:IsA("UIPadding") then c:Destroy() end
 	end
+	local uiscaleRow = make("Frame", UnexpectedUi.STSCROLL, { Size = UDim2.new(0,278,0,40), BackgroundTransparency = 1, BorderSizePixel = 0 })
+	make("TextLabel", uiscaleRow, { Size = UDim2.new(0,140,1,0), BackgroundTransparency = 1, Text = "ui scale", TextColor3 = UiQuery.COLORS.TEXT_MAIN, TextSize = 16, FontFace = UiQuery.FONTS.REGULAR, TextXAlignment = Enum.TextXAlignment.Left, BorderSizePixel = 0 })
+	local uiscaleBox = make("TextBox", uiscaleRow, { Size = UDim2.new(0,120,0,30), Position = UDim2.new(1,-120,0.5,-15), BackgroundColor3 = UiQuery.COLORS.BACKGROUND, TextColor3 = UiQuery.COLORS.TEXT_MAIN, PlaceholderColor3 = UiQuery.COLORS.TEXT_DIM, PlaceholderText = "scale", Text = tostring(BASE_SCALE.PILL), TextSize = 14, FontFace = UiQuery.FONTS.REGULAR, BorderSizePixel = 0, ClearTextOnFocus = false })
+	CreateCorner(uiscaleBox, 0.1, 0)
+	CreateStroke(uiscaleBox, UiQuery.COLORS.STROKE)
+	uiscaleBox.FocusLost:Connect(function()
+		local val = math.clamp(tonumber(uiscaleBox.Text) or 1, 0.1, 3)
+		for key in pairs(BASE_SCALE) do BASE_SCALE[key] = val end
+		applyScale()
+		uiscaleBox.Text = tostring(val)
+		Unexpected:notify("uiscale", "Scale set to " .. val)
+	end)
 	local resetRow = make("Frame", UnexpectedUi.STSCROLL, { Size = UDim2.new(0,278,0,40), BackgroundTransparency = 1, BorderSizePixel = 0 })
 	make("TextLabel", resetRow, { Size = UDim2.new(0,140,1,0), BackgroundTransparency = 1, Text = "reset positions", TextColor3 = UiQuery.COLORS.TEXT_MAIN, TextSize = 16, FontFace = UiQuery.FONTS.REGULAR, TextXAlignment = Enum.TextXAlignment.Left, BorderSizePixel = 0 })
 	local resetBtn = make("TextButton", resetRow, { Size = UDim2.new(0,120,0,30), Position = UDim2.new(1,-120,0.5,-15), BackgroundColor3 = UiQuery.COLORS.BACKGROUND, TextColor3 = UiQuery.COLORS.TEXT_MAIN, FontFace = UiQuery.FONTS.REGULAR, TextSize = 14, BorderSizePixel = 0, Text = "reset" })
@@ -1660,9 +1689,8 @@ MENU.MouseButton1Click:Connect(function()
 	LASTFOCUSED = os.clock()
 	MENUON = not MENUON
 	if MENUON then
-		UnexpectedUi.Predictor.Text = ""
 		UnexpectedUi.RecoFrame.Visible = false
-		for name, f in pairs(MENUFRAMES) do f.Visible = false end
+		for name, f in next, MENUFRAMES do f.Visible = false end
 		returnToMenu()
 		MENUFRAME.Size, MENUFRAME.Visible = UDim2.new(0, 339, 0, 0), true
 		CreateTween(UnexpectedUi["PILL"], { Size = UDim2.new(0, 339, 0, 71) }, 0.25, Enum.EasingStyle.Quint):Play()
@@ -1751,7 +1779,7 @@ indicator.MouseButton1Click:Connect(function()
         return
     end
 	showPILL()
-	for name, f in pairs(MENUFRAMES) do f.Visible = false end
+	for name, f in next, MENUFRAMES do f.Visible = false end
 	returnToMenu()
 	CreateTween(UnexpectedUi["PILL"], { Size = UDim2.new(0, 339, 0, 71) }, 0.25, Enum.EasingStyle.Quint):Play()
 	local NS = UDim2.new(0, 230, 0, 54)
@@ -1814,7 +1842,7 @@ restorePos(CONFIG.indicatorPos, indicator)
 if type(CONFIG.indicatorS) == "number" then updateIndicatorS(CONFIG.indicatorS) end
 if type(CONFIG.UICornerScale) == "number" then updateUICorners(CONFIG.UICornerScale) end
 if type(CONFIG.Colors) == "table" then
-	for key, rgb in pairs(CONFIG.Colors) do
+	for key, rgb in next, CONFIG.Colors do
 		if UiQuery.COLORS[key] and type(rgb) == "table" then
 			UiQuery.COLORS[key] = Color3.fromRGB(rgb.r or 0, rgb.g or 0, rgb.b or 0)
 		end
@@ -2602,7 +2630,7 @@ end)
 Unexpected:AddCommand("clearbinds", "Remove all binds", function()
 	CONFIG.Binds = {}
 	UX_config()
-	for _, conn in pairs(BindConnections) do if conn then conn:Disconnect() end end
+	for _, conn in next, BindConnections do if conn then conn:Disconnect() end end
 	BindConnections = {}
 	BindToggleStates = {}
 	Keybinds = {}
@@ -2968,7 +2996,7 @@ Unexpected:AddCommand("showwaypoints", "Show all waypoint visuals", function()
 end, {"showwp"})
 
 Unexpected:AddCommand("hidewaypoints", "Hide all waypoint visuals", function()
-	for name, visual in pairs(waypointVisuals) do dWPVisual(name) end
+	for name, visual in next, waypointVisuals do dWPVisual(name) end
 	Unexpected:notify("hidewaypoints", "Waypoints hidden")
 end, {"hidewp"})
 
@@ -3176,13 +3204,13 @@ Unexpected:AddCommand("unglide", "Disable glide mode", function()
 end)
 
 Unexpected:AddCommand("iceslide", "Slide around with low friction", function()
-	for _, part in ipairs(Character:GetDescendants()) do
+	for _, part in next, Character:GetDescendants() do
 		if part:IsA("BasePart") then part.CustomPhysicalProperties = PhysicalProperties.new(0.1, 0.3, 0.5) end
 	end
 end)
 
 Unexpected:AddCommand("uniceslide", "Restore normal walking friction", function()
-	for _, part in ipairs(Character:GetDescendants()) do
+	for _, part in next, Character:GetDescendants() do
 		if part:IsA("BasePart") then part.CustomPhysicalProperties = PhysicalProperties.new(0.7, 0.3, 0.5) end
 	end
 end)
@@ -3243,7 +3271,7 @@ Unexpected:AddCommand("state", "Set HumanoidState", function(args)
 	local input = args[1]
 	if not input then return end
 	input = input:upper()
-	for _, state in ipairs(Enum.HumanoidStateType:GetEnumItems()) do
+	for _, state in next, Enum.HumanoidStateType:GetEnumItems() do
 		if state.Name:upper() == input then
             Humanoid:ChangeState(state)
             return
@@ -3252,13 +3280,13 @@ Unexpected:AddCommand("state", "Set HumanoidState", function(args)
 end)
 
 Unexpected:AddCommand("[CLIENT] freeze", "Freeze character", function()
-	for _, p in ipairs(Character:GetChildren()) do
+	for _, p in next, Character:GetChildren() do
 		if p:IsA("BasePart") then p.Anchored = true end
 	end
 end)
 
 Unexpected:AddCommand("[CLIENT] unfreeze", "Unfreeze your character", function()
-	for _, p in ipairs(Character:GetChildren()) do
+	for _, p in next, Character:GetChildren() do
 		if p:IsA("BasePart") then p.Anchored = false end
 	end
 end)
@@ -3344,7 +3372,7 @@ Unexpected:AddCommand("unfly", "Disable flying", function()
         flyConnB:Disconnect()
         flyConnB = nil
     end
-	for _, inst in ipairs({bv, bg}) do if inst and inst.Destroy then inst:Destroy() end end
+	for _, inst in next, {bv, bg} do if inst and inst.Destroy then inst:Destroy() end end
 	task.wait()
 	Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
 end)
@@ -3452,8 +3480,8 @@ end)
 
 Unexpected:AddCommand("sitwalk", "Set animations to sit", function()
 	local sitID = LocalPlayer.Character.Animate.sit:FindFirstChildWhichIsA("Animation").AnimationId
-	for _, v in ipairs({"idle","walk","run","jump"}) do
-		for _, a in ipairs(LocalPlayer.Character.Animate[v]:GetDescendants()) do
+	for _, v in next, {"idle","walk","run","jump"} do
+		for _, a in next, LocalPlayer.Character.Animate[v]:GetDescendants() do
 			if a:IsA("Animation") then a.AnimationId = sitID end
 		end
 	end
@@ -3492,7 +3520,7 @@ Unexpected:AddCommand("exit", "Exit unexpected script", function()
         spinConnection = nil
     end
 	disconnectEvents()
-	for key, conns in pairs(BindConnections) do if conns then conns:Disconnect() end end
+	for key, conns in next, BindConnections do if conns then conns:Disconnect() end end
 	UnexpectedUi.UI:Destroy()
 	task.wait()
 	getgenv().unexpected_LOAD = false
@@ -3519,7 +3547,7 @@ end
 Unexpected:AddCommand("team", "Switch team", function(teamN)
 	local teamName = teamN and teamN:lower()
 	local team
-	for _, v in ipairs(Teams:GetChildren()) do
+	for _, v in next, Teams:GetChildren() do
 		if v.Name:lower():find(teamName) then
             team = v
             break
@@ -3530,7 +3558,7 @@ Unexpected:AddCommand("team", "Switch team", function(teamN)
         return
     end
 	if RootPart and firetouchinterest then
-		for _, v in ipairs(Workspace:GetDescendants()) do
+		for _, v in next, Workspace:GetDescendants() do
 			if v:IsA("SpawnLocation") and v.TeamColor == team.TeamColor and v.AllowTeamChangeOnTouch then
 				firetouchinterest(v, RootPart, true)
 				firetouchinterest(v, RootPart, false)
@@ -3614,7 +3642,7 @@ Unexpected:AddCommand("refreshanimations", "Refresh animations", function()
         return
     end
 	Character.Animate.Disabled = true
-	for _, v in ipairs(Humanoid:GetPlayingAnimationTracks()) do v:Stop() end
+	for _, v in next, Humanoid:GetPlayingAnimationTracks() do v:Stop() end
 	Character.Animate.Disabled = false
 end, {"refreshanimation", "refreshanims", "refreshanim"})
 
@@ -3685,7 +3713,7 @@ Unexpected:AddCommand("importiy", "Import plugins, binds, and events from Infini
     local imported = { plugins = 0, binds = 0, events = 0 }
     CONFIG.Plugins, CONFIG.Binds, CONFIG.Events, CONFIG.Autoruns =
         CONFIG.Plugins or {}, CONFIG.Binds or {}, CONFIG.Events or {}, CONFIG.Autoruns or {}
-    for _, pluginFile in ipairs(parsed.PluginsTable or {}) do
+    for _, pluginFile in next, parsed.PluginsTable or {} do
         local name = tostring(pluginFile):match("^(.+)%.[^.]+$") or tostring(pluginFile)
         if not CONFIG.Plugins[name] then
             if LOAD_PLUGIN(name) then
@@ -3694,7 +3722,7 @@ Unexpected:AddCommand("importiy", "Import plugins, binds, and events from Infini
             end
         end
     end
-	for _, bd in ipairs(parsed.binds or {}) do
+	for _, bd in next, parsed.binds or {} do
 		local key = tostring(bd.KEY or ""):match("Enum%.KeyCode%.(.+)$") or bd.KEY
 		local cmd = bd.COMMAND
 		local toggleCmd = bd.TOGGLE
@@ -3709,8 +3737,8 @@ Unexpected:AddCommand("importiy", "Import plugins, binds, and events from Infini
     local IY_TO_UX = {OnSpawn="respawned", OnDied="died", OnKilled="died", OnJoin="playerjoined", OnLeave="playerleft", OnDamage="healthchanged", OnChatted="chatted"}
     local evOk, evData = pcall(function() return HttpService:JSONDecode(parsed.eventBinds or "{}") end)
     if evOk and type(evData) == "table" then
-        for iyEvent, entries in pairs(evData) do
-            for _, entry in ipairs(type(entries) == "table" and entries or {}) do
+        for iyEvent, entries in next, evData do
+            for _, entry in next, type(entries) == "table" and entries or {} do
                 local cmd = entry[1]
                 if cmd and tostring(cmd) ~= "" then
                     if iyEvent == "OnExecute" then
@@ -3728,7 +3756,7 @@ Unexpected:AddCommand("importiy", "Import plugins, binds, and events from Infini
         hookEvents()
     end
     UX_config()
-    for _, pair in ipairs({{"autorun","autorun"},{"plugin","plugin"},{"bind","bind"},{"event","event"}}) do if MENUFRAMES[pair[1]].Visible then renderList(pair[2]) end end
+    for _, pair in next, {{"autorun","autorun"},{"plugin","plugin"},{"bind","bind"},{"event","event"}} do if MENUFRAMES[pair[1]].Visible then renderList(pair[2]) end end
     Unexpected:notify("importiy", ("Imported: %d plugin(s), %d bind(s), %d event(s)."):format(imported.plugins, imported.binds, imported.events))
 end)
 
@@ -3756,25 +3784,6 @@ do
     end, {"rjkick"}, {"true/false"})
 end
 
-local function applyScale()
-	local function set(obj, key)
-		if not obj then return end
-		local scale = BASE_SCALE[key]
-		if IsMobile then
-			scale = scale * (MOBILE_MULT[key] or 1)
-		end
-		scale = math.clamp(scale, 0.1, 3)
-		local existing = obj:FindFirstChildWhichIsA("UIScale")
-		if existing then
-			existing.Scale = scale
-		else
-			make("UIScale", obj, { Scale = scale })
-		end
-	end
-
-	set(NotifUi, "notifUI")
-	set(UnexpectedUi["PILL"], "PILL")
-end
 Unexpected:AddCommand("uiscale","set UI scale (e.g. 0.8, 1.5)",function(val)
 	val = tonumber(val) or 1
 	for key in pairs(BASE_SCALE) do
@@ -3787,7 +3796,7 @@ end, nil, {"scale"})
 local function autorunItems_init()
 	local t = {}
 	CONFIG.Autoruns = CONFIG.Autoruns or {}
-	for i, v in ipairs(CONFIG.Autoruns) do
+	for i, v in next, CONFIG.Autoruns do
 		t[#t+1] = {
 			id = i,
 			text = v
@@ -3799,7 +3808,7 @@ end
 local function eventItems_init()
 	local t = {}
 	CONFIG.Events = CONFIG.Events or {}
-	for i, ev in ipairs(CONFIG.Events) do
+	for i, ev in next, CONFIG.Events do
 		local display = ev.event .. (ev.filter and (" [" .. ev.filter .. "]") or "") .. " → " .. ev.cmd
 		t[#t+1] = {
 			id = i,
@@ -3813,7 +3822,7 @@ end
 local function bindItems_init()
 	local t = {}
 	CONFIG.Binds = CONFIG.Binds or {}
-	for i, bd in ipairs(CONFIG.Binds) do
+	for i, bd in next, CONFIG.Binds do
 		local display =
 			"[" .. bd.key .. "]"
 			.. (bd.toggle and " (toggle)" or "")
@@ -3831,7 +3840,7 @@ end
 local function pluginItems_init()
 	local t = {}
 	CONFIG.Plugins = CONFIG.Plugins or {}
-	for name, enabled in pairs(CONFIG.Plugins) do
+	for name, enabled in next, CONFIG.Plugins do
 		if enabled then
 			t[#t+1] = {
 				id = name,
@@ -3845,7 +3854,7 @@ end
 local function waypointItems_init()
 	local t = {}
 	CONFIG.Waypoints = CONFIG.Waypoints or {}
-	for i, wp in ipairs(CONFIG.Waypoints) do
+	for i, wp in next, CONFIG.Waypoints do
 		if wp.game == game.PlaceId then
 			local display =
 				wp.name .. " (" ..
@@ -3916,10 +3925,10 @@ end
 local function installedpluginsscan()
 	table.clear(_installedPlugins)
 	if listfiles then
-		for _, dir in ipairs({"unexpected_plugins", "."}) do
+		for _, dir in next, {"unexpected_plugins", "."} do
 			pcall(function()
 				if dir == "unexpected_plugins" and not isfolder("unexpected_plugins") then return end
-				for _, f in ipairs(listfiles(dir)) do
+				for _, f in next, listfiles(dir) do
 					local n = f:match("([^/]+)%.iy$")
 					if n then _installedPlugins[n] = true end
 				end
@@ -3953,7 +3962,7 @@ local function fetchStore()
 
 	_storeCache = data.plugins
 
-	for _, v in ipairs(_storeCache) do
+	for _, v in next, _storeCache do
 		local y,m,d,h,mi,s = (v.date or ""):match("(%d+)-(%d+)-(%d+)T(%d+):(%d+):(%d+)")
 		v._t = y and (y*31536000 + m*2592000 + d*86400 + h*3600 + mi*60 + s) or 0
 	end
@@ -3976,9 +3985,9 @@ local function storeItems_init()
 
 	if not _storeCache then return {} end
 	_storeProcessed = {}
-	for _, p in ipairs(_storeCache) do
+	for _, p in next, _storeCache do
 		local name = p.name or "unknown"
-		for _, f in ipairs(p.files or {}) do local n = f.filename:match("(.+)%.iy$")
+		for _, f in next, p.files or {} do local n = f.filename:match("(.+)%.iy$")
 			if n then
                 name = n
                 break
@@ -4004,8 +4013,7 @@ List.register("store", function(item)
 	currentStoreItem = item
 	info.AnchorPoint = Vector2.new(0, 1)
 	info.Position = UDim2.new(mf.Position.X.Scale, mf.Position.X.Offset + 175, 1, -80)
-	local targetH = 348
-	if IsMobile then targetH = math.max(100, Camera.ViewportSize.Y - 120) end
+	local targetH = MENUFRAME.AbsoluteSize.Y > 0 and MENUFRAME.AbsoluteSize.Y or 348
 	info.Size = UDim2.new(0, 0, 0, targetH)
 	info.Visible = true
 	CreateTween(info, { Size = UDim2.new(0, 300, 0, targetH) }, 0.25, Enum.EasingStyle.Quint):Play()
@@ -4051,7 +4059,7 @@ actionBtn.MouseButton1Click:Connect(function()
 
 	task.spawn(function()
 		local okALL = false
-		for _, f in ipairs(item.p.files or {}) do
+		for _, f in next, item.p.files or {} do
 			if f.filename:match("%.iy$") then
 				local url = HttpService:UrlEncode("https://iyplugins.pages.dev/" .. f.url)
 				local tracker = "https://iy-analytics.renern.workers.dev/load/"
@@ -4102,7 +4110,7 @@ UX_rconfig()
 
 task.delay(1, function()
 	CONFIG.Autoruns = CONFIG.Autoruns or {}
-	for _, full in ipairs(CONFIG.Autoruns) do
+	for _, full in next, CONFIG.Autoruns do
 		local cmdName, argsText = string.match(full, "^(%S+)%s*(.*)$")
 		if cmdName then
 			local cmd = CommandListData[string.lower(cmdName)]
