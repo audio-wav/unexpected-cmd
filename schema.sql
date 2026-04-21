@@ -1,2 +1,3 @@
 CREATE TABLE IF NOT EXISTS stats (id TEXT PRIMARY KEY, count INTEGER);
 INSERT OR IGNORE INTO stats (id, count) VALUES ('executions', 0);
+CREATE TABLE IF NOT EXISTS rate_limits (ip TEXT PRIMARY KEY, last_ts INTEGER);

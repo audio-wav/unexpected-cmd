@@ -13,9 +13,23 @@ export default {
 
         try {
             if (url.pathname === "/track" && request.method === "POST") {
-                await env.DB.prepare(
-                    "UPDATE stats SET count = count + 1 WHERE id = 'executions'"
-                ).run();
+                const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+                const now = Math.floor(Date.now() / 1000);
+                const THRESHOLD = 30;
+
+                const lastTrack = await env.DB.prepare(
+                    "SELECT last_ts FROM rate_limits WHERE ip = ?"
+                ).bind(ip).first();
+
+                if (lastTrack && (now - lastTrack.last_ts) < THRESHOLD) {
+                    return new Response("Spam Filter Active", { status: 429, headers: corsHeaders });
+                }
+
+                await env.DB.batch([
+                    env.DB.prepare("UPDATE stats SET count = count + 1 WHERE id = 'executions'"),
+                    env.DB.prepare("INSERT OR REPLACE INTO rate_limits (ip, last_ts) VALUES (?, ?)").bind(ip, now)
+                ]);
+
                 return new Response("OK", { headers: corsHeaders });
             }
 
