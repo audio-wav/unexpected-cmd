@@ -3913,10 +3913,9 @@ actionBtn.MouseButton1Click:Connect(function()
 end)
 
 List.register("plugin", function(item)
-	CONFIG.Plugins[item.id] = nil
-	UX_config()
-	unexpected:notify("plugins", "Removed: " .. item.text)
-	renderList("plugin")
+    removePlugin({name = item.id})
+    UX_config()
+    renderList("plugin")
 end)
 
 List.register("waypoint", function(item, index)
