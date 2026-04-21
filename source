@@ -4005,8 +4005,7 @@ List.register("store", function(item)
 	currentStoreItem = item
 	info.AnchorPoint = Vector2.new(0, 1)
 	info.Position = UDim2.new(mf.Position.X.Scale, mf.Position.X.Offset + 175, 1, -80)
-	local targetH = 348
-	if IsMobile then targetH = math.max(100, Camera.ViewportSize.Y - 120) end
+	local targetH = MENUFRAME.AbsoluteSize.Y > 0 and MENUFRAME.AbsoluteSize.Y or 348
 	info.Size = UDim2.new(0, 0, 0, targetH)
 	info.Visible = true
 	CreateTween(info, { Size = UDim2.new(0, 300, 0, targetH) }, 0.25, Enum.EasingStyle.Quint):Play()
