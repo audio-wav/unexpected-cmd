@@ -103,6 +103,11 @@ local UiQuery = {
 
 local WHITE = Color3.fromRGB(255, 255, 255)
 
+local MENUON, HOVERED, shithover = false, false, false
+local LASTFOCUSED = os.clock()
+local HIDDEN, HIDING = false, false
+local currentRecoIndex, currentRecoButtons = 0, {}
+
 local BASE_SCALE = {notifUI = 1, PILL = 1}
 local MOBILE_MULT = {notifUI = 0.65, PILL = 0.6}
 
@@ -221,6 +226,19 @@ UnexpectedUi.Predictor = make("TextLabel", UnexpectedUi.PILL, {
 	BorderColor3 = UiQuery.COLORS.BACKGROUND, Text = "",
 	ZIndex = 1, BackgroundTransparency = 1, ClipsDescendants = true
 }) :: TextLabel
+
+UnexpectedUi.RecoFrame = make("ScrollingFrame", UnexpectedUi.PILL, {
+	Name = "RecoFrame", BackgroundColor3 = UiQuery.COLORS.BACKGROUND, BackgroundTransparency = 0,
+	BorderSizePixel = 0,
+	Size = UDim2.new(0, 210, 0, 0), Position = UDim2.new(0, 25, 0, -5),
+	AnchorPoint = Vector2.new(0, 1), Visible = false,
+	CanvasSize = UDim2.new(0, 0, 0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y,
+	ScrollBarThickness = 1, ScrollBarImageColor3 = UiQuery.COLORS.ACCENT, ClipsDescendants = true,
+	ZIndex = 0,
+}) :: ScrollingFrame
+make("UIListLayout", UnexpectedUi.RecoFrame, { SortOrder = Enum.SortOrder.LayoutOrder })
+CreateCorner(UnexpectedUi.RecoFrame, 0.1, 0)
+CreateStroke(UnexpectedUi.RecoFrame, UiQuery.COLORS.STROKE)
 
 UnexpectedUi.Menu = make("ImageButton", UnexpectedUi.PILL, {
 	BorderSizePixel = 0, BackgroundTransparency = 1,
@@ -746,72 +764,119 @@ do
     end
 
     local CommandLine, Predictor = UnexpectedUi.CommandLine, UnexpectedUi.Predictor
+    -- LOG H3
     CommandLine:GetPropertyChangedSignal("Text"):Connect(function()
+        if MENUON then
+            Predictor.Text = ""
+            UnexpectedUi.RecoFrame.Visible = false
+            return
+        end
         local Input = CommandLine.Text:gsub("%s+$", "")
         local CommandName, ArgText = Input:match("^(%S+)%s(.*)$")
         local BareCommand = Input:match("^(%S+)$") or ""
-
+        local Suggestion = ""
         if BareCommand ~= "" then
             local LowerCommand = string.lower(BareCommand)
             local Matches = {}
-            for CommandName in next, CommandListData do
-                if string.sub(string.lower(CommandName), 1, #LowerCommand) ~= LowerCommand then continue end
-                Matches[#Matches + 1] = CommandName
+            local AllMatches = {}
+            
+            for Name in next, CommandListData do
+                local LowerName = string.lower(Name)
+                if string.sub(LowerName, 1, #LowerCommand) == LowerCommand then
+                    table.insert(Matches, Name)
+                    table.insert(AllMatches, {key = Name, prio = 1})
+                elseif string.find(LowerName, LowerCommand, 1, true) then
+                    table.insert(AllMatches, {key = Name, prio = 2})
+                end
             end
+            
             table.sort(Matches)
             if #Matches > 0 then
                 local bestKey = Matches[1]
-                Predictor.Text = if string.lower(bestKey) == LowerCommand then ""
+                Suggestion = if string.lower(bestKey) == LowerCommand then ""
                     else `{Input}{string.sub(bestKey, #BareCommand + 1)}`
+            end
+
+            for _, c in next, UnexpectedUi.RecoFrame:GetChildren() do
+                if c:IsA("GuiButton") then c:Destroy() end
+            end
+            
+            table.sort(AllMatches, function(a, b)
+                if a.prio ~= b.prio then return a.prio < b.prio end
+                return a.key < b.key
+            end)
+
+            if #AllMatches > 0 then
+                local YOffset = 0
+                for i = 1, math.min(#AllMatches, 8) do
+                    local Data = AllMatches[i]
+                    local Match = Data.key
+                    local Btn = make("TextButton", UnexpectedUi.RecoFrame, {
+                        Size = UDim2.new(1, 0, 0, 30), Position = UDim2.new(0, 0, 0, YOffset),
+                        BackgroundTransparency = 1, Text = Match, TextColor3 = UiQuery.COLORS.TEXT_MAIN,
+                        FontFace = UiQuery.FONTS.REGULAR, TextSize = 16, TextXAlignment = Enum.TextXAlignment.Left,
+                        Name = `RecoBtn_{i}`
+                    })
+                    make("UIPadding", Btn, { PaddingLeft = UDim.new(0, 8) })
+                    Btn.MouseButton1Click:Connect(function()
+                        CommandLine.Text = `{Match} `
+                        CommandLine:CaptureFocus()
+                    end)
+                    YOffset += 30
+                end
+                local MaxH = 120
+                UnexpectedUi.RecoFrame.Size = UDim2.new(0, 210, 0, math.min(YOffset, MaxH))
+                UnexpectedUi.RecoFrame.CanvasSize = UDim2.new(0, 0, 0, YOffset)
+                UnexpectedUi.RecoFrame.Visible = true
             else
-                Predictor.Text = ""
+                UnexpectedUi.RecoFrame.Visible = false
             end
-            return
-        end
-
-        if not CommandName or not ArgText then return end
-        
-        local Command = CommandListData[string.lower(CommandName)]
-        if not Command then return end
-
-        local UsageArgs = Command.UsageArgs
-        if not UsageArgs or #UsageArgs <= 0 then return end
-
-        local HasPlayerArgument = false
-        for _, Arg in next, Command.UsageArgs do
-            local LowerArg = string.lower(Arg)
-            if LowerArg ~= "player" and LowerArg ~= "plr" then continue end
-            HasPlayerArgument = true
-            break
-        end
-        if not HasPlayerArgument then return end
-
-        local LastArg = (string.match(ArgText, "%S+$") or ""):gsub("%s+$", "")
-        local LowerArg = string.lower(LastArg)
-        local BestMatch = nil
-        for _, Player in next, Players:GetPlayers() do
-            if Player == LocalPlayer then continue end
-            local Name, DisplayName = Player.Name, Player.DisplayName
-            local LowerName, LowerDisplayName = string.lower(Name), string.lower(DisplayName)
-            local Candidate
-            if LowerArg == "" or LowerName:sub(1, #LowerArg) == LowerArg then
-                Candidate = Name
-            elseif LowerDisplayName:sub(1, #LowerArg) == LowerArg then
-                Candidate = DisplayName
+        else
+            UnexpectedUi.RecoFrame.Visible = false
+            if CommandName and ArgText then
+                local Command = CommandListData[string.lower(CommandName)]
+                if Command and Command.UsageArgs and #Command.UsageArgs > 0 then
+                    local HasPlayerArgument = false
+                    for _, Arg in next, Command.UsageArgs do
+                        local LowerArg = string.lower(Arg)
+                        if LowerArg ~= "player" and LowerArg ~= "plr" then continue end
+                        HasPlayerArgument = true
+                        break
+                    end
+                    
+                    if HasPlayerArgument then
+                        local LastArg = (string.match(ArgText, "%S+$") or ""):gsub("%s+$", "")
+                        local LowerArg = string.lower(LastArg)
+                        local BestMatch = nil
+                        for _, Player in next, Players:GetPlayers() do
+                            if Player == LocalPlayer then continue end
+                            local Name, DisplayName = Player.Name, Player.DisplayName
+                            local LowerName, LowerDisplayName = string.lower(Name), string.lower(DisplayName)
+                            local Candidate
+                            if LowerArg == "" or LowerName:sub(1, #LowerArg) == LowerArg then
+                                Candidate = Name
+                            elseif LowerDisplayName:sub(1, #LowerArg) == LowerArg then
+                                Candidate = DisplayName
+                            end
+                            if Candidate and (not BestMatch or string.lower(Candidate) < string.lower(BestMatch)) then
+                                BestMatch = Candidate
+                            end
+                        end
+                        if BestMatch then
+                            local PrefixArgs = (ArgText or ""):match("^(.-)%S+$") or ""
+                            local Formatted = ReplicateCapitalisation(LastArg, BestMatch)
+                            Suggestion = if LowerArg == string.lower(BestMatch) then ""
+                                else `{CommandName} {PrefixArgs}{Formatted}`
+                        end
+                    end
+                end
             end
-            if Candidate and (not BestMatch or string.lower(Candidate) < string.lower(BestMatch)) then
-                BestMatch = Candidate
-            end
         end
-        if BestMatch then
-            local PrefixArgs = (ArgText or ""):match("^(.-)%S+$") or ""
-            local Formatted = ReplicateCapitalisation(LastArg, BestMatch)
-            Predictor.Text = if LowerArg == string.lower(BestMatch) then ""
-                else `{CommandName} {PrefixArgs}{Formatted}`
-        end
+        Predictor.Text = Suggestion
     end)
 
     CommandLine.FocusLost:Connect(function(EnterPressed)
+        UnexpectedUi.RecoFrame.Visible = false
         if not EnterPressed then return end
 
         local Input = CommandLine.Text
@@ -957,9 +1022,6 @@ end
 local MENU = UnexpectedUi["PILL"]:FindFirstChild("Menu")
 local CLI = UnexpectedUi["PILL"]:FindFirstChild("CLI")
 local MENUFRAME = UnexpectedUi["PILL"]:WaitForChild("MenuFrame")
-local LASTFOCUSED = os.clock()
-local HIDDEN = false
-local HIDING = false
 local indicatorDRAG, indicatorWDRAG, indicatorSTART, DRAG_THRESHOLD, indicatorMD, indicatorS = false, false, nil, 15, false, 30
 local indicator = make("TextButton", UnexpectedUi.PILL.Parent, {
 	Size = UDim2.new(0,indicatorS,0,indicatorS), Position = UDim2.new(0,20,1,-70),
@@ -1036,7 +1098,7 @@ MENUFRAME.AnchorPoint = Vector2.new(0.5, 1)
 MENUFRAME.Position = UDim2.new(0.5, 0, 1, -80)
 MENUFRAME.Size = UDim2.new(0, 339, 0, 0)
 
-local MENUON, HOVERED, shithover = false, false, false
+local MENUON_init = false
 local MENUFRAMES = {
 	command = MENUFRAME:WaitForChild("commandFrame"),
 	autorun = MENUFRAME:WaitForChild("autorunFrame"),
@@ -1590,6 +1652,8 @@ MENU.MouseButton1Click:Connect(function()
 	LASTFOCUSED = os.clock()
 	MENUON = not MENUON
 	if MENUON then
+		UnexpectedUi.Predictor.Text = ""
+		UnexpectedUi.RecoFrame.Visible = false
 		for name, f in pairs(MENUFRAMES) do f.Visible = false end
 		returnToMenu()
 		MENUFRAME.Size, MENUFRAME.Visible = UDim2.new(0, 339, 0, 0), true
@@ -3943,11 +4007,18 @@ List.register("store", function(item)
 		:gsub("&", "&amp;")
 		:gsub("<", "&lt;")
 		:gsub(">", "&gt;")
+		:gsub("###%s?(.-)[\n\r]", "<b>%1</b>\n")
+		:gsub("##%s?(.-)[\n\r]", "<font size=\"17\"><b>%1</b></font>\n")
+		:gsub("#%s?(.-)[\n\r]", "<font size=\"20\"><b>%1</b></font>\n")
+		:gsub("[\n\r]-#%s?(.-)[\n\r]", "\n<font size=\"12\"><font color=\"#808080\">%1</font></font>\n")
+		:gsub("[\n\r]>%s?(.-)[\n\r]", "\n<font color=\"#808080\"><i> %1</i></font>\n")
+		:gsub("%*%*%*(.-)%*%*%*", "<b><i>%1</i></b>")
 		:gsub("%*%*(.-)%*%*", "<b>%1</b>")
 		:gsub("%*(.-)%*", "<i>%1</i>")
 		:gsub("__(.-)__", "<u>%1</u>")
 		:gsub("~~(.-)~~", "<s>%1</s>")
-		:gsub("```%w*\\n?(.-)\\n?```", "<font color='#787878'>%1</font>")
+		:gsub("`(.-)`", "<font family=\"rbxasset://fonts/families/RobotoMono.json\">%1</font>")
+		:gsub("```%w*[\n\r]?(.-)[\n\r]?```", "<font color=\"#808080\">%1</font>")
 	UnexpectedUi.InfoTitle.Text = item.name
 	UnexpectedUi.InfoDescription.Text = desc
 	actionBtn.Text = (_installedPlugins[item.name] and "delete") or "install"
