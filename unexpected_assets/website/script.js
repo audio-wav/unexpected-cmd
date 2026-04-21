@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", async () => {
   const WORKER_URL = "https://unexpected-stats.renern.workers.dev";
   const tb = document.getElementById("tb"),
-    esc = s => s.replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))
+    esc = s => s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]))
 
   fetch(`${WORKER_URL}/stats`)
     .then(r => r.json())
@@ -30,25 +30,23 @@ document.addEventListener("DOMContentLoaded", async () => {
     tr.innerHTML = `
       <td><div class="cc"><span class="cn">${esc(name)}</span>${badge}</div></td>
       <td><span class="desc">${esc(desc)}</span></td>
-      <td>${
-        aliases.length
-          ? `<div class="tags">${aliases.map(x => `<span class="tag ta">${esc(x)}</span>`).join("")}</div>`
-          : `<span class="tn">—</span>`
+      <td>${aliases.length
+        ? `<div class="tags">${aliases.map(x => `<span class="tag ta">${esc(x)}</span>`).join("")}</div>`
+        : `<span class="tn">—</span>`
       }</td>
-      <td>${
-        args.length
-          ? `<div class="tags">${args.map(x => `<span class="tag tg">[${esc(x)}]</span>`).join("")}</div>`
-          : `<span class="tn">—</span>`
+      <td>${args.length
+        ? `<div class="tags">${args.map(x => `<span class="tag tg">[${esc(x)}]</span>`).join("")}</div>`
+        : `<span class="tn">—</span>`
       }</td>
     `
     tb.appendChild(tr)
     i++
   }
   const existingCommands = new Set(
-    [...text.matchAll(/unexpected:addcmd\(\s*"([^"]+)"/g)]
+    [...text.matchAll(/unexpected:add(?:command|cmd)\(\s*"([^"]+)"/gi)]
       .map(m => m[1].replace(/^\[CLIENT\]\s*/i, "").toLowerCase())
   )
-  const blocks = text.split("unexpected:addcmd(")
+  const blocks = text.split(/unexpected:add(?:command|cmd)\(/i)
   for (let j = 1; j < blocks.length; j++) {
     const chunk = blocks[j]
     const header = chunk.match(/^"([^"]+)"\s*,\s*"([^"]+)"\s*,/)
@@ -86,29 +84,29 @@ document.addEventListener("DOMContentLoaded", async () => {
   const upd = a => {
     const q = document.getElementById("q").value.toLowerCase()
     let shown = 0
-    ;[...tb.children].forEach((tr, i) => {
-      const ok =
-        !q ||
-        tr.dataset.n.includes(q) ||
-        tr.dataset.d.includes(q) ||
-        tr.dataset.a.includes(q) ||
-        tr.dataset.g.includes(q)
-      const show =
-        filter === "client"
-          ? tr.dataset.c === "1" && ok
-          : ok
-      tr.classList.toggle("h", !show)
-      if (show) {
-        shown++
-        if (a) {
-          tr.style.animation = "none"
-          tr.offsetHeight
-          tr.style.animation = ""
-          tr.style.animationDelay = i * 15 + "ms"
-          tr.style.animationName = "fadeUp"
+      ;[...tb.children].forEach((tr, i) => {
+        const ok =
+          !q ||
+          tr.dataset.n.includes(q) ||
+          tr.dataset.d.includes(q) ||
+          tr.dataset.a.includes(q) ||
+          tr.dataset.g.includes(q)
+        const show =
+          filter === "client"
+            ? tr.dataset.c === "1" && ok
+            : ok
+        tr.classList.toggle("h", !show)
+        if (show) {
+          shown++
+          if (a) {
+            tr.style.animation = "none"
+            tr.offsetHeight
+            tr.style.animation = ""
+            tr.style.animationDelay = i * 15 + "ms"
+            tr.style.animationName = "fadeUp"
+          }
         }
-      }
-    })
+      })
     document.getElementById("cs").textContent = shown
     document.getElementById("es").style.display = shown ? "none" : "block"
   }
