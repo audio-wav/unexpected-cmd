@@ -36,6 +36,7 @@ local Workspace = cloneref(game:GetService("Workspace")) :: FixedWorkspace
 local CoreGui = cloneref(game:GetService("CoreGui"))
 local Players = cloneref(game:GetService("Players")) :: FixedPlayers
 local Teams = cloneref(game:GetService("Teams"))
+local ContextActionService = cloneref(game:GetService("ContextActionService"))
 local LocalPlayer = cloneref(Players.LocalPlayer)
 local Camera = cloneref(Workspace.CurrentCamera)
 
@@ -3364,6 +3365,7 @@ end, nil, {"speed"})
 Unexpected:AddCommand("unfly", "Disable flying", function()
 	flying = false
 	Humanoid.PlatformStand = false
+	pcall(function() ContextActionService:UnbindAction("SitflyNoJump") end)
 	if flyConnA then
         flyConnA:Disconnect()
         flyConnA = nil
@@ -3375,7 +3377,61 @@ Unexpected:AddCommand("unfly", "Disable flying", function()
 	for _, inst in next, {bv, bg} do if inst and inst.Destroy then inst:Destroy() end end
 	task.wait()
 	Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-end)
+end, {"unsitfly"})
+
+Unexpected:AddCommand("sitfly", "Sit while flying", function(spd)
+	if flying then
+		Unexpected:notify("sitfly", "Unfly first before changing speed")
+		return
+	end
+	Humanoid.Sit = true
+	spd, flying = tonumber(spd) or 3, true
+	bv = Instance.new("BodyVelocity", RootPart)
+	bg = Instance.new("BodyGyro", RootPart)
+	bv.MaxForce, bg.MaxTorque, bg.P = Vector3.one * 1e6, Vector3.one * 1e6, 1e4
+	local input = { w = 0, s = 0, a = 0, d = 0, up = 0, down = 0 }
+	pcall(function() ContextActionService:BindAction("SitflyNoJump", function(actionName, inputState, inputObject)
+		if inputState == Enum.UserInputState.Begin then
+			input.up = 1
+		elseif inputState == Enum.UserInputState.End then
+			input.up = 0
+		end
+		return Enum.ContextActionResult.Sink
+	end, false, Enum.KeyCode.Space) end)
+	if IsMobile then
+		Humanoid.StateChanged:Connect(function(_, state)
+			if state == Enum.HumanoidStateType.Jumping then
+				input.up = 1
+				task.delay(0.3, function() input.up = 0 end)
+			end
+		end)
+	else
+		local function set(k, v)
+			if k == Enum.KeyCode.W then input.w = v elseif k == Enum.KeyCode.S then input.s = -v
+			elseif k == Enum.KeyCode.A then input.a = -v elseif k == Enum.KeyCode.D then input.d = v
+			elseif k == Enum.KeyCode.LeftShift then input.down = -v end
+		end
+		flyConnA = UserInputService.InputBegan:Connect(function(i, g) if not g then set(i.KeyCode, 1) end end)
+		flyConnB = UserInputService.InputEnded:Connect(function(i) set(i.KeyCode, 0) end)
+	end
+	task.spawn(function()
+		while flying and RootPart and Camera do
+			task.wait()
+			local move
+			if IsMobile then
+				local camFlat = Camera.CFrame.LookVector * Vector3.new(1,0,1)
+				if camFlat.Magnitude < 0.001 then camFlat = Vector3.new(0,0,-1) end
+				local cf = CFrame.new(Vector3.zero, camFlat)
+				local objMove = cf:VectorToObjectSpace(Humanoid.MoveDirection)
+				move = Vector3.new(objMove.X, input.up + input.down, objMove.Z)
+			else
+				move = Vector3.new(input.a + input.d, input.up + input.down, -(input.w + input.s))
+			end
+			bv.Velocity = move.Magnitude > 0 and Camera.CFrame:VectorToWorldSpace(move.Unit) * spd * 10 or Vector3.zero
+			bg.CFrame = Camera.CFrame
+		end
+	end)
+end, nil, {"speed"})
 
 local afConn, lastSafe, count = nil, nil, 0
 Unexpected:AddCommand("antifling", "Stops flings via velocity detection", function()
