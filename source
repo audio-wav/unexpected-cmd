@@ -142,7 +142,7 @@ local function mkBTNEXAMPLE(name)
 	})
 end
 
-local UiCornerTable: {UICorner} = {}
+local UiCornerTable: {{UICorner: UICorner, OriginalRadius: UDim}} = {}
 
 local function CreateCorner(
     Parent: Instance?,
@@ -156,7 +156,7 @@ local function CreateCorner(
         CornerRadius = UDim.new(_RadiusScale, _RadiusOffset)
     })
 
-	UiCornerTable[#UiCornerTable + 1] = Corner
+	UiCornerTable[#UiCornerTable + 1] = {UICorner = Corner, OriginalRadius = UDim.new(_RadiusScale, _RadiusOffset)}
 
 	return Corner
 end
@@ -1249,8 +1249,8 @@ end
 local function updateUICorners(newSize: number?)
 	local UICornersS = math.clamp(newSize or 1, 0, 1)
 	for _, data in next, UiCornerTable do
-        local CornerRadius = data.CornerRadius
-		data.CornerRadius = UDim.new(CornerRadius.Scale * UICornersS, CornerRadius.Offset)
+        local OriginalRadius = data.OriginalRadius
+		data.UICorner.CornerRadius = UDim.new(OriginalRadius.Scale * UICornersS, OriginalRadius.Offset)
 	end
 	UX_config()
 end
