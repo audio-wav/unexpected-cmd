@@ -40,6 +40,17 @@ body {
   flex-wrap: wrap;
 }
 
+.stat-banner {
+  padding: 24px 20px;
+  background: linear-gradient(to bottom, #050505, #000);
+  border-bottom: 1px solid #1a1a1a;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.stat-label { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: .1em; color: #333; }
+.stat-value { font-size: 32px; font-weight: 600; color: #fff; letter-spacing: -0.02em; }
+
 .sw { position: relative; flex: 1; min-width: 140px; }
 .sw svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 13px; height: 13px; color: #444; pointer-events: none; }
 input {
