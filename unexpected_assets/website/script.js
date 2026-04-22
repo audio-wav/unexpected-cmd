@@ -58,10 +58,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     const key = n.toLowerCase()
     if (seen.has(key)) continue
     seen.add(key)
-    const argsMatch = chunk.match(/,\s*nil\s*,\s*(\{[\s\S]*?\})/)
-    const uRaw = argsMatch ? argsMatch[1] : null
-    const aliasesMatch = chunk.match(/,\s*\{([\s\S]*?)\}/)
-    const aRaw = aliasesMatch ? aliasesMatch[1] : null
+    const paramsMatch = chunk.match(/,\s*(nil|\{[\s\S]*?\})\s*,\s*(nil|\{[\s\S]*?\})\s*\)/)
+    let aRaw = null, uRaw = null
+    if (paramsMatch) {
+      const p1 = paramsMatch[1]
+      const p2 = paramsMatch[2]
+      aRaw = p1 !== "nil" ? p1 : null
+      uRaw = p2 !== "nil" ? p2 : null
+    }
     const aliases = aRaw ? parseTable(aRaw) : []
     const args = uRaw ? parseTable(uRaw) : []
     makeRow(n, desc, isClient, aliases, args)
