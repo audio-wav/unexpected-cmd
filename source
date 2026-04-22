@@ -576,7 +576,7 @@ local function ClearCommandList(): ()
 end
 
 local _fadeTargets = setmetatable({} :: {[Frame]: {TextLabel | TextButton | TextBox | ImageLabel | ImageButton}}, { __mode = "k" })
-local function getFadeTargets(frame: Frame): {TextLabel | TextButton | TextBox | ImageLabel | ImageButton}
+local function GetFadeTargets(frame: Frame): {TextLabel | TextButton | TextBox | ImageLabel | ImageButton}
     local t = _fadeTargets[frame]
     if t then return t end
     t = frame:QueryDescendants("TextLabel,TextButton,TextBox,ImageLabel,ImageButton") :: any
@@ -1105,7 +1105,7 @@ end
 
 local function FadeIn(frame: Frame?): ()
 	frame.Visible = true
-	local targets = getFadeTargets(frame)
+	local targets = GetFadeTargets(frame)
 	for _, c in next, targets do
 		if c:IsA("TextLabel") or c:IsA("TextButton") or c:IsA("TextBox") then
 			c.TextTransparency = 1
@@ -1118,7 +1118,7 @@ local function FadeIn(frame: Frame?): ()
 end
 
 local function FadeOut(frame: Frame?): ()
-	local targets = getFadeTargets(frame)
+	local targets = GetFadeTargets(frame)
 	for _, c in next, targets do
 		if c:IsA("TextLabel") or c:IsA("TextButton") or c:IsA("TextBox") then
 			CreateTween(c, { TextTransparency = 1 }):Play()
