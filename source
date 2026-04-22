@@ -745,33 +745,16 @@ function Unexpected:notify(title, ...)
 end
 
 do
-    local function ReplicateCapitalisation(Pattern: string, Word: string)
-        local Length = #Word
-        local Buffer = buffer.create(Length)
-        local WordBuffer = buffer.fromstring(Word)
-        local PatternBuffer = buffer.fromstring(Pattern)
-        local PatternLength = #Pattern
-
-        for i = 0, Length - 1 do
-            local WordByte = buffer.readu8(WordBuffer, i)
-            local IsAlpha = (WordByte >= 65 and WordByte <= 90) or (WordByte >= 97 and WordByte <= 122)
-
-            local PatternByte = buffer.readu8(PatternBuffer, i)
-            local IsUpper = i < PatternLength and (PatternByte >= 65 and PatternByte <= 90)
-
-            buffer.writeu8(
-                Buffer, i,
-                if IsAlpha then
-                    if IsUpper then
-                        bit32.band(WordByte, 0xDF)
-                    else
-                        bit32.bor(WordByte, 0x20)
-                else WordByte
-            )
-        end
-        
-        return buffer.tostring(Buffer)
-    end
+    local function caseSens(pattern, word)
+		local out = {}
+		for i = 1, #word do
+			local c = word:sub(i,i)
+			local p = pattern:sub(i,i)
+			-- use a better method instead of nesting
+			out[i] = (p ~= "" and p:match("%u")) and c:upper() or c:lower()
+		end
+		return table.concat(out)
+	end
 
     local CommandLine, Predictor = UnexpectedUi.CommandLine, UnexpectedUi.Predictor
     -- LOG H3
@@ -870,7 +853,7 @@ do
                         end
                         if BestMatch then
                             local PrefixArgs = (ArgText or ""):match("^(.-)%S+$") or ""
-                            local Formatted = ReplicateCapitalisation(LastArg, BestMatch)
+                            local Formatted = caseSens(LastArg, BestMatch)
                             Suggestion = if LowerArg == string.lower(BestMatch) then ""
                                 else `{CommandName} {PrefixArgs}{Formatted}`
                         end
