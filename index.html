@@ -1,39 +1,59 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-<title>unexpected</title>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="unexpected_assets/website/style.css">
+  <title>unexpected</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="unexpected_assets/website/style.css">
 </head>
+
 <body>
-<div class="card">
-  <div class="banner"><img src="unexpected_assets/unexpected-cmd.png"></div>
-  <div class="stat-banner">
-    <div class="stat-label">Total Executions</div>
-    <div class="stat-value" id="ex">—</div>
-  </div>
-  <div class="controls">
-    <div class="sw">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5l3 3"/></svg>
-      <input id="q" type="text" placeholder="search a command">
+  <div class="card">
+    <div class="banner"><img src="unexpected_assets/unexpected-cmd.png"></div>
+    <div class="stat-banner">
+      <div class="stat-label">Total Executions</div>
+      <div class="stat-value" id="ex">—</div>
     </div>
-    <div class="fbtns">
-      <button class="fb on" data-f="all">All</button>
-      <button class="fb" data-f="client">Client</button>
+    <div class="controls">
+      <div class="sw">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="7" cy="7" r="4.5" />
+          <path d="M10.5 10.5l3 3" />
+        </svg>
+        <input id="q" type="text" placeholder="search a command">
+      </div>
+      <div class="fbtns">
+        <button class="fb on" data-f="all">All</button>
+        <button class="fb" data-f="client">Client</button>
+      </div>
+      <div class="cnt">showing <b id="cs">0</b> / <b id="ct">0</b></div>
     </div>
-    <div class="cnt">showing <b id="cs">0</b> / <b id="ct">0</b></div>
+    <div class="to">
+      <table>
+        <colgroup>
+          <col class="col-cmd">
+          <col class="col-desc">
+          <col class="col-ali">
+          <col class="col-arg">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Command</th>
+            <th>Description</th>
+            <th>Aliases</th>
+            <th>Arguments</th>
+          </tr>
+        </thead>
+        <tbody id="tb"></tbody>
+      </table>
+      <div id="es">
+        <p>No commands match</p>
+      </div>
+    </div>
   </div>
-  <div class="to">
-    <table>
-      <colgroup><col class="col-cmd"><col class="col-desc"><col class="col-ali"><col class="col-arg"></colgroup>
-      <thead><tr><th>Command</th><th>Description</th><th>Aliases</th><th>Arguments</th></tr></thead>
-      <tbody id="tb"></tbody>
-    </table>
-    <div id="es"><p>No commands match</p></div>
-  </div>
-</div>
-<script src="unexpected_assets/website/script.js"></script>
+  <script src="unexpected_assets/website/script.js"></script>
 </body>
+
 </html>
