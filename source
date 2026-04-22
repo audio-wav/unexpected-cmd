@@ -1463,7 +1463,7 @@ local function DeleteWaypointVisual(name: string?): ()
 	end
 end
 
-local function SetActiveTab(tabKey: string?, onOpen: function?): ()
+local function SetActiveTab(tabKey: string?, onOpen): ()
 	local frame = MENUFRAMES[tabKey]
 	if not frame then return end
 	for _, f in next, MENUFRAMES do if f ~= frame and f.Visible then FadeOut(f) end end
@@ -1541,7 +1541,7 @@ local function RenderList(key: string?): ()
 	if fn then fn() end
 end
 
-local function CreateListSystem(listKey: string?, btnList: Instance?, btnExample: Instance?, getItems: function?): ()
+local function CreateListSystem(listKey: string?, btnList: Instance?, btnExample: Instance?, getItems): ()
 	List.renderers[listKey] = function()
 		_fadeTargets[btnList.Parent] = nil
 		local filter = (List.filters[listKey] or ""):lower()
@@ -2002,7 +2002,7 @@ local function UX_AddBind(keyName: string?, cmdString: string?, toggle: boolean?
 	CreateKeyConnection(keyName)
 end
 
-local function UX_AddPluginBind(keyName: string?, fn: function?): ()
+local function UX_AddPluginBind(keyName: string?, fn): ()
 	keyName = keyName:lower()
 	if not Keybinds[keyName] then Keybinds[keyName] = {} end
 	local bindId = CreateBindId()
