@@ -211,6 +211,54 @@ local function CreateAspectRatio(Parent: Instance?, Ratio: number?): UIAspectRat
 	return Create("UIAspectRatioConstraint", Parent, { AspectRatio = Ratio })
 end
 
+local _fadeTargets = setmetatable({} :: {[Frame]: {TextLabel | TextButton | TextBox | ImageLabel | ImageButton}}, { __mode = "k" })
+local function GetFadeTargets(frame: Frame): {TextLabel | TextButton | TextBox | ImageLabel | ImageButton}
+    local t = _fadeTargets[frame]
+    if t then return t end
+    t = frame:QueryDescendants("TextLabel,TextButton,TextBox,ImageLabel,ImageButton") :: any
+    _fadeTargets[frame] = t
+    return t
+end
+
+local function CreateTween(
+    Object: Instance, Properties: {[string]: any},
+    Time: number?, EasingStyle: Enum.EasingStyle?
+)
+	return TweenService:Create(Object, TweenInfo.new(Time or 0.2, EasingStyle or Enum.EasingStyle.Sine), Properties)
+end
+
+local function ButtonTween(button: GuiButton?, target: number?): ()
+	local prop = button:IsA("ImageButton") and "ImageTransparency" or "TextTransparency"
+	CreateTween(button, { [prop] = target }, 0.2, Enum.EasingStyle.Sine):Play()
+end
+
+local function FadeIn(frame: Frame?): ()
+	frame.Visible = true
+	local targets = GetFadeTargets(frame)
+	for _, c in next, targets do
+		if c:IsA("TextLabel") or c:IsA("TextButton") or c:IsA("TextBox") then
+			c.TextTransparency = 1
+			CreateTween(c, { TextTransparency = 0 }):Play()
+		elseif c:IsA("ImageLabel") or c:IsA("ImageButton") then
+			c.ImageTransparency = 1
+			CreateTween(c, { ImageTransparency = 0 }):Play()
+		end
+	end
+end
+
+local function FadeOut(frame: Frame?): ()
+	local targets = GetFadeTargets(frame)
+	for _, c in next, targets do
+		if c:IsA("TextLabel") or c:IsA("TextButton") or c:IsA("TextBox") then
+			CreateTween(c, { TextTransparency = 1 }):Play()
+		elseif c:IsA("ImageLabel") or c:IsA("ImageButton") then
+			CreateTween(c, { ImageTransparency = 1 }):Play()
+		end
+	end
+	task.delay(0.2, function() frame.Visible = false end)
+end
+
+
 local function RandomString(len: number?, charset: string?): string
     local _len = len or math.random(10, 20)
     local buff = buffer.create(_len)
@@ -381,9 +429,9 @@ end
 
 UnexpectedUi.CommandsButton = CreateMenuButton("cmdsButton", "commands", 1)
 UnexpectedUi.AutorunsButton = CreateMenuButton("autorunsButton", "autoruns", 2)
-UnexpectedUi.EventsButton = CreateMenuButton("eventsButton", "events", 3)
-UnexpectedUi.BindsButton = CreateMenuButton("bindsButton", "binds", 4)
-UnexpectedUi.PluginsButton = CreateMenuButton("pluginsButton", "plugins", 5)
+UnexpectedUi.EventsButton = CreateMenuButton("eventsButton", "Events", 3)
+UnexpectedUi.BindsButton = CreateMenuButton("bindsButton", "Binds", 4)
+UnexpectedUi.PluginsButton = CreateMenuButton("pluginsButton", "Plugins", 5)
 UnexpectedUi.StoreButton = CreateMenuButton("storeButton", "store", 6)
 UnexpectedUi.WaypointsButton = CreateMenuButton("waypointsButton", "waypoints", 7)
 UnexpectedUi.Discord = CreateMenuButton("discordButton", "discord", 8)
@@ -466,17 +514,17 @@ UnexpectedUi.ARBACK = CreateTabBack(UnexpectedUi.ARFRAME, "autorunBack")
 
 UnexpectedUi.EVFRAME = CreateTab("eventFrame")
 UnexpectedUi.EVBTNLIST = CreateTabScroll(UnexpectedUi.EVFRAME, "eventList")
-UnexpectedUi.EVSEARCHBAR = CreateTabSearch(UnexpectedUi.EVFRAME, "eventSearch", "search events")
+UnexpectedUi.EVSEARCHBAR = CreateTabSearch(UnexpectedUi.EVFRAME, "eventSearch", "search Events")
 UnexpectedUi.EVBACK = CreateTabBack(UnexpectedUi.EVFRAME, "eventBack")
 
 UnexpectedUi.BDFRAME = CreateTab("bindFrame")
 UnexpectedUi.BDBTNLIST = CreateTabScroll(UnexpectedUi.BDFRAME, "bindList")
-UnexpectedUi.BDSEARCHBAR = CreateTabSearch(UnexpectedUi.BDFRAME, "bindSearch", "search binds")
+UnexpectedUi.BDSEARCHBAR = CreateTabSearch(UnexpectedUi.BDFRAME, "bindSearch", "search Binds")
 UnexpectedUi.BDBACK = CreateTabBack(UnexpectedUi.BDFRAME, "bindBack")
 
 UnexpectedUi.PLFRAME = CreateTab("pluginFrame")
 UnexpectedUi.PLBTNLIST = CreateTabScroll(UnexpectedUi.PLFRAME, "pluginList")
-UnexpectedUi.PLSEARCHBAR = CreateTabSearch(UnexpectedUi.PLFRAME, "pluginSearch", "search plugins")
+UnexpectedUi.PLSEARCHBAR = CreateTabSearch(UnexpectedUi.PLFRAME, "pluginSearch", "search Plugins")
 UnexpectedUi.PLBACK = CreateTabBack(UnexpectedUi.PLFRAME, "pluginBack")
 
 
@@ -618,22 +666,6 @@ local function ClearCommandList(): ()
 	commandButtonCache = {}
 	UnexpectedUi.BTNLIST.CanvasSize = UDim2.new()
 	if _sharedTooltip then _sharedTooltip.Visible = false end
-end
-
-local _fadeTargets = setmetatable({} :: {[Frame]: {TextLabel | TextButton | TextBox | ImageLabel | ImageButton}}, { __mode = "k" })
-local function GetFadeTargets(frame: Frame): {TextLabel | TextButton | TextBox | ImageLabel | ImageButton}
-    local t = _fadeTargets[frame]
-    if t then return t end
-    t = frame:QueryDescendants("TextLabel,TextButton,TextBox,ImageLabel,ImageButton") :: any
-    _fadeTargets[frame] = t
-    return t
-end
-
-local function CreateTween(
-    Object: Instance, Properties: {[string]: any},
-    Time: number?, EasingStyle: Enum.EasingStyle?
-)
-	return TweenService:Create(Object, TweenInfo.new(Time or 0.2, EasingStyle or Enum.EasingStyle.Sine), Properties)
 end
 
 type NotificationData = {title: string, text: string}
@@ -1132,8 +1164,8 @@ MenuFrame.Position = UDim2.new(0.5, 0, 1, -80)
 MenuFrame.Size = UDim2.new(0, 339, 0, 0)
 
 local MenuMap = {
-	command  = "cmdsButton",
-	autorun  = "autorunsButton",
+	command = "cmdsButton",
+	autorun = "autorunsButton",
 	event = "eventsButton",
 	bind = "bindsButton",
 	plugin = "pluginsButton",
@@ -1144,43 +1176,11 @@ local MenuMap = {
 }
 
 local MenuFrames, MenuButtons = {}, {}
-
 for name, btnName in next, MenuMap do
+	MenuButtons[name] = UnexpectedUi.MenuScroll:WaitForChild(btnName) -- do this first since it's what you see earlier
 	if name ~= "discord" then
 		MenuFrames[name] = MenuFrame:WaitForChild(name .. "Frame")
 	end
-	MenuButtons[name] = UnexpectedUi.MenuScroll:WaitForChild(btnName)
-end
-
-local function ButtonTween(button: GuiButton?, target: number?): ()
-	local prop = button:IsA("ImageButton") and "ImageTransparency" or "TextTransparency"
-	CreateTween(button, { [prop] = target }, 0.2, Enum.EasingStyle.Sine):Play()
-end
-
-local function FadeIn(frame: Frame?): ()
-	frame.Visible = true
-	local targets = GetFadeTargets(frame)
-	for _, c in next, targets do
-		if c:IsA("TextLabel") or c:IsA("TextButton") or c:IsA("TextBox") then
-			c.TextTransparency = 1
-			CreateTween(c, { TextTransparency = 0 }):Play()
-		elseif c:IsA("ImageLabel") or c:IsA("ImageButton") then
-			c.ImageTransparency = 1
-			CreateTween(c, { ImageTransparency = 0 }):Play()
-		end
-	end
-end
-
-local function FadeOut(frame: Frame?): ()
-	local targets = GetFadeTargets(frame)
-	for _, c in next, targets do
-		if c:IsA("TextLabel") or c:IsA("TextButton") or c:IsA("TextBox") then
-			CreateTween(c, { TextTransparency = 1 }):Play()
-		elseif c:IsA("ImageLabel") or c:IsA("ImageButton") then
-			CreateTween(c, { ImageTransparency = 1 }):Play()
-		end
-	end
-	task.delay(0.2, function() frame.Visible = false end)
 end
 
 UserInputService.InputChanged:Connect(function(input)
@@ -2002,7 +2002,7 @@ local function HookEvents(): ()
 			local Success, conn = pcall(handler, ev)
 			if Success and conn then table.insert(ActiveEvents, conn) end
 		else
-			Unexpected:Notify("events", "unknown event: " .. tostring(ev.event))
+			Unexpected:Notify("Events", "unknown event: " .. tostring(ev.event))
 		end
 	end
 end
@@ -2025,8 +2025,8 @@ local function CreateKeyConnection(keyName: string?): ()
 	if BindConnections[keyName] then return end
 	local conn = UserInputService.InputBegan:Connect(function(input, processed)
 		if not processed and input.KeyCode.Name:lower() == keyName then
-			local binds = Keybinds[keyName] or {}
-			for _, bind in next, binds do
+			local Binds = Keybinds[keyName] or {}
+			for _, bind in next, Binds do
 				if bind.fn then
 					pcall(bind.fn)
 				elseif bind.cmd then
@@ -2411,7 +2411,7 @@ local function HookBinds()
 	Settings.Binds = Settings.Binds or {}
 	for _, Bind in next, Settings.Binds do
 		if Bind.isPlugin then
-			Unexpected:Notify("unexpected", "Note: Plugin binds require plugins to be reloaded to restore.")
+			Unexpected:Notify("unexpected", "Note: Plugin Binds require Plugins to be reloaded to restore.")
 		else
 			UX_AddBind(Bind.key, Bind.cmd, Bind.toggle)
 		end
@@ -2497,7 +2497,7 @@ Unexpected:AddCommand("reloadplugin", "Reload a plugin", function(NAME)
     end
 end, nil, {"name"})
 
-Unexpected:AddCommand("clearplugins", "Disable all plugins", function()
+Unexpected:AddCommand("clearplugins", "Disable all Plugins", function()
 	for pluginName in next, Settings.Plugins do
 		StripPluginCommands(pluginName)
 	end
@@ -2514,10 +2514,10 @@ Unexpected:AddCommand("clearplugins", "Disable all plugins", function()
 		ShowCommandList()
 	end
 
-	Unexpected:Notify("plugins", "All plugins disabled.")
+	Unexpected:Notify("Plugins", "All Plugins disabled.")
 end)
 
-Unexpected:AddCommand("addallplugins", "Load all available plugins", function()
+Unexpected:AddCommand("addallplugins", "Load all available Plugins", function()
 	local files = listfiles(PLUGIN_DIR)
 	local toLoad = {}
 	for _, file in next, files do
@@ -2544,7 +2544,7 @@ Unexpected:AddCommand("addallplugins", "Load all available plugins", function()
 
 	task.delay(0.5, function()
 		if MenuFrames.plugin.Visible then RenderList("plugin") end
-		Unexpected:Notify("plugins", `Loaded {#toLoad} plugin(s).`)
+		Unexpected:Notify("Plugins", `Loaded {#toLoad} plugin(s).`)
 	end)
 end)
 
@@ -2603,7 +2603,7 @@ Unexpected:AddCommand("unbind", "Remove all key bindings", function(key)
 	Unexpected:Notify("unbind", "Unbound: " .. key)
 end, nil, {"key"})
 
-Unexpected:AddCommand("binds", "Show binds tab", function()
+Unexpected:AddCommand("Binds", "Show Binds tab", function()
 	SetActiveTab("bind", function()
 		UnexpectedUi.BDSEARCHBAR.Text = ""
 		RenderList("bind")
@@ -2612,12 +2612,12 @@ end)
 
 Unexpected:AddCommand("onevent", "Add event trigger", function(event, ...)
 	if not event then
-        Unexpected:Notify("events", "Usage: onevent [event] [filter/*] [command]")
+        Unexpected:Notify("Events", "Usage: onevent [event] [filter/*] [command]")
         return
     end
 	local args = {...}
 	if #args == 0 then
-        Unexpected:Notify("events", "Missing command.")
+        Unexpected:Notify("Events", "Missing command.")
         return
     end
 	local FILTER_EVENTS = {playerjoined=true, playerleft=true, chatted=true, statechanged=true, keypressed=true, keyreleased=true, touched=true, equipped=true, unequipped=true}
@@ -2634,12 +2634,12 @@ Unexpected:AddCommand("onevent", "Add event trigger", function(event, ...)
 	SaveSettings()
 	HookEvents()
 	if MenuFrames.event.Visible then RenderList("event") end
-	Unexpected:Notify("events", `Added: {event}{filter and ` [{filter}]` or ""} → {cmd}`)
+	Unexpected:Notify("Events", `Added: {event}{filter and ` [{filter}]` or ""} → {cmd}`)
 end, nil, {"event", "filter/*", "..."})
 
 Unexpected:AddCommand("unevent", "Remove event trigger", function(event, ...)
 	if not event then
-        Unexpected:Notify("events", "Usage: unevent [event] [cmd]")
+        Unexpected:Notify("Events", "Usage: unevent [event] [cmd]")
         return
     end
 	local args = {...}
@@ -2660,18 +2660,18 @@ Unexpected:AddCommand("unevent", "Remove event trigger", function(event, ...)
 	HookEvents()
 	if MenuFrames.event.Visible then RenderList("event") end
 	if removed > 0 then
-		Unexpected:Notify("events", `Removed {removed}: {event}{cmd and ` → {cmd}` or ""}`)
+		Unexpected:Notify("Events", `Removed {removed}: {event}{cmd and ` → {cmd}` or ""}`)
 	else
-		Unexpected:Notify("events", `No match found for: {event}{cmd and ` → {cmd}` or ""}`)
+		Unexpected:Notify("Events", `No match found for: {event}{cmd and ` → {cmd}` or ""}`)
 	end
 end, nil, {"event", "[cmd]"})
 
-Unexpected:AddCommand("clearevents", "Clear all events", function()
+Unexpected:AddCommand("clearevents", "Clear all Events", function()
 	Settings.Events = {}
 	SaveSettings()
 	DisconnectEvents()
 	if MenuFrames.event.Visible then RenderList("event") end
-	Unexpected:Notify("events", "Cleared")
+	Unexpected:Notify("Events", "Cleared")
 end)
 
 Unexpected:AddCommand("clearautoruns", "Remove all autoruns", function()
@@ -2681,7 +2681,7 @@ Unexpected:AddCommand("clearautoruns", "Remove all autoruns", function()
 	Unexpected:Notify("autoruns", "All autoruns cleared.")
 end)
 
-Unexpected:AddCommand("clearbinds", "Remove all binds", function()
+Unexpected:AddCommand("clearbinds", "Remove all Binds", function()
 	Settings.Binds = {}
 	SaveSettings()
 	for _, conn in next, BindConnections do if conn then conn:Disconnect() end end
@@ -2689,17 +2689,17 @@ Unexpected:AddCommand("clearbinds", "Remove all binds", function()
 	BindToggleStates = {}
 	Keybinds = {}
 	if MenuFrames.bind.Visible then RenderList("bind") end
-	Unexpected:Notify("binds", "All binds cleared.")
+	Unexpected:Notify("Binds", "All Binds cleared.")
 end)
 
-Unexpected:AddCommand("events", "Show events tab", function()
+Unexpected:AddCommand("Events", "Show Events tab", function()
 	SetActiveTab("event", function()
 		UnexpectedUi.EVSEARCHBAR.Text = ""
 		RenderList("event")
 	end)
 end)
 
-Unexpected:AddCommand("plugins", "Show plugins tab", function()
+Unexpected:AddCommand("Plugins", "Show Plugins tab", function()
 	SetActiveTab("plugin", function()
 		UnexpectedUi.PLSEARCHBAR.Text = ""
 		RenderList("plugin")
@@ -3805,29 +3805,29 @@ Unexpected:AddCommand("simplespy", "Spies on remotes", function()
 	loadstring(game:HttpGet("https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/unexpected_assets/scripts/simplespy"))()
 end, {"remotespy"})
 
-Unexpected:AddCommand("importiy", "Import plugins, binds, and events from Infinite Yield", function()
+Unexpected:AddCommand("importiy", "Import Plugins, Binds, and Events from Infinite Yield", function()
     if not isfile("IY_FE.iy") then
 		Unexpected:Notify("importiy", "IY_FE.iy not found.")
 		return
 	end
-    local Success, parsed = pcall(function() return HttpService:JSONDecode(readfile("IY_FE.iy")) end)
-    if not Success or type(parsed) ~= "table" then
+    local Success, Parsed = pcall(function() return HttpService:JSONDecode(readfile("IY_FE.iy")) end)
+    if not Success or type(Parsed) ~= "table" then
 		Unexpected:Notify("importiy", "Failed to parse IY_FE.iy")
 		return
 	end
-    local imported = { plugins = 0, binds = 0, events = 0 }
+    local Imported = { Plugins = 0, Binds = 0, Events = 0 }
     Settings.Plugins, Settings.Binds, Settings.Events, Settings.Autoruns =
         Settings.Plugins or {}, Settings.Binds or {}, Settings.Events or {}, Settings.Autoruns or {}
-    for _, pluginFile in next, parsed.PluginsTable or {} do
+    for _, pluginFile in next, Parsed.PluginsTable or {} do
         local name = tostring(pluginFile):match("^(.+)%.[^.]+$") or tostring(pluginFile)
         if not Settings.Plugins[name] then
             if LoadPlugin(name) then
                 Settings.Plugins[name] = true
-                imported.plugins += 1
+                Imported.Plugins += 1
             end
         end
     end
-	for _, bd in next, parsed.binds or {} do
+	for _, bd in next, Parsed.Binds or {} do
 		local key = tostring(bd.KEY or ""):match("Enum%.KeyCode%.(.+)$") or bd.KEY
 		local cmd = bd.COMMAND
 		local toggleCmd = bd.TOGGLE
@@ -3836,11 +3836,11 @@ Unexpected:AddCommand("importiy", "Import plugins, binds, and events from Infini
 			local bindId = CreateBindId()
 			table.insert(Settings.Binds, { id = bindId, key = key:lower(), cmd = cmd, toggle = isToggle, isPlugin = false })
 			UX_AddBind(key, cmd, isToggle)
-			imported.binds += 1
+			Imported.Binds += 1
 		end
 	end
     local IY_TO_UX = {OnSpawn="respawned", OnDied="died", OnKilled="died", OnJoin="playerjoined", OnLeave="playerleft", OnDamage="healthchanged", OnChatted="chatted"}
-    local evOk, evData = pcall(function() return HttpService:JSONDecode(parsed.eventBinds or "{}") end)
+    local evOk, evData = pcall(function() return HttpService:JSONDecode(Parsed.eventBinds or "{}") end)
     if evOk and type(evData) == "table" then
         for iyEvent, entries in next, evData do
             for _, entry in next, type(entries) == "table" and entries or {} do
@@ -3849,11 +3849,11 @@ Unexpected:AddCommand("importiy", "Import plugins, binds, and events from Infini
                     if iyEvent == "OnExecute" then
                         if not table.find(Settings.Autoruns, tostring(cmd)) then
                             table.insert(Settings.Autoruns, tostring(cmd))
-                            imported.events += 1
+                            Imported.Events += 1
                         end
                     elseif IY_TO_UX[iyEvent] then
                         table.insert(Settings.Events, { event = IY_TO_UX[iyEvent], filter = nil, cmd = tostring(cmd) })
-                        imported.events += 1
+                        Imported.Events += 1
                     end
                 end
             end
@@ -3862,7 +3862,7 @@ Unexpected:AddCommand("importiy", "Import plugins, binds, and events from Infini
     end
     SaveSettings()
     for _, pair in next, {{"autorun","autorun"},{"plugin","plugin"},{"bind","bind"},{"event","event"}} do if MenuFrames[pair[1]].Visible then RenderList(pair[2]) end end
-    Unexpected:Notify("importiy", ("Imported: %d plugin(s), %d bind(s), %d event(s)."):format(imported.plugins, imported.binds, imported.events))
+    Unexpected:Notify("importiy", ("Imported: %d plugin(s), %d bind(s), %d event(s)."):format(Imported.Plugins, Imported.Binds, Imported.Events))
 end)
 
 do
@@ -4015,14 +4015,14 @@ end)
 List.register("event", function(item, index)
 	table.remove(Settings.Events, index)
 	SaveSettings()
-	Unexpected:Notify("events", "Removed: " .. tostring(item.text))
+	Unexpected:Notify("Events", "Removed: " .. tostring(item.text))
 	RenderList("event")
 end)
 
 List.register("bind", function(item, index)
 	table.remove(Settings.Binds, index)
 	SaveSettings()
-	Unexpected:Notify("binds", "Removed: " .. tostring(item.text))
+	Unexpected:Notify("Binds", "Removed: " .. tostring(item.text))
 	RenderList("bind")
 end)
 local _storeCache, _storeProcessed, _storeInit = nil, {}, false
@@ -4037,9 +4037,9 @@ end
 local function FetchRemote()
 	local Success, raw = pcall(function()
 		if request then
-			return request({Url="https://iyplugins.pages.dev/data/plugins.json"}).Body
+			return request({Url="https://iyplugins.pages.dev/data/Plugins.json"}).Body
         else
-			return game:HttpGet("https://iyplugins.pages.dev/data/plugins.json")
+			return game:HttpGet("https://iyplugins.pages.dev/data/Plugins.json")
 		end
 	end)
 
@@ -4083,12 +4083,12 @@ local function FetchStore()
 	end
 
 	local data = SafeDecode(raw)
-	if not (data and data.plugins) then
+	if not (data and data.Plugins) then
 		_storeCache = {}
 		return
 	end
 
-	_storeCache = data.plugins
+	_storeCache = data.Plugins
 
 	for _, v in next, _storeCache do
 		local y,m,d,h,mi,s = (v.date or ""):match("(%d+)-(%d+)-(%d+)T(%d+):(%d+):(%d+)")
