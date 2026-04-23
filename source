@@ -74,6 +74,11 @@ local Settings = {
             Bold = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold,    Enum.FontStyle.Normal),
             Italic = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular, Enum.FontStyle.Italic),
         },
+
+		Assets = {
+			["unexpected_assets/menu.png"] = "rbxassetid://10734887784",
+			["unexpected_assets/back.png"] = "rbxassetid://10709812784",
+		},
     },
 
 	-- User Interface
@@ -120,18 +125,13 @@ end
 if LocalPlayer.Character then CreateCharacter(LocalPlayer.Character) end
 LocalPlayer.CharacterAdded:Connect(CreateCharacter)
 
-local UxAssets = {
-	["unexpected_assets/menu.png"] = "rbxassetid://10734887784",
-	["unexpected_assets/back.png"] = "rbxassetid://10709812784",
-}
-
 if makefolder and isfolder and writefile and isfile then
 	pcall(function()
 		if not isfolder("unexpected_assets") then
 			makefolder("unexpected_assets")
 		end
 
-		for Path in next, UxAssets do
+		for Path in next, Settings.Theme.Assets do
 			if not isfile(Path) then
 				writefile(Path, game:HttpGet("https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/" .. Path))
 			end
@@ -144,9 +144,9 @@ if makefolder and isfolder and writefile and isfile then
 end
 
 local function GetCustomAsset(AssetName: string): string
-	if not uxgetcustomasset then return UxAssets[AssetName] end
+	if not uxgetcustomasset then return Settings.Theme.Assets[AssetName] end
 	local Success, AssetId = pcall(uxgetcustomasset, AssetName)
-	return (Success and AssetId ~= "" and AssetId) or UxAssets[AssetName]
+	return (Success and AssetId ~= "" and AssetId) or Settings.Theme.Assets[AssetName]
 end
 
 local function PingCounter(): ()
