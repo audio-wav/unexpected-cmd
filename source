@@ -156,6 +156,8 @@ local function PingCounter(): () -- D1 Cloudflare Workers, Source: https://githu
 	end
 end
 
+PingCounter()
+
 local function Create(Class: string, Parent: Instance?, Properties: {[string]: any}?): any
     local Inst: any = Instance.new(Class)
     if Properties then
@@ -3900,12 +3902,12 @@ Unexpected:AddCommand("uiscale", "Sets UI scale (e.g. 0.8, 1.5)", function(val)
     Unexpected:Notify("uiscale", "Scale set to " .. val)
 end, nil, {"scale"})
 
-Unexpected:AddCommand("countit", "Send anonymous usage stats", function()
-    task.spawn(pcall, PingCounter)
-    Settings.StatsSent = true
-    SaveSettings()
-    Unexpected:Notify("unexpected", "Thanks! Stats sent.")
-end)
+--Unexpected:AddCommand("countit", "Send anonymous usage stats", function()
+--    task.spawn(pcall, PingCounter)
+--    Settings.StatsSent = true
+--    SaveSettings()
+--    Unexpected:Notify("unexpected", "Thanks! Stats sent.")
+--end)
 
 Unexpected:AddCommand("prefix", "Change the prefix", function(key)
     if not key or key == "" then
@@ -4230,11 +4232,11 @@ List.register("waypoint", function(item, index)
 	RenderList("waypoint")
 end)
 
-if Settings.StatsSent == nil then
-    Unexpected:Notify("unexpected", "Send anonymous usage stats? Run 'countit' to opt in.")
-    Settings.StatsSent = false
-    SaveSettings()
-end
+--if Settings.StatsSent == nil then
+--    Unexpected:Notify("unexpected", "Send anonymous usage stats? Run 'countit' to opt in.")
+--    Settings.StatsSent = false
+--    SaveSettings()
+--end
 ResolveUNCommands()
 HookEvents()
 HookBinds()
