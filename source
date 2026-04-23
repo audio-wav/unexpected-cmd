@@ -149,11 +149,15 @@ local function GetCustomAsset(AssetName: string): string
 	return (Success and AssetId ~= "" and AssetId) or UxAssets[AssetName]
 end
 
-local function PingCounter(): () -- D1 Cloudflare Workers, Source: https://github.com/audio-wav/unexpected-cmd/blob/main/worker.js
+local function PingCounter(): ()
 	if request then
-		request({Url = "https://unexpected-stats.renern.workers.dev/track", Method = "POST" })
-	else
-		game:HttpGet("https://unexpected-stats.renern.workers.dev/track")
+		request({
+			Url = "https://unexpected-stats.renern.workers.dev/track",
+			Method = "POST",
+			Headers = {
+				["X-Session-Key"] = "UX_PRIVATE_SIG_8821"
+			}
+		})
 	end
 end
 
