@@ -2481,24 +2481,24 @@ local function AnimationToTrack(asset_id)
 	return asset_id
 end
 
-Unexpected:AddCommand("Autorun", "Add a Command to Autorun on load", function(...)
+Unexpected:AddCommand("autorun", "Add a Command to autorun on load", function(...)
 	local args = table.pack(...)
 	if #args == 0 then
-        Unexpected:Notify("Autorun", "Usage: Autorun [Command] [args]")
+        Unexpected:Notify("autorun", "Usage: autorun [Command] [args]")
         return
     end
 	local full = table.concat(args, " ")
 	Settings.Autoruns = Settings.Autoruns or {}
 	table.insert(Settings.Autoruns, full)
 	SaveSettings()
-	Unexpected:Notify("Autorun", "Added: " .. full)
+	Unexpected:Notify("autorun", "Added: " .. full)
 	if MenuFrames.Autorun.Visible then RenderList("Autorun") end
 end, nil, {"Command", "..."})
 
-Unexpected:AddCommand("unautorun", "Remove an Autorun Command", function(...)
+Unexpected:AddCommand("unautorun", "Remove an autorun Command", function(...)
 	local args = table.pack(...)
 	if args.n == 0 then
-        Unexpected:Notify("Autorun", "Usage: unautorun [Command] [args]")
+        Unexpected:Notify("autorun", "Usage: unautorun [Command] [args]")
         return
     end
 	local full = table.concat(args, " ")
@@ -2508,10 +2508,10 @@ Unexpected:AddCommand("unautorun", "Remove an Autorun Command", function(...)
         table.remove(Settings.Autoruns, i)
         SaveSettings()
         if MenuFrames.Autorun.Visible then RenderList("Autorun") end
-        Unexpected:Notify("Autorun", "Removed: " .. full)
+        Unexpected:Notify("autorun", "Removed: " .. full)
         return
 	end
-	Unexpected:Notify("Autorun", "Not found: " .. full)
+	Unexpected:Notify("autorun", "Not found: " .. full)
 end, nil, {"Command", "..."})
 
 Unexpected:AddCommand("autoruns", "List all autoruns", function()
@@ -2650,7 +2650,7 @@ Unexpected:AddCommand("unbind", "Remove all key bindings", function(key)
 	Unexpected:Notify("unbind", "Unbound: " .. key)
 end, nil, {"key"})
 
-Unexpected:AddCommand("Binds", "Show Binds tab", function()
+Unexpected:AddCommand("binds", "Show Binds tab", function()
 	SetActiveTab("Bind", function()
 		UnexpectedUi.BDSEARCHBAR.Text = ""
 		RenderList("Bind")
@@ -2739,14 +2739,14 @@ Unexpected:AddCommand("clearbinds", "Remove all Binds", function()
 	Unexpected:Notify("Binds", "All Binds cleared.")
 end)
 
-Unexpected:AddCommand("Events", "Show Events tab", function()
+Unexpected:AddCommand("events", "Show Events tab", function()
 	SetActiveTab("Event", function()
 		UnexpectedUi.EVSEARCHBAR.Text = ""
 		RenderList("Event")
 	end)
 end)
 
-Unexpected:AddCommand("Plugins", "Show Plugins tab", function()
+Unexpected:AddCommand("plugins", "Show Plugins tab", function()
 	SetActiveTab("plugin", function()
 		UnexpectedUi.PLSEARCHBAR.Text = ""
 		RenderList("plugin")
