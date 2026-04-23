@@ -1,5 +1,7 @@
 --!strict
 --[[
+//
+//
 //                   ▓▓▓▓▓▒    ░▓▓▓▓▓  ▒▓▓▓▓▒   ░▓▓▓▓▓                             
 //                   ▓▓▓▓▓▒    ░▓▓▓▓▓   ▒▓▓▓▓▒ ░▓▓▓▓▒                              
 //                   ▓▓▓▓▓▒    ░▓▓▓▓▓    ▒▓▓▓▓▒▓▓▓▓▒                               
@@ -11,7 +13,6 @@
 //                     ▒▓▓▓▓▓▒ ░▓▓▓▓▓ ░▓▓▓▓▒     ▒▓▓▓▓░                            
 //
 //			https://github.com/audio-wav/unexpected-cmd/tree/main				   
-//
 ]]
 
 local missing = function(t, f, fallback)
