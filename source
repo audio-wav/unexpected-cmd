@@ -1145,7 +1145,7 @@ local MenuMap = {
 
 local MenuFrames, MenuButtons = {}, {}
 
-for name, btnName in pairs(MenuMap) do
+for name, btnName in next, MenuMap do
 	if name ~= "discord" then
 		MenuFrames[name] = MenuFrame:WaitForChild(name .. "Frame")
 	end
