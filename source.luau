@@ -3932,6 +3932,32 @@ Unexpected:AddCommand("uiscale", "Sets UI scale (e.g. 0.8, 1.5)", function(val)
     Unexpected:Notify("uiscale", "Scale set to " .. val)
 end, nil, {"scale"})
 
+Unexpected:AddCommand("dexplusplus", "Run DexPlusPlus Explorer", function()
+	loadstring(game:HttpGet("https://github.com/AZYsGithub/DexPlusPlus/releases/latest/download/out.lua"))()
+end, {"dex++", "dexpp"})
+
+Unexpected:AddCommand("dexplusplus", "Run DexPlusPlus Explorer", function()
+	loadstring(game:HttpGet("https://github.com/AZYsGithub/DexPlusPlus/releases/latest/download/out.lua"))()
+end, {"dex++", "dexpp"})
+
+
+Unexpected:AddCommand("hydroxide", "Run Hydroxide", function()
+	local owner = "Upbolt"
+	local branch = "revision"
+
+	local function webImport(file)
+		return loadstring(game:HttpGetAsync(("https://raw.githubusercontent.com/%s/Hydroxide/%s/%s.lua"):format(owner, branch, file)), file .. '.lua')()
+	end
+
+	webImport("init")
+	webImport("ui/main")
+end, {"hydro", "hyd", "remotespy++"})
+
+Unexpected:AddCommand("hydroxide", "Run Hydroxide", function()
+	
+end, {"hydro", "hyd", "remotespy++"})
+
+
 --Unexpected:AddCommand("countit", "Send anonymous usage stats", function()
 --    task.spawn(pcall, PingCounter)
 --    Settings.StatsSent = true
@@ -4313,7 +4339,7 @@ tpCHECK = false
 LocalPlayer.OnTeleport:Connect(function()
 	if getgenv().keepUX and not tpCHECK and queueteleport then
 		tpCHECK = true
-		queueteleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/source'))()")
+		queueteleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/source.luau'))()")
 	end
 end)
 

@@ -5,27 +5,27 @@ An open source Roblox admin commands script [Website](https://audio-wav.github.i
 
 Made by **gio, ymaw.1, anbubu, .smug_.**
 ```lua
-loadstring(game:HttpGet('https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/source'))()
+loadstring(game:HttpGet('https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/source.luau'))()
 ```
 ---
 ## bootstrapper
 `unexpected cmd` offers a fast, caching bootstrapper that will make loading times faster.
 ```lua
 local HTTP = (cloneref and cloneref(game:GetService("HttpService"))) or game:GetService("HttpService")
-local VURL, SURL = "https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/version", "https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/source"
+local VURL, SURL = "https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/version", "https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/source.luau"
 local DEPENDENCIES = typeof(writefile) == "function" and typeof(readfile) == "function" and typeof(isfile) == "function"
 local REMOTE = HTTP:JSONDecode(game:HttpGet(VURL))
 local CACHE = DEPENDENCIES and isfile("ux_cache.json") and HTTP:JSONDecode(readfile("ux_cache.json"))
 if DEPENDENCIES and (not CACHE or CACHE.version ~= REMOTE.version) then
-	writefile("ux_source.lua", game:HttpGet(SURL))
+	writefile("ux_source.luau", game:HttpGet(SURL))
 	writefile("ux_cache.json", HTTP:JSONEncode(REMOTE))
 end
 
-loadstring(DEPENDENCIES and isfile("ux_source.lua") and readfile("ux_source.lua") or game:HttpGet(SURL))()
+loadstring(DEPENDENCIES and isfile("ux_source.luau") and readfile("ux_source.luau") or game:HttpGet(SURL))()
 ```
 you can also use the one liner, much more compact but bad readability and possible compatibility issue on weaker executors.
 ```lua
-if not (isfile("ux_cache.json") and game:GetService("HttpService"):JSONDecode(readfile("ux_cache.json")) and game:GetService("HttpService"):JSONDecode(readfile("ux_cache.json")).version==game:GetService("HttpService"):JSONDecode(game:HttpGet("https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/version")).version) then writefile("ux_source.lua",game:HttpGet("https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/source"));writefile("ux_cache.json",game:GetService("HttpService"):JSONEncode(game:GetService("HttpService"):JSONDecode(game:HttpGet("https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/version")))) end;loadstring((isfile("ux_source.lua")and readfile("ux_source.lua"))or game:HttpGet("https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/source"))()
+if not (isfile("ux_cache.json") and game:GetService("HttpService"):JSONDecode(readfile("ux_cache.json")) and game:GetService("HttpService"):JSONDecode(readfile("ux_cache.json")).version==game:GetService("HttpService"):JSONDecode(game:HttpGet("https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/version")).version) then writefile("ux_source.luau",game:HttpGet("https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/source.luau"));writefile("ux_cache.json",game:GetService("HttpService"):JSONEncode(game:GetService("HttpService"):JSONDecode(game:HttpGet("https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/version")))) end;loadstring((isfile("ux_source.luau")and readfile("ux_source.luau"))or game:HttpGet("https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/source.luau"))()
 ```
 ---
 ## it's just perfect.*

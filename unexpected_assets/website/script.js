@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (el) el.textContent = "—";
     });
   let filter = "all"
-  const text = await (await fetch("https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/source")).text()
+  const text = await (await fetch("https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/source.luau")).text()
   let i = 0
   const seen = new Set()
   const parseTable = t =>
