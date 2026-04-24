@@ -104,8 +104,10 @@ local Settings = {
     },
 	ShrinkTween = nil,
 }
+
 local UnexpectedUi = {}
 local MenuButtons, MenuFrames = {}, {}
+
 local getgenv: typeof(getgenv) = getgenv or getfenv :: any
 if getgenv().unexpected_LOAD then
 	if not Settings.DebugMode then return end
@@ -229,44 +231,41 @@ local function GetFadeTargets(Frame: Frame): {TextLabel | TextButton | TextBox |
     return t
 end
 
-local function CreateTween(
-    Object: Instance, Properties: {[string]: any},
-    Time: number?, EasingStyle: Enum.EasingStyle?
-)
-	return TweenService:Create(Object, TweenInfo.new(Time or 0.2, EasingStyle or Enum.EasingStyle.Sine), Properties)
+local function CreateTween(Object: Instance, Properties: {[string]: any}, Time: number?, EasingStyle: Enum.EasingStyle?)
+    return TweenService:Create(Object, TweenInfo.new(Time or 0.2, EasingStyle or Enum.EasingStyle.Sine), Properties)
 end
 
-local function ButtonTween(button: GuiButton?, target: number?): ()
-	local prop = button:IsA("ImageButton") and "ImageTransparency" or "TextTransparency"
-	CreateTween(button, { [prop] = target }, 0.2, Enum.EasingStyle.Sine):Play()
+local function ButtonTween(Button: GuiButton?, Target: number?): ()
+    local Prop = Button:IsA("ImageButton") and "ImageTransparency" or "TextTransparency"
+    CreateTween(Button, { [Prop] = Target }, 0.2, Enum.EasingStyle.Sine):Play()
 end
-
 local function FadeIn(Frame: Frame?): ()
 	Frame.Visible = true
-	local targets = GetFadeTargets(Frame)
-	for _, c in next, targets do
-		if c:IsA("TextLabel") or c:IsA("TextButton") or c:IsA("TextBox") then
-			c.TextTransparency = 1
-			CreateTween(c, { TextTransparency = 0 }):Play()
-		elseif c:IsA("ImageLabel") or c:IsA("ImageButton") then
-			c.ImageTransparency = 1
-			CreateTween(c, { ImageTransparency = 0 }):Play()
-		end
-	end
+    local Targets = GetFadeTargets(Frame)
+    for _, c in next, Targets do
+        if c:IsA("TextLabel") or c:IsA("TextButton") or c:IsA("TextBox") then
+            c.TextTransparency = 1
+            CreateTween(c, { TextTransparency = 0 }):Play()
+        elseif c:IsA("ImageLabel") or c:IsA("ImageButton") then
+            c.ImageTransparency = 1
+            CreateTween(c, { ImageTransparency = 0 }):Play()
+        end
+    end
 end
 
 local function FadeOut(Frame: Frame?): ()
-	local targets = GetFadeTargets(Frame)
-	for _, c in next, targets do
-		if c:IsA("TextLabel") or c:IsA("TextButton") or c:IsA("TextBox") then
-			CreateTween(c, { TextTransparency = 1 }):Play()
-		elseif c:IsA("ImageLabel") or c:IsA("ImageButton") then
-			CreateTween(c, { ImageTransparency = 1 }):Play()
-		end
-	end
-	task.delay(0.2, function() Frame.Visible = false end)
+	local Targets = GetFadeTargets(Frame)
+    for _, c in next, Targets do
+        if c:IsA("TextLabel") or c:IsA("TextButton") or c:IsA("TextBox") then
+            CreateTween(c, { TextTransparency = 1 }):Play()
+        elseif c:IsA("ImageLabel") or c:IsA("ImageButton") then
+            CreateTween(c, { ImageTransparency = 1 }):Play()
+        end
+    end
+    task.delay(0.2, function() 
+        Frame.Visible = false 
+    end)
 end
-
 
 local function RandomString(len: number?, charset: string?): string
     local _len = len or math.random(10, 20)
@@ -1152,30 +1151,25 @@ UserInputService.InputChanged:Connect(function(input)
 	end
 end)
 
-local function SetHoverState(hovered: boolean?): ()
-	if Settings.IsMobile then
-		Settings.Hovered = true
-		UnexpectedUi["PILL"].Size, UnexpectedUi["CommandLine"].Size = UDim2.new(0, 339, 0, 71), UDim2.new(0, 230, 0, 54)
-		UnexpectedUi["Menu"].ImageTransparency = 0
-		ButtonTween(Menu, 0)
-		return
-	end
-	if Settings.MenuOn and hovered then
-		Settings.Hovered = true
-		CreateTween(UnexpectedUi["PILL"], { Size = UDim2.new(0, 339, 0, 71) }, 0.25, Enum.EasingStyle.Quint):Play()
-		local NS = UDim2.new(0, 230, 0, 54)
-		CreateTween(Cli, { Size = NS }, 0.25, Enum.EasingStyle.Quint):Play()
-		CreateTween(UnexpectedUi["Predictor"], { Size = NS }, 0.25, Enum.EasingStyle.Quint):Play()
-		ButtonTween(Menu, 0)
-		return
-	end
-	Settings.Hovered = hovered
-	local gSize = hovered and 339 or 218
-	local cSize = hovered and 230 or 167
-	CreateTween(UnexpectedUi["PILL"], { Size = UDim2.new(0, gSize, 0, 71) }, 0.25, Enum.EasingStyle.Quint):Play()
-	CreateTween(Cli, { Size = UDim2.new(0, cSize, 0, 54) }, 0.25, Enum.EasingStyle.Quint):Play()
-	CreateTween(UnexpectedUi["Predictor"], { Size = UDim2.new(0, cSize, 0, 54) }, 0.25, Enum.EasingStyle.Quint):Play()
-	ButtonTween(Menu, hovered and 0 or 1)
+local function SetHoverState(hovered: boolean): ()
+    local Cli = UnexpectedUi.CommandLine
+    local Menu = UnexpectedUi.Menu
+    if not Cli or not Menu then return end
+    if Settings.IsMobile then
+        local NS = UDim2.new(0, 230, 0, 54)
+        CreateTween(Cli, { Size = NS }, 0.25, Enum.EasingStyle.Quint):Play()
+        CreateTween(UnexpectedUi.Predictor, { Size = NS }, 0.25, Enum.EasingStyle.Quint):Play()
+        ButtonTween(Menu, 0)
+        return
+    end
+    Settings.Hovered = hovered
+    local gSize = (hovered or Settings.MenuOn) and 339 or 218
+    local cSize = (hovered or Settings.MenuOn) and 230 or 167
+    CreateTween(UnexpectedUi.PILL, { Size = UDim2.new(0, gSize, 0, 71) }, 0.25, Enum.EasingStyle.Quint):Play()
+    CreateTween(Cli, { Size = UDim2.new(0, cSize, 0, 54) }, 0.25, Enum.EasingStyle.Quint):Play()
+    CreateTween(UnexpectedUi.Predictor, { Size = UDim2.new(0, cSize, 0, 54) }, 0.25, Enum.EasingStyle.Quint):Play()
+    local transparency = (hovered or Settings.MenuOn or Settings.MouseHovered) and 0 or 1
+    ButtonTween(Menu, transparency)
 end
 
 local ColorKeys = {
