@@ -146,12 +146,14 @@ end
 
 local function PingCounter(): ()
 	if request then
-		request({
+		pcall(request, {
 			Url = "https://unexpected-stats.renern.workers.dev/track", 
 			Method = "POST",
 			Headers = {
-				["X-Session-Key"] = "UX_PRIVATE_SIG_8821"
-			}
+				["X-Session-Key"] = "UX_PRIVATE_SIG_8821",
+				["User-Agent"] = "Roblox/unexpected-cmd"
+			},
+			Body = "{}"
 		})
 	end
 end
