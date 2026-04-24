@@ -1,19 +1,10 @@
 --!strict
 --[[
-//																		  
-//																		  
-//                   ▓▓▓▓▓▒    ░▓▓▓▓▓  ▒▓▓▓▓▒   ░▓▓▓▓▓                    
-//                   ▓▓▓▓▓▒    ░▓▓▓▓▓   ▒▓▓▓▓▒ ░▓▓▓▓▒                     
-//                   ▓▓▓▓▓▒    ░▓▓▓▓▓    ▒▓▓▓▓▒▓▓▓▓▒                      
-//                   ▓▓▓▓▓▒    ░▓▓▓▓▓     ░▓▓▓▓▓▓▓▒                       
-//                   ▓▓▓▓▓▒    ░▓▓▓▓▓      ▒▓▓▓▓▓▒                        
-//                   ▓▓▓▓▓▒    ▒▓▓▓▓▓     ▒▓▓▓▓▓▓▓▒                       
-//                   ▒▓▓▓▓▓▒▒▒▒▓▓▓▓▓▓    ▒▓▓▓▓▒▓▓▓▓▒                      
-//                 	  ▒▓▓▓▓▓▓▓▒▒▓▓▓▓▓   ▓▓▓▓▒░ ░▓▓▓▓▓░                    
-//                     ▒▓▓▓▓▓▒ ░▓▓▓▓▓ ░▓▓▓▓▒     ▒▓▓▓▓░                   
-//																		  
-//			 https://github.com/audio-wav/unexpected-cmd/tree/main		  
-//			 			https://discord.gg/J73SnGB2y2                     
+	unexpected cmd
+	An open source Roblox admin commands script
+
+	Made by gio, ymaw.1, anbubu, .smug_.
+	https://discord.gg/J73SnGB2y
 ]]
 
 local missing = function(t, f, fallback)
