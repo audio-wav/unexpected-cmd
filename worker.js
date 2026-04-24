@@ -1,7 +1,7 @@
 export default {
     async fetch(request, env) {
         const { pathname } = new URL(request.url);
-        
+
         const headers = {
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
@@ -16,7 +16,7 @@ export default {
             if (pathname === "/") {
                 const row = await env.DB.prepare("SELECT count FROM stats WHERE id = 'executions'").first();
                 const total = row?.count || 0;
-                
+
                 const html = `<!DOCTYPE html>
                 <html lang="en">
                 <head>
@@ -41,15 +41,17 @@ export default {
                     </div>
                 </body>
                 </html>`;
-                
+
                 return new Response(html, { headers: { ...headers, "Content-Type": "text/html" } });
             }
 
             if (pathname === "/track" && request.method === "POST") {
                 const key = request.headers.get("X-Session-Key");
                 const agent = request.headers.get("User-Agent") || "";
-                
-                if (key !== "UX_PRIVATE_SIG_8821" || !agent.toLowerCase().includes("roblox")) {
+
+                const validKey = env.SESSION_KEY || "UX_PRIVATE_SIG_8821";
+
+                if (key !== validKey || (!agent.toLowerCase().includes("roblox") && !agent.toLowerCase().includes("rbx"))) {
                     return new Response("Unauthorized", { status: 401, headers });
                 }
 
@@ -61,19 +63,19 @@ export default {
                 const rawIp = request.headers.get("CF-Connecting-IP") || "unknown";
                 const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(rawIp));
                 const identity = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
-                
+
                 const stamp = Math.floor(Date.now() / 1000);
-                
+
                 const entry = await env.DB.prepare(
                     "SELECT last_ts FROM rate_limits WHERE ip = ?"
                 ).bind(identity).first();
-
-                if (entry && (stamp - entry.last_ts) < 30) {
+                // REDUCED COOLDOWN TO 10 SECONDS FROM 30. - DAVID
+                if (entry && (stamp - entry.last_ts) < 10) {
                     return new Response("Spam", { status: 429, headers });
                 }
 
                 await env.DB.batch([
-                    env.DB.prepare("UPDATE stats SET count = count + 1 WHERE id = 'executions'"),
+                    env.DB.prepare("INSERT INTO stats (id, count) VALUES ('executions', 1) ON CONFLICT(id) DO UPDATE SET count = count + 1"),
                     env.DB.prepare("INSERT OR REPLACE INTO rate_limits (ip, last_ts) VALUES (?, ?)").bind(identity, stamp)
                 ]);
 
@@ -84,14 +86,14 @@ export default {
                 const data = await env.DB.prepare(
                     "SELECT count FROM stats WHERE id = 'executions'"
                 ).first();
-                
+
                 return new Response(JSON.stringify({ count: data?.count || 0 }), {
                     headers: { ...headers, "Content-Type": "application/json" },
                 });
             }
 
             return new Response("Not found", { status: 404, headers });
-            
+
         } catch (error) {
             return new Response("Error", { status: 500, headers });
         }
