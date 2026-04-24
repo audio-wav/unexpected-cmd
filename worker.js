@@ -47,18 +47,15 @@ export default {
 
             if (pathname === "/track" && request.method === "POST") {
                 const key = request.headers.get("X-Session-Key");
-                const agent = request.headers.get("User-Agent") || "";
+                const agent = request.headers.get("User-Agent") || "unknown";
 
                 const validKey = env.SESSION_KEY || "UX_PRIVATE_SIG_8821";
 
-                if (key !== validKey || (!agent.toLowerCase().includes("roblox") && !agent.toLowerCase().includes("rbx"))) {
+                if (key !== validKey) {
+                    console.log(`[TRACK] Rejecting request: Invalid session key from ${agent}`);
                     return new Response("Unauthorized", { status: 401, headers });
                 }
-
-                const isWeb = request.headers.has("sec-fetch-mode") || request.headers.has("sec-ch-ua");
-                if (isWeb) {
-                    return new Response("Forbidden", { status: 403, headers });
-                }
+                console.log(`[TRACK] Request from: ${agent}`);
 
                 const rawIp = request.headers.get("CF-Connecting-IP") || "unknown";
                 const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(rawIp));
@@ -69,8 +66,9 @@ export default {
                 const entry = await env.DB.prepare(
                     "SELECT last_ts FROM rate_limits WHERE ip = ?"
                 ).bind(identity).first();
-                // REDUCED COOLDOWN TO 10 SECONDS FROM 30. - DAVID
+
                 if (entry && (stamp - entry.last_ts) < 10) {
+                    console.log(`[TRACK] Rate limited: ${identity}`);
                     return new Response("Spam", { status: 429, headers });
                 }
 
@@ -79,6 +77,7 @@ export default {
                     env.DB.prepare("INSERT OR REPLACE INTO rate_limits (ip, last_ts) VALUES (?, ?)").bind(identity, stamp)
                 ]);
 
+                console.log(`[TRACK] Success: ${identity}`);
                 return new Response("OK", { headers });
             }
 
