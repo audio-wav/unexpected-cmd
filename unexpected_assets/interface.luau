@@ -76,7 +76,7 @@ function Interface.Init(deps: {
     U.CreateAspectRatio = CreateAspectRatio
     U.CreateTween = CreateTween
 
-    U.UI = Create("ScreenGui", game:GetService("RobloxHideGui") or CoreGui, {
+    U.UI = Create("ScreenGui", CoreGui, {
         Name = RandomString()
     })
 
