@@ -3936,11 +3936,6 @@ Unexpected:AddCommand("dexplusplus", "Run DexPlusPlus Explorer", function()
 	loadstring(game:HttpGet("https://github.com/AZYsGithub/DexPlusPlus/releases/latest/download/out.lua"))()
 end, {"dex++", "dexpp"})
 
-Unexpected:AddCommand("dexplusplus", "Run DexPlusPlus Explorer", function()
-	loadstring(game:HttpGet("https://github.com/AZYsGithub/DexPlusPlus/releases/latest/download/out.lua"))()
-end, {"dex++", "dexpp"})
-
-
 Unexpected:AddCommand("hydroxide", "Run Hydroxide", function()
 	local owner = "Upbolt"
 	local branch = "revision"
@@ -3951,10 +3946,6 @@ Unexpected:AddCommand("hydroxide", "Run Hydroxide", function()
 
 	webImport("init")
 	webImport("ui/main")
-end, {"hydro", "hyd", "remotespy++"})
-
-Unexpected:AddCommand("hydroxide", "Run Hydroxide", function()
-	
 end, {"hydro", "hyd", "remotespy++"})
 
 
