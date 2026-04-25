@@ -68,8 +68,8 @@ local Settings = {
         },
 
 		Assets = {
-			["unexpected_assets/menu.png"] = "rbxassetid://10734887784",
-			["unexpected_assets/back.png"] = "rbxassetid://10709812784",
+			["unexpected_library/images/menu.png"] = "rbxassetid://10734887784",
+			["unexpected_library/images/back.png"] = "rbxassetid://10709812784",
 		},
     },
 
@@ -122,8 +122,8 @@ LocalPlayer.CharacterAdded:Connect(CreateCharacter)
 
 if makefolder and isfolder and writefile and isfile then
 	pcall(function()
-		if not isfolder("unexpected_assets") then
-			makefolder("unexpected_assets")
+		if not isfolder("unexpected_library/images") then
+			makefolder("unexpected_library/images")
 		end
 
 		for Path in next, Settings.Theme.Assets do
@@ -133,7 +133,7 @@ if makefolder and isfolder and writefile and isfile then
 		end
 
 		if Settings.IsMobile then
-			writefile("unexpected_assets/.nomedia", "")
+			writefile("unexpected_library/images/.nomedia", "")
 		end
 	end)
 end
@@ -335,7 +335,7 @@ UnexpectedUi.Menu = Create("ImageButton", UnexpectedUi.PILL, {
 	BorderSizePixel = 0, BackgroundTransparency = 1,
 	BackgroundColor3 = White,
 	ImageColor3 = Settings.Theme.Accent,
-	Image = GetCustomAsset("unexpected_assets/menu.png"),
+	Image = GetCustomAsset("unexpected_library/images/menu.png"),
 	Size = UDim2.fromOffset(30, 30),
 	BorderColor3 = Settings.Theme.Background, Name = "Menu",
 	Position = UDim2.fromScale(0.83776, 0.28169),
@@ -461,7 +461,7 @@ local function CreateTabBack(Parent: Instance, Name: string): ImageButton
 	local b = Create("ImageButton", Parent, {
 		BorderSizePixel = 0, BackgroundTransparency = 1,
 		BackgroundColor3 = White, ImageColor3 = Settings.Theme.Accent,
-		Image = GetCustomAsset("unexpected_assets/back.png"),
+		Image = GetCustomAsset("unexpected_library/images/back.png"),
 		Size = UDim2.fromOffset(38, 30), BorderColor3 = Settings.Theme.Background,
 		Name = Name, Position = UDim2.fromScale(0.0885, 0.82759),
 	})
@@ -3836,7 +3836,7 @@ Unexpected:AddCommand("quirkycmd", "A script that abuses vulnerabilities", funct
 end, {"febypass"})
 
 Unexpected:AddCommand("simplespy", "Spies on remotes", function()
-	loadstring(game:HttpGet("https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/unexpected_assets/scripts/simplespy"))()
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/audio-wav/unexpected-cmd/main/unexpected_library/images/scripts/simplespy"))()
 end, {"remotespy"})
 
 Unexpected:AddCommand("importiy", "Import Plugins, Binds, and Events from Infinite Yield", function()
