@@ -73,7 +73,7 @@ export default {
                     <head>
                         <meta charset="UTF-8">
                         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                        <title>System Telemetry</title>
+                        <title>Unexpected Counter</title>
                         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
                         <style>
                             :root {
@@ -252,7 +252,7 @@ export default {
                         <div class="scanline"></div>
                         <div class="container">
                             <header>
-                                <h1>Network Telemetry</h1>
+                                <h1>Unexpected CMD Counter</h1>
                                 <div class="status-badge">
                                     <div class="pulse"></div>
                                     Systems Online
@@ -278,7 +278,7 @@ export default {
                             </div>
                             
                             <div class="footer">
-                                unexpected-cmd endpoint &bull; telemetry active
+                                unexpected-cmd endpoint &bull; counter active! :3
                             </div>
                         </div>
                     </body>
