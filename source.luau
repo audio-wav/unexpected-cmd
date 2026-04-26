@@ -147,7 +147,7 @@ end
 local function PingCounter(): ()
 	if request then
 		pcall(request, {
-			Url = "https://unexpected-stats.renern.workers.dev/track", 
+			Url = "https://globalzen-api.renern.workers.dev/unexpected/track", 
 			Method = "POST",
 			Headers = {
 				["X-Session-Key"] = "UX_PRIVATE_SIG_8821",

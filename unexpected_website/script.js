@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", async () => {
-  const WORKER_URL = "https://unexpected-stats.renern.workers.dev";
+  const WORKER_URL = "https://globalzen-api.renern.workers.dev/unexpected";
   const tb = document.getElementById("tb"),
     esc = s => s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]))
 
