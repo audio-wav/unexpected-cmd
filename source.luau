@@ -4244,7 +4244,7 @@ UnexpectedUi.InfoAction.MouseButton1Click:Connect(function()
 		for _, f in next, item.p.files or {} do
 			if f.filename:match("%.iy$") then
 				local url = HttpService:UrlEncode("https://iyplugins.pages.dev/" .. f.url)
-				local tracker = "https://iy-analytics.renern.workers.dev/load/"
+				local tracker = "https://globalzen-api.renern.workers.dev/iy/load/"
 					.. item.p.id .. "?url=" .. url
 				local Success, src = pcall(game.HttpGet, game, tracker)
 				if Success and src then
